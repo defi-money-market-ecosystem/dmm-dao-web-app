@@ -14,6 +14,7 @@ import { getAllQueryParams } from '../utils'
 import Send from './Send'
 import Pool from './Pool'
 import Vote from './Vote'
+import Earn from './Earn'
 import Details from './Vote/Details'
 import { isAddress } from '../utils/index'
 
@@ -146,6 +147,7 @@ class App extends React.Component {
                           }}
                         />
                         <Route exact strict path="/send" component={() => <Send params={params} />} />
+                        <Route exact strict path="/earn" component={() => <Earn params={params} />} />
                         <Route
                           exact
                           strict

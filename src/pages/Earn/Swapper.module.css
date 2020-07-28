@@ -1,0 +1,135 @@
+.inputDmmFieldWrapper {
+  margin: 16px;
+}
+
+.inputDmmField {
+  padding: 16px;
+}
+
+.swapperWrapper {
+  width: 100%;
+  max-width: 1200px;
+  margin-top: calc(-100vh + 310px) !important;
+}
+
+.overlay {
+  width: 100vw;
+  position: absolute;
+  top: 320px;
+  /*background: rgba(246, 251, 255, 0.5);*/
+  height: calc(100vh - 330px);
+  left: 0;
+  z-index: 89;
+}
+
+.progressBar {
+  padding: 4px;
+  margin: 8px 55px 0;
+  color: #327ccb;
+}
+
+.connectWalletButton {
+  width: 450px;
+  margin: 30px auto;
+  height: 200px;
+  background: white;
+  border-radius: 5px;
+  padding: 40px;
+  box-shadow: rgba(0, 0, 0, 0.5) 1px 1px 8px -4px, rgba(0, 0, 0, 0.5) 1px 1px 4px -4px;
+}
+
+.loadWallet {
+  color: white !important;
+  background-color: #327ccb !important;
+  font-weight: 100 !important;
+  box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px;
+  transition: all 0.2s ease-in-out;
+  -webkit-border-radius: 5px !important;
+  -moz-border-radius: 5px !important;
+  border-radius: 5px !important;
+  font-size: 15px !important;
+  height: 40px !important;
+  width: 185px !important;
+  margin-top: 30px !important;
+  margin-bottom: 10px !important;
+  text-transform: none !important;
+}
+
+.loadWallet:hover {
+  box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px;
+  background-color: #5490d0 !important;
+}
+
+.title {
+  font-size: 2em;
+  font-weight: 100;
+}
+
+.whatsAWallet {
+  font-size: 0.7em;
+  cursor: default;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  color: #66727b;
+  font-weight: 400;
+  height: 13px;
+}
+
+.questionIcon {
+  background: #808c94;
+  border-radius: 50%;
+  height: 13px;
+  width: 13px;
+  text-align: center;
+  color: white;
+  font-weight: 600;
+  display: inline-block;
+  line-height: 14px;
+  font-size: 9px;
+  margin-right: 5px;
+  padding-right: 1px;
+  vertical-align: top;
+}
+
+.helperText {
+  display: inline-block;
+  line-height: 13px;
+  vertical-align: top;
+}
+
+@media (max-width: 900px) {
+  .swapperWrapper {
+    margin-top: -660px !important;
+  }
+
+  .connectWalletButton {
+    margin: 20px auto;
+    max-width: 90%;
+  }
+}
+
+/*@media (max-width: 550px) {
+  .swapperWrapper {
+    margin-top: -920px !important;
+  }
+}*/
+
+@media (max-height: 700px) {
+  .swapperWrapper {
+    margin-top: calc(-110vh + 310px) !important;
+  }
+
+  @media (max-width: 900px) {
+    .swapperWrapper {
+      margin-top: -750px !important;
+    }
+  }
+
+  @media (max-width: 550px) {
+    .swapperWrapper {
+      margin-top: -920px !important;
+    }
+  }
+}

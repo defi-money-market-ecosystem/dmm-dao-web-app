@@ -1,0 +1,401 @@
+.SwapPanel {
+  width: 46%;
+  height: 325px;
+  margin: 2%;
+  display: inline-block;
+  box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px;
+  -webkit-border-radius: 5px;
+  -moz-border-radius: 5px;
+  border-radius: 5px;
+  background: white;
+  vertical-align: top;
+  font-family: 'Open Sans', sans-serif !important;
+  -webkit-transition: opacity 0.5s ease-in-out;
+  -moz-transition: opacity 0.5s ease-in-out;
+  -ms-transition: opacity 0.5s ease-in-out;
+  -o-transition: opacity 0.5s ease-in-out;
+  transition: opacity 0.5s ease-in-out;
+  padding: 13px 0 20px;
+}
+
+.SwapPanel.disabled {
+  opacity: 0.5;
+}
+
+.mintOrRedeem {
+  padding: 0 4%;
+}
+
+.mintOrRedeem > div {
+  min-height: 0 !important;
+  margin-bottom: 10px !important;
+}
+
+.mintOrRedeem .MuiTabs-indicator {
+  background-color: #327ccb;
+  height: 3px;
+}
+
+.mintOrRedeem button {
+  min-width: 0 !important;
+  width: fit-content !important;
+  padding: 0;
+  margin:  0 6px;
+  font-size: 1.3em;
+  text-transform: initial;
+  font-weight: 400;
+  min-height: 28px !important;
+}
+
+.mintOrRedeem span {
+  font-family: 'Open Sans', sans-serif !important;
+  letter-spacing: initial !important;
+}
+
+.helperText {
+  text-align: center;
+  font-weight: 100;
+  font-size: 0.8em;
+  margin-top: 30px;
+  padding: 0 5%;
+}
+
+.inputForm {
+  width: 90%;
+  margin: 20px auto 20px;
+}
+
+/*.inputFormWrapper {
+  display: flex;
+  flex-direction: row;
+}*/
+
+.underlyingSection,
+.dmmSection {
+  width: 45%;
+  display: inline-block;
+  vertical-align: top;
+  align-self: flex-end;
+}
+
+.dmmSection {
+  margin-top: 16px;
+}
+
+.arrow {
+  width: 10%;
+  display: inline-block;
+  vertical-align: top;
+  margin-top: 24px;
+}
+
+.downArrow {
+  display: none;
+}
+
+.maxBalance {
+  font-size: 0.7em;
+  line-height: 0.9em;
+  text-align: right;
+  font-weight: 100;
+  margin-bottom: 5px;
+  padding-right: 4px;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  -webkit-transition: opacity 0.2s ease-in-out;
+  -moz-transition: opacity 0.2s ease-in-out;
+  -ms-transition: opacity 0.2s ease-in-out;
+  -o-transition: opacity 0.2s ease-in-out;
+  transition: opacity 0.2s ease-in-out;
+  width: fit-content;
+  float: right;
+}
+
+.maxBalance:hover {
+  opacity: 0.5;
+}
+
+.inputWrapper {
+  width: 100%;
+  -webkit-border-radius: 4px;
+  -moz-border-radius: 4px;
+  border-radius: 4px;
+  background: #f6f8fb;
+  float: right;
+  height: 40px;
+}
+
+.inputWrapper input {
+  border: none;
+  background: none;
+  font-size: 1em;
+  margin: 0;
+  width: calc(100% - 100px);
+  float: left;
+  display: inline-block;
+  vertical-align: top;
+  padding: 10px 0 10px 15px;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+}
+
+.inputWrapper input.dmmInput {
+  width: calc(100% - 100px);
+  float: left;
+}
+
+.dmmSection .inputWrapper input {
+  width: calc(100% - 80px);
+}
+
+.underlyingSelector {
+  display: inline-block;
+  float: right;
+  font-weight: 100;
+  vertical-align: top;
+  -webkit-transition: all 0.2s ease-in-out;
+  -moz-transition: all 0.2s ease-in-out;
+  -ms-transition: all 0.2s ease-in-out;
+  -o-transition: all 0.2s ease-in-out;
+  transition: all 0.2s ease-in-out;
+  cursor: pointer;
+  height: 40px;
+  padding-left: 4%;
+  border-bottom-right-radius: 4px;
+  border-top-right-radius: 4px;
+  overflow: hidden;
+  width: 100px;
+}
+
+.underlyingSelector.dmmUnderlying {
+}
+
+.underlyingSelector:hover {
+  background: #ebedf3;
+}
+
+.underlyingSelector.expanded {
+  background: #ebedf3;
+  border-bottom-left-radius: 4px;
+  position: relative;
+  z-index: 999;
+  height: fit-content;
+  margin-bottom: -40px;
+}
+
+.underlyingOption {
+  text-align: left;
+  padding-left: 13%;
+  width: 111%;
+  margin-left: -11%;
+  height: 40px;
+  line-height: 40px;
+  cursor: pointer;
+  -webkit-transition: background-color 0.2s ease-in-out;
+  -moz-transition: background-color 0.2s ease-in-out;
+  -ms-transition: background-color 0.2s ease-in-out;
+  -o-transition: background-color 0.2s ease-in-out;
+  transition: background-color 0.2s ease-in-out;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.underlyingOption.first {
+  margin-top: -40px;
+}
+
+.underlyingSelector.expanded .underlyingOption:hover {
+  background-color: #d8dfec;
+}
+
+.asset {
+  display: inline-block;
+  vertical-align: top;
+  line-height: 40px;
+  visibility: hidden;
+}
+
+.dmmSection .asset {
+  visibility: visible;
+  font-weight: 100;
+  width: 80px;
+  float: right;
+  /*margin-left: 5%;*/
+}
+
+.underlyingSelector svg {
+  display: inline-block;
+  vertical-align: top;
+  margin-top: 8px;
+  -webkit-transition: opacity 0.3s ease-in-out;
+  -moz-transition: opacity 0.3s ease-in-out;
+  -ms-transition: opacity 0.3s ease-in-out;
+  -o-transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+.underlyingSelector path {
+  pointer-events: none;
+}
+
+.underlyingSelector.expanded svg {
+  opacity: 0;
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+}
+
+.light {
+  font-weight: 100;
+}
+
+.submit {
+  text-align: right;
+  padding: 0 5%;
+}
+
+.supplyWrapper {
+  width: 40%;
+  display: inline-block;
+  font-size: 0.7em;
+  font-weight: 100;
+  text-align: left;
+  float: left;
+  min-width: 200px;
+}
+
+.supply {
+  line-height: 18px;
+  justify-content: space-between;
+  display: flex;
+}
+
+.amount {
+  font-weight: 400;
+}
+
+.gray {
+  color: #c1c5d0;
+  font-weight: 100;
+}
+
+.submitButton {
+  color: white !important;
+  background-color: #327ccb !important;
+  font-weight: 100 !important;
+  box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px;
+  transition: all 0.2s ease-in-out;
+  -webkit-border-radius: 5px !important;
+  -moz-border-radius: 5px !important;
+  border-radius: 5px !important;
+  font-size: 15px !important;
+  height: 40px !important;
+  /*width: 120px !important;*/
+  /*margin-top: 10px !important;*/
+  text-transform: none !important;
+  width: fit-content !important;
+  min-width: 80px !important;
+  padding: 6px 12px !important;
+}
+
+.submitButtonDisabled {
+  color: rgba(0, 0, 0, 0.30) !important;
+  background-color: rgba(#327ccb, 0.30) !important;
+  cursor: not-allowed !important;
+  transition: none;
+}
+
+.submitButtonDisabled:hover {
+  color: rgba(0, 0, 0, 0.30) !important;
+  background-color: rgba(#327ccb, 0.30) !important;
+}
+
+.submitButton.loading {
+  width: 160px;
+}
+
+.submitButton:hover {
+  box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px;
+  background-color: #5490d0 !important;
+}
+
+.submitButton span div {
+  width: 20px !important;
+  height: 20px !important;
+  margin-right: 10px;
+}
+
+@media (max-width: 900px) {
+  .SwapPanel {
+    width: 80%;
+  }
+}
+
+@media (max-width: 700px) {
+  .SwapPanel {
+    width: 90%;
+  }
+}
+
+@media (max-width: 550px) {
+  .SwapPanel {
+    width: 95%;
+    height: fit-content;
+  }
+
+  .underlyingSection,
+  .dmmSection {
+    width: 100%;
+  }
+
+  .rightArrow {
+    display: none;
+  }
+
+  .downArrow {
+    display: block;
+  }
+
+  .supplyWrapper {
+    width: 100%;
+  }
+
+  .submitButton {
+    width: 100% !important;
+    margin-top: 20px !important;
+  }
+}
+
+@media (max-height: 650px) {
+  @media (min-width: 650px) {
+    .SwapPanel {
+      height: 285px;
+    }
+  }
+}
+
+/*.inputRightSide {
+  align-self: flex-end;
+}*/
+
+.errorSection {
+  color: $pink;
+  font-size: 12px;
+  padding: 0 5% 8px;
+  margin-top: -8px;
+  text-align: left;
+  width: 87%;
+}

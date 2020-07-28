@@ -26,6 +26,11 @@ const tabOrder = [
     regex: /\/send/
   },
   {
+    path: '/earn',
+    textKey: 'Earn',
+    regex: /\/earn/
+  },
+  {
     path: '/add-liquidity',
     textKey: 'pool',
     regex: /\/add-liquidity|\/remove-liquidity|\/create-exchange.*/
