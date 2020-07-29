@@ -15,7 +15,7 @@ class Swapper extends React.Component {
   }
 
   render() {
-    const isWalletLoaded = !!this.props.web3value;
+    const isWalletLoaded = !!this.props.account;
 
     const swapPanel = (
       <div>
@@ -42,6 +42,8 @@ class Swapper extends React.Component {
       </div>
     );
 
+
+    console.log(this.props.dmmToken)
     if (isWalletLoaded && this.props.dmmToken) {
       return (
         <div className={styles.swapperWrapper}>

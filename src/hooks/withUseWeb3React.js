@@ -4,6 +4,8 @@ import { useWeb3React } from '../hooks'
 export default function withUseWeb3React(Component) {
   return function WrappedComponent(props) {
     const value = useWeb3React();
-    return <Component {...props} web3value={value} />;
+    const { library, account, chainId, error } = useWeb3React()
+
+    return <Component {...props} library={library} account={account} chainId={chainId} error={error} />;
   }
 }
