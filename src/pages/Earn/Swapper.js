@@ -1,7 +1,7 @@
 import * as React from "react";
 import {CircularProgress} from "@material-ui/core";
 import Button from "@material-ui/core/Button";
-import withUseWeb3React from '../../hooks/withUseWeb3React'
+import withUseWeb3React from '../../hoc/withUseWeb3React'
 
 import styles from "./Swapper.module.css";
 import Tooltip from "@material-ui/core/Tooltip";
@@ -42,8 +42,6 @@ class Swapper extends React.Component {
       </div>
     );
 
-
-    console.log(this.props.dmmToken)
     if (isWalletLoaded && this.props.dmmToken) {
       return (
         <div className={styles.swapperWrapper}>
@@ -62,7 +60,6 @@ class Swapper extends React.Component {
                 <Button
                   className={`${styles.loadWallet} ${isWalletLoaded && styles.loaded}`}
                   disabled={isWalletLoaded}
-                  onClick={() => this.props.loadWallet()}
                 >
                   {isWalletLoaded ? "Wallet Loaded" : "Connect Your Wallet"}
                 </Button>

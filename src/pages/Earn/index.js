@@ -1,23 +1,15 @@
 import React from 'react';
 
 import Swapper from "./Swapper";
-import withUseWeb3React from '../../hooks/withUseWeb3React'
+import withUseWeb3React from '../../hoc/withUseWeb3React'
+import withUseTransactionAdder from '../../hoc/withUseTransactionAdder'
 
-import DmmWeb3Service from "./services/DmmWeb3Service";
 import NumberUtil, {BN} from "../../utils/NumberUtil";
-import ERC20Service from "./services/ERC20Service";
-import DmmTokenService from "./services/DmmTokenService";
+import DmmTokenService from "../../services/DmmTokenService";
 
-import {tokenAddressToTokenMap, tokens, WETH} from "../models/Tokens";
+import {tokenAddressToTokenMap, tokens, WETH} from "../../models/Tokens";
+import {asyncForEach} from "../../utils/ArrayUtil";
 
-import Snackbar from "@material-ui/core/Snackbar";
-import Alert from "@material-ui/lab/Alert";
-
-import {library} from '@fortawesome/fontawesome-svg-core';
-import {fab} from '@fortawesome/free-brands-svg-icons';
-import {asyncForEach} from "./utils/ArrayUtil";
-
-library.add(fab);
 
 class Earn extends React.Component {
   constructor(props) {
@@ -45,11 +37,7 @@ class Earn extends React.Component {
       totalTokensPurchased: NumberUtil._0,
     };
 
-    this.pollForData().then(() => {
-      console.log("Finished initial poll for data")
-    });
-
-    const address = this.props.account;
+    this.address = this.props.account;
   }
 
   doOperation = async () => {
@@ -57,7 +45,7 @@ class Earn extends React.Component {
       return;
     }
 
-    const walletAddressLower = DmmWeb3Service.walletAddress().toLowerCase();
+    const walletAddressLower = this.address.toLowerCase();
     const underlyingToken = this.state.underlyingToken;
     const dmmToken = this.state.dmmToken;
 
@@ -86,7 +74,7 @@ class Earn extends React.Component {
     const isSuccessful = await receiptPromise
       .on('transactionHash', transactionHash => {
         if (this.state.isMinting) {
-          DmmWeb3Service.watchHash(transactionHash);
+          // this.add(transactionHash); - check  slack
         }
         // This is purposefully NOT awaited. It's a "side-effect" promise
         DmmTokenService.addNewTokensToTotalTokensPurchased(transactionHash);
@@ -130,17 +118,8 @@ class Earn extends React.Component {
     });
   };
 
-  getAllowance = async (token, spender) => {
-    return await ERC20Service.getAllowance(token.address, DmmWeb3Service.walletAddress(), spender ? spender.address : this.state.dmmToken.address);
-  };
-
-  getBalance = async (token) => {
-    return await ERC20Service.getBalance(token.address, DmmWeb3Service.walletAddress());
-  };
-
   componentWillUnmount() {
     clearInterval(this.subscriptionId);
-    DmmWeb3Service.removeOnWalletChange(this.walletChangeUid);
   };
 
   pollForData = async () => {
@@ -148,6 +127,11 @@ class Earn extends React.Component {
       const underlyingToken = this.state.underlyingToken;
       const underlyingToDmmTokensMap = await DmmTokenService.getDmmTokens();
       const dmmToken = underlyingToDmmTokensMap[underlyingToken.address.toLowerCase()];
+
+      console.log(underlyingToken)
+      console.log(underlyingToDmmTokensMap)
+      console.log(dmmToken)
+      
       this.setState({
         dmmToken,
         dmmTokensMap: underlyingToDmmTokensMap,
@@ -189,7 +173,7 @@ class Earn extends React.Component {
       totalTokensPurchased,
     });
 
-    if (DmmWeb3Service.walletAddress()) {
+    if (this.address) {
       this.loadWeb3Data(0).catch(e => {
         console.error("Could not get web3 data due to error: ", e);
         this.setState({
@@ -255,31 +239,6 @@ class Earn extends React.Component {
       });
   };
 
-  loadWallet = () => {
-    this.setState({isLoading: true});
-    DmmWeb3Service.onboard.walletSelect()
-      .then(result => {
-        if (result && typeof DmmWeb3Service.instance.wallet.connect === 'function') {
-          return DmmWeb3Service.instance.wallet.connect();
-        } else {
-          return true;
-        }
-      })
-      .then(() => {
-        this.setState({isLoading: false});
-      })
-      .catch(error => {
-        const metaMaskDenialErrorMessage = 'This dapp needs access to your account information.'
-        if (error.code !== 4001 && error.message !== metaMaskDenialErrorMessage) {
-          this.setState({
-            snackMessage: `There was an unknown error loading your wallet. Error Code: ${error.code || Object.keys(error)}`
-          });
-        }
-        this.setState({isLoading: false});
-        console.error('Found error ', error);
-      })
-  };
-
   render() {
     return (
       <div>
@@ -295,7 +254,6 @@ class Earn extends React.Component {
             isUnlocked={this.state.isUnlocked}
             isWaitingForSignature={this.state.isWaitingForSignature}
             isWaitingForApprovalToMine={this.state.isWaitingForApprovalToMine}
-            loadWallet={() => this.loadWallet()}
             doOperation={() => this.doOperation()}
             updateUnderlying={(newTicker) => {
               const underlyingToken = this.state.tokens.find(token => token.symbol === newTicker);
@@ -340,4 +298,4 @@ class Earn extends React.Component {
 
 }
 
-export default withUseWeb3React(Earn);
+export default withUseTransactionAdder(withUseWeb3React(Earn));

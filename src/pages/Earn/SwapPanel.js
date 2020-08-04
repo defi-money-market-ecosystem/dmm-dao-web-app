@@ -292,6 +292,9 @@ class SwapPanel extends React.Component {
     const actionRightInputView = this.getRightSideInputView(isMinting);
     const dmmToken = this.props.dmmToken;
 
+    console.log('test')
+    console.log(dmmToken)
+
     let metadataSection;
     if (dmmToken) {
       const targetPrecision = dmmToken.underlyingTokenAddress === WETH.addressLower ? 2 : 0;
