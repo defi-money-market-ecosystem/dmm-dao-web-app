@@ -35,6 +35,7 @@ const Card = styled.div`
 	text-align: center;
 	font-weight: 600;
 	color: black;
+	max-width: calc(80vw - 30px);
 `
 
 const Title = styled.div`
