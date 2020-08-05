@@ -10,6 +10,7 @@ import { ProposalSummary } from '../../models/ProposalSummary'
 import { AccountVoteInfo } from '../../models/AccountVoteInfo'
 import { useAllTransactions } from '../../contexts/Transactions'
 import { Spinner } from '../../theme'
+import ReactMarkdown from "react-markdown";
 
 const Main = styled.div`
   width: 70vw;
@@ -463,7 +464,7 @@ export default function Details() {
           Details
         </Title>
         <Description>
-          {proposal?.description}
+          <ReactMarkdown source={proposal?.description} />
         </Description>
       </Card>
       <Card width={40}>
