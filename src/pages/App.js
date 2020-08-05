@@ -44,7 +44,7 @@ const BodyWrapper = styled.div`
   -webkit-box-align: center;
   z-index: 1;
   flex: 1 1 0%;
-  overflow-y: hidden;
+  overflow-y: scroll;
   overflow-x: hidden;
   padding-bottom: 40px;
   padding-top: 70px; 
