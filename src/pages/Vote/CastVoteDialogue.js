@@ -29,7 +29,8 @@ const Card = styled.div`
 	position: relative;
 	left: 50%;
 	top: 50%;
-	width: 340px;
+	max-width: 320px;
+	width: 65%;
 	transform: translate(-50%, -50%);
 	border-radius: 5px;
 	opacity: 1;
@@ -54,7 +55,7 @@ const Title = styled.div`
 `
 
 const Proposal = styled.div`
-	font-size: 20px;
+	font-size: 16px;
 	text-align: left;
 `
 
@@ -78,9 +79,17 @@ const Buttons = styled.div`
 `
 
 const SpinnerWrapper = styled.div`
-	height: 48px;
+	height: 64px;
 	padding-top: 24px;
 	padding-bottom: 14px;
+	
+	@media (max-width: 540px) {
+    height: 96px;	
+	}
+	
+	@media (max-width: 320px) {
+    height: 120px;	
+	}
 `
 
 const TextualBody = styled.div`
@@ -197,7 +206,9 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
       <>
         {<SpinnerWrapper>
           {loading ? <CircularProgress style={{ color: primaryColor }}/> :
-            <span>Cast your vote using the options below.</span>}
+            <span>
+              Cast your vote using the options below. Keep in mind, all votes are final and &nbsp;
+              <strong>cannot</strong> be undone.</span>}
         </SpinnerWrapper>}
         <Buttons>
           <Button color={'#09b53d'} onClick={() => castVote(true)}>

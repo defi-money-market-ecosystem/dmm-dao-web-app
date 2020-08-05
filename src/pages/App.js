@@ -46,8 +46,8 @@ const BodyWrapper = styled.div`
   flex: 1 1 0%;
   overflow-y: scroll;
   overflow-x: hidden;
-  padding-bottom: 40px;
-  padding-top: 70px; 
+  padding-bottom: 0;
+  padding-top: 72px; 
 `
 
 const Body = styled.div`
@@ -58,9 +58,7 @@ const Body = styled.div`
   flex-direction: column;
   align-items: center;
 
-  @media (max-width: 1000px) {
-    margin-top: 16px;
-  }
+  margin-top: 16px;
 `
 
 class App extends React.Component {

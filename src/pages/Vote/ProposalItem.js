@@ -58,6 +58,10 @@ const Status = styled.div`
       border: 2px solid #327ccb;
       color: #327ccb;
   `}
+  
+  @media (max-width: 400px) {
+    margin-bottom: 8px;
+  }
 `
 
 const VoteButton = styled.div`
