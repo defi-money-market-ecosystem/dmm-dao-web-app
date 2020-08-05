@@ -333,7 +333,7 @@ export default function ProposalDetailsPage() {
   const [showCast, changeShowCast] = useState(false)
   const [castHash, setCastHash] = useState('')
 
-  const [topVotersAmount, setTopVotersAmount] = useState(3)
+  const [topVotersAmount] = useState(5)
 
   const handleClick = (e) => {
     if (e) {
@@ -451,7 +451,7 @@ export default function ProposalDetailsPage() {
         }
       </div>
       <Body>
-        {voteDetails.map(({ title, votesBN, topVoters, color }, index) => {
+        {voteDetails.map(({ title, votesBN, topVoters, color }) => {
           const _0 = ethers.BigNumber.from('0')
           const sumVotes = voteDetails
             .map(vote => vote.votesBN)
@@ -462,12 +462,7 @@ export default function ProposalDetailsPage() {
           const percentageBN = (!!votesBN && votesBN.gt(_0)) ? votesBN.mul(_100).div(sumVotes).toString() : _0.toString()
           const percentage = parseInt(fromWei(percentageBN)).toString(10)
 
-          const filteredTopVoters = topVoters
-            .filter(voter => {
-              return !!voter.proposalVoteInfo?.votesCastedBN &&
-                voter.proposalVoteInfo?.votesCastedBN.gt(ethers.BigNumber.from('0'))
-            })
-
+          const filteredTopVoters = topVoters.length > topVotersAmount ? topVoters.splice(topVotersAmount, topVoters.length - topVotersAmount) : topVoters;
 
           return (
             <Card width={50} key={`vote-details-${color}`}>
@@ -479,27 +474,27 @@ export default function ProposalDetailsPage() {
               </Title>
               <Addresses>
                 <AddressTitle>
-                  {addressTitle(filteredTopVoters.length)}
+                  {addressTitle(topVoters.length)}
                   <VotesTitle>Votes</VotesTitle>
                 </AddressTitle>
                 {filteredTopVoters.length === 0 ? (
                   <NoVoters>No votes {title.toLowerCase()} the proposal have been cast</NoVoters>) : (<span/>)}
-                {filteredTopVoters
-                  .map((topVoter) => {
-                    return (
-                      <Address active key={`voter-${topVoter.walletAddress}`}>
-                        {shorten(topVoter.walletAddress)}
-                        <Votes>
-                          {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2)}
-                        </Votes>
-                      </Address>
-                    )
-                  })}
+                {filteredTopVoters.map((topVoter) => {
+                  return (
+                    <Address active key={`voter-${topVoter.walletAddress}`}>
+                      {shorten(topVoter.walletAddress)}
+                      <Votes>
+                        {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2)}
+                      </Votes>
+                    </Address>
+                  )
+                })}
               </Addresses>
-              {topVoters.length > topVotersAmount ? (
-                <View onClick={() => showMoreTopVoters(topVoters)}>
-                  {'View More'}
-                </View>
+              {filteredTopVoters.length > topVotersAmount ? (
+                // <View onClick={() => showMoreTopVoters(topVoters)}>
+                //   {'View More'}
+                // </View>
+                <span/>
               ) : (<span/>)}
             </Card>
           )
