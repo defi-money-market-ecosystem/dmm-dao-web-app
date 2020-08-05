@@ -78,6 +78,10 @@ const SpinnerWrapper = styled.div`
 	@media (max-width: 540px) {
     height: 96px;	
 	}
+	
+	@media (max-width: 320px) {
+    height: 120px;	
+	}
 `
 
 const TextualBody = styled.div`
