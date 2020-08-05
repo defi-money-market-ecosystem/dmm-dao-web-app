@@ -333,7 +333,7 @@ export default function Vote() {
   const [sticky, changeVisibility] = useState(false)
   let history = useHistory()
 
-  const proposalsPerPage = window.innerWidth > 900 ? (window.innerHeight - 350) / 130 : Math.max(0, (window.innerHeight - 620)) / 130 || 1
+  const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
   // const proposalsPerPage = window.innerWidth > 900 ? (window.innerHeight - 350) / 130 : (window.innerHeight - 620) / 130 || 1
 
   const mp = page * proposalsPerPage - proposalsPerPage
