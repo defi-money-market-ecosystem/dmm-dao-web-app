@@ -462,32 +462,39 @@ export default function ProposalDetailsPage() {
           const percentageBN = (!!votesBN && votesBN.gt(_0)) ? votesBN.mul(_100).div(sumVotes).toString() : _0.toString()
           const percentage = parseInt(fromWei(percentageBN)).toString(10)
 
+          const filteredTopVoters = topVoters
+            .filter(voter => {
+              return !!voter.proposalVoteInfo?.votesCastedBN &&
+                voter.proposalVoteInfo?.votesCastedBN.gt(ethers.BigNumber.from('0'))
+            })
+
+
           return (
             <Card width={50} key={`vote-details-${color}`}>
               <Title>
                 {title}:&nbsp;&nbsp;&nbsp;{amountFormatter(votesBN, 18, 2)}
                 <Bar>
-                  <Color color={color}
-                         percentage={!!votesBN ? percentage : '50'}/>
+                  <Color color={color} percentage={!!votesBN ? percentage : '50'}/>
                 </Bar>
               </Title>
               <Addresses>
                 <AddressTitle>
-                  {addressTitle(topVoters.length)}
+                  {addressTitle(filteredTopVoters.length)}
                   <VotesTitle>Votes</VotesTitle>
                 </AddressTitle>
-                {topVoters.length === 0 ? (
+                {filteredTopVoters.length === 0 ? (
                   <NoVoters>No votes {title.toLowerCase()} the proposal have been cast</NoVoters>) : (<span/>)}
-                {topVoters.map((topVoter) => {
-                  return (
-                    <Address active key={`voter-${topVoter.walletAddress}`}>
-                      {shorten(topVoter.walletAddress)}
-                      <Votes>
-                        {amountFormatter(topVoter.voteInfo?.votesCastedBN)}
-                      </Votes>
-                    </Address>
-                  )
-                })}
+                {filteredTopVoters
+                  .map((topVoter) => {
+                    return (
+                      <Address active key={`voter-${topVoter.walletAddress}`}>
+                        {shorten(topVoter.walletAddress)}
+                        <Votes>
+                          {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2)}
+                        </Votes>
+                      </Address>
+                    )
+                  })}
               </Addresses>
               {topVoters.length > topVotersAmount ? (
                 <View onClick={() => showMoreTopVoters(topVoters)}>
