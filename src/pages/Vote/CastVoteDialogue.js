@@ -30,7 +30,7 @@ const Card = styled.div`
 	left: 50%;
 	top: 50%;
 	max-width: 320px;
-	width: 65%;
+	width: 350px;
 	transform: translate(-50%, -50%);
 	border-radius: 5px;
 	opacity: 1;
