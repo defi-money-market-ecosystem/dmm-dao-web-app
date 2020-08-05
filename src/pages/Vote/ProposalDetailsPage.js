@@ -462,7 +462,7 @@ export default function ProposalDetailsPage() {
           const percentageBN = (!!votesBN && votesBN.gt(_0)) ? votesBN.mul(_100).div(sumVotes).toString() : _0.toString()
           const percentage = parseInt(fromWei(percentageBN)).toString(10)
 
-          const filteredTopVoters = topVoters.length > topVotersAmount ? topVoters.splice(topVotersAmount, topVoters.length - topVotersAmount) : topVoters;
+          const filteredTopVoters = topVoters.filter((value, index) => index < topVotersAmount)
 
           return (
             <Card width={50} key={`vote-details-${color}`}>
@@ -474,7 +474,7 @@ export default function ProposalDetailsPage() {
               </Title>
               <Addresses>
                 <AddressTitle>
-                  {addressTitle(topVoters.length)}
+                  {addressTitle(filteredTopVoters.length)}
                   <VotesTitle>Votes</VotesTitle>
                 </AddressTitle>
                 {filteredTopVoters.length === 0 ? (
