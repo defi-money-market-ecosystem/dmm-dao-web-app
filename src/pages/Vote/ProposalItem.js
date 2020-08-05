@@ -69,7 +69,6 @@ const VoteButton = styled.div`
   display: inline-block;
   font-size: 15px;
   font-weight: 600;
-  color: #b7c3cc;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
 
@@ -77,16 +76,16 @@ const VoteButton = styled.div`
     margin-top: 12px;
   }
 
-  ${({ cast }) => cast && `
-    color: black;
-    cursor: pointer;
+  color: black;
+  cursor: pointer;
     
-    :hover {
-      opacity: 0.7;
-    }
-  `}
+  :hover {
+    opacity: 0.7;
+  }
+  
   ${({ disabled }) => disabled && `
-    cursor: none;
+    cursor: not-allowed;
+    color: #b7c3cc;
   `}
 `
 
@@ -105,8 +104,6 @@ const link = {
 export default function ProposalItem(props) {
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
-
-  console.log('proposal ', proposal)
 
   let initialVoteStatus
   if (!props.walletAddress) {

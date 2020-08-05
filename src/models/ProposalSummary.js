@@ -20,7 +20,7 @@ export class ProposalSummary {
     return status.substring(0, 1) + status.substring(1).toLowerCase()
   }
 
-  constructor({ proposal_id, title, description, start_block, end_block, start_timestamp, end_timestamp, proposal_status }) {
+  constructor({ proposal_id, title, description, start_block, end_block, start_timestamp, end_timestamp, proposal_status, last_updated_timestamp }) {
     this.proposalId = proposal_id
     this.title = title
     this.description = description
@@ -29,6 +29,7 @@ export class ProposalSummary {
     this.startTimestamp = !!start_timestamp ? moment(start_timestamp) : null
     this.endTimestamp = !!end_timestamp ? moment(end_timestamp) : null
     this.proposalStatus = proposal_status
+    this.lastUpdatedTimestamp = !!last_updated_timestamp ? moment(last_updated_timestamp) : null
     this.account = null
   }
 
@@ -44,21 +45,55 @@ export class ProposalSummary {
   mostRecentDateText() {
     const momentFormatterDate = 'l'
     const momentFormatterTime = 'LT'
-    if (!!this.endTimestamp) {
-      if (moment(this.endTimestamp).isSame(moment(), 'day')) {
-        return `Voting ended at ${moment(this.endTimestamp).format(momentFormatterTime)}`
+    if (this.proposalStatus === ProposalSummary.statuses.CANCELLED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal was cancelled at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
       } else {
-        return `Voting ended on ${moment(this.endTimestamp).format(momentFormatterDate)}`
+        return `Proposal was cancelled on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
       }
-    } else if (!!this.startTimestamp) {
-      if (moment(this.startTimestamp).isSame(moment(), 'day')) {
-        return `Voting started at
-         ${moment(this.startTimestamp).format(momentFormatterTime)}`
+    } else if (this.proposalStatus === ProposalSummary.statuses.QUEUED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal has been queued for execution since ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
       } else {
-        return `Voting started on ${moment(this.startTimestamp).format(momentFormatterDate)}`
+        return `Proposal has been queued for execution since ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
       }
-    } else {
-      return ''
+    } else if (this.proposalStatus === ProposalSummary.statuses.EXECUTED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal was executed at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Proposal was executed on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+    } else if (this.proposalStatus === ProposalSummary.statuses.EXPIRED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal expired at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Proposal expired on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+    } else if (this.proposalStatus === ProposalSummary.statuses.PENDING) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal is awaiting the vote to start since ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Proposal is awaiting the vote to start since ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+    } else if (this.proposalStatus === ProposalSummary.statuses.SUCCEEDED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal was passed at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Proposal was passed on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+    } else if (this.proposalStatus === ProposalSummary.statuses.DEFEATED) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Proposal was defeated at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Proposal was defeated on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+    } else if (this.proposalStatus === ProposalSummary.statuses.ACTIVE) {
+      if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
+        return `Voting started at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+      } else {
+        return `Voting started on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+      }
+
     }
   }
 
