@@ -16,6 +16,10 @@ const FooterElement = styled.div`
   min-width: 0;
   display: flex;
   align-items: center;
+  
+  @media (max-width: 800px) {
+    margin: 0.8rem;
+  }
 `
 
 const Title = styled.div`

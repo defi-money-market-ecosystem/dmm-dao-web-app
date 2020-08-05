@@ -20,7 +20,8 @@ const AppWrapper = styled.div`
   display: flex;
   flex-flow: column;
   align-items: flex-start;
-  height: 100vh;
+  max-height: 100vh;
+  height: 100%;
   background: linear-gradient(360deg, #327ccb, #4f94de 5%, #8bbbef 15%, #bdddff 25%, #deeeff 40%);
 `
 
@@ -33,6 +34,11 @@ const FooterWrapper = styled.div`
   width: 100%;
   min-height: 30px;
   align-self: flex-end;
+  
+  @media (max-width: 800px) {
+    height: 50px;
+    overflow: hidden;
+  }
 `
 
 const BodyWrapper = styled.div`
@@ -44,7 +50,7 @@ const BodyWrapper = styled.div`
   -webkit-box-align: center;
   z-index: 1;
   flex: 1 1 0%;
-  overflow-y: scroll;
+  overflow-y: visible;
   overflow-x: hidden;
   padding-bottom: 0;
   padding-top: 72px; 
