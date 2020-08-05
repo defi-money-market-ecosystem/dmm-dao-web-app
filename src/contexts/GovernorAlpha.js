@@ -1,0 +1,13 @@
+export const GOVERNOR_ALPHA_ADDRESS = "0x67Cb2868Ebf965b66d3dC81D0aDd6fd849BCF6D5"
+export const TIMELOCK_ADDRESS = "0x67Cb2868Ebf965b66d3dC81D0aDd6fd849BCF6D5"
+
+export const GOVERNORS_CONTEXT = {
+  1: {
+    [GOVERNOR_ALPHA_ADDRESS]: {
+
+    },
+    [TIMELOCK_ADDRESS]: {
+
+    },
+  },
+}

@@ -4,12 +4,15 @@ import { BrowserRouter, Redirect, Route, Switch } from 'react-router-dom'
 
 import Web3ReactManager from '../components/Web3ReactManager'
 import Header from '../components/Header'
-import SaleInfo from './SaleInfo/SaleInfo'
 import Footer from '../components/Footer'
-import Login from './Login/Login'
 
 import NavigationTabs from '../components/NavigationTabs'
 import { getAllQueryParams } from '../utils'
+
+import Send from './Send'
+import Vote from './Vote'
+import ProposalDetailsPage from './Vote/ProposalDetailsPage'
+import { isAddress } from '../utils/index'
 
 const Swap = lazy(() => import('./Swap'))
 
@@ -38,27 +41,29 @@ const BodyWrapper = styled.div`
   width: 100%;
   justify-content: flex-start;
   align-items: center;
-  flex: 1;
-  overflow: auto;
-  padding:bottom: 40px;
+  -webkit-box-align: center;
+  z-index: 1;
+  flex: 1 1 0%;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  padding-bottom: 40px;
+  padding-top: 70px; 
 `
 
 const Body = styled.div`
-  max-width: 35rem;
+  max-width: 540px;
   width: 90%;
-  margin-top: 150px;
-  /* margin: 0 1.25rem 1.25rem 1.25rem; */
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  @media (max-width: 1000px) {
+    margin-top: 16px;
+  }
 `
 
 class App extends React.Component {
-  constructor(props) {
-    super(props)
-
-    this.state = {
-      isLoggedIn: true,
-      displayInfoPage: false
-    }
-  }
 
   render() {
     const params = getAllQueryParams()
@@ -72,35 +77,6 @@ class App extends React.Component {
     }
     window.referrer = params.referrer
 
-    if (this.state.displayInfoPage) {
-      return (
-        <BrowserRouter>
-          <Route path={'/info'}>
-            <SaleInfo onClose={() => this.setState({ displayInfoPage: false })}/>
-          </Route>
-          <Redirect to="/info"/>
-        </BrowserRouter>
-      )
-    }
-
-    if (!this.state.isLoggedIn) {
-      return (
-        <BrowserRouter>
-          <Route path="/login">
-            <Suspense fallback={null}>
-              <Web3ReactManager>
-                <HeaderWrapper>
-                  <Header hideInfo hideBuy/>
-                </HeaderWrapper>
-                <Login onLogin={() => this.setState({ isLoggedIn: true })}/>
-              </Web3ReactManager>
-            </Suspense>
-          </Route>
-          <Redirect to="/login"/>
-        </BrowserRouter>
-      )
-    }
-
     return (
       <>
         <Suspense fallback={null}>
@@ -113,50 +89,31 @@ class App extends React.Component {
                 <Web3ReactManager>
                   <BrowserRouter>
                     <NavigationTabs/>
-                    {/* this Suspense is for route code-splitting */}
+                    { /*this Suspense is for route code-splitting*/ }
                     <Suspense fallback={null}>
                       <Switch>
                         <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
-                        {/*<Route*/}
-                        {/*  exact*/}
-                        {/*  strict*/}
-                        {/*  path="/swap/:tokenAddress?"*/}
-                        {/*  render={({ match, location }) => {*/}
-                        {/*    if (isAddress(match.params.tokenAddress)) {*/}
-                        {/*      return (*/}
-                        {/*        <Swap*/}
-                        {/*          location={location}*/}
-                        {/*          initialCurrency={isAddress(match.params.tokenAddress)}*/}
-                        {/*          params={params}*/}
-                        {/*        />*/}
-                        {/*      )*/}
-                        {/*    } else {*/}
-                        {/*      return <Redirect to={{ pathname: '/swap' }} />*/}
-                        {/*    }*/}
-                        {/*  }}*/}
-                        {/*/>*/}
-                        {/*<Route exact strict path="/send" component={() => <Send params={params} />} />*/}
-                        {/*<Route*/}
-                        {/*  exact*/}
-                        {/*  strict*/}
-                        {/*  path="/send/:tokenAddress?"*/}
-                        {/*  render={({ match }) => {*/}
-                        {/*    if (isAddress(match.params.tokenAddress)) {*/}
-                        {/*      return <Send initialCurrency={isAddress(match.params.tokenAddress)} params={params} />*/}
-                        {/*    } else {*/}
-                        {/*      return <Redirect to={{ pathname: '/send' }} />*/}
-                        {/*    }*/}
-                        {/*  }}*/}
-                        {/*/>*/}
-                        {/*<Route*/}
-                        {/*  path={[*/}
-                        {/*    '/add-liquidity',*/}
-                        {/*    '/remove-liquidity',*/}
-                        {/*    '/create-exchange',*/}
-                        {/*    '/create-exchange/:tokenAddress?'*/}
-                        {/*  ]}*/}
-                        {/*  component={() => <Pool params={params} />}*/}
-                        {/*/>*/}
+                        <Route
+                          exact
+                          strict
+                          path="/swap/:tokenAddress?"
+                          render={({ match, location }) => {
+                            if (isAddress(match.params.tokenAddress)) {
+                              return (
+                                <Swap
+                                  location={location}
+                                  initialCurrency={isAddress(match.params.tokenAddress)}
+                                  params={params}
+                                />
+                              )
+                            } else {
+                              return <Redirect to={{ pathname: '/swap' }} />
+                            }
+                          }}
+                        />
+                        <Route exact strict path="/burn" component={() => <Send params={params} />} />
+                        <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
+                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
                         <Redirect to="/swap"/>
                       </Switch>
                     </Suspense>

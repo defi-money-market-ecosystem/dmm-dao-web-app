@@ -6,6 +6,8 @@ import { useDarkModeManager } from '../contexts/LocalStorage'
 
 export * from './components'
 
+export const primaryColor = '#327ccb'
+
 const MEDIA_WIDTHS = {
   upToSmall: 600,
   upToMedium: 960,
@@ -43,6 +45,8 @@ export default function ThemeProvider({ children }) {
 const theme = darkMode => ({
   white,
   black,
+  primary: '#327ccb',
+  secondary: white,
   textColor: darkMode ? white : '#010101',
   greyText: darkMode ? white : '#6C7284',
 
