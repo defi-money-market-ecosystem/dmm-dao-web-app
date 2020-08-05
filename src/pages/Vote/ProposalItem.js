@@ -71,6 +71,7 @@ const VoteButton = styled.div`
   font-weight: 600;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
+  width: 20%;
 
   @media (max-width: 540px) {
     margin-top: 12px;
