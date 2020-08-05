@@ -27,7 +27,7 @@ const Main = styled.div`
   right: 0;
   margin-left: auto;
   margin-right: auto;
-  overflow-y: scroll;
+  overflow-y: visible;
   overflow-x: hidden;
   font-family: "Open Sans", sans-serif;
 
@@ -43,7 +43,7 @@ const Main = styled.div`
   }
 
   @media (max-width: 800px) {
-    width: 90vw;
+    width: 100vw;
   }
 `
 
@@ -101,6 +101,7 @@ const GovernanceProposals = styled.div`
 
   @media (max-width: 900px) {
     width: calc(100% - 20px);
+    margin-bottom: 100px;
   }
 `
 
