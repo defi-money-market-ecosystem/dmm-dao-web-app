@@ -18,6 +18,10 @@ const BackDrop = styled.div`
 	top: 0;
 	left: 0;
 	z-index: 110;
+	
+	@media (max-width: 700px) {
+	  background: none;
+  }
 `
 
 const Card = styled.div`
@@ -26,7 +30,7 @@ const Card = styled.div`
 	left: 50%;
 	top: 50%;
 	max-width: 320px;
-	width: 65%;
+	width: 350px;
 	transform: translate(-50%, -50%);
 	border-radius: 5px;
 	opacity: 1;
@@ -36,6 +40,10 @@ const Card = styled.div`
 	font-weight: 600;
 	color: black;
 	max-width: calc(80vw - 30px);
+	
+	@media (max-width: 700px) {
+	  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+	}
 `
 
 const Title = styled.div`
