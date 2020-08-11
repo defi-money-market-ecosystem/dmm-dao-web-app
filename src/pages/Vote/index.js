@@ -400,7 +400,7 @@ export default function Vote() {
   useEffect(() => {
     const subscriptionId = setTimeout(() => {
       setIsActivating(isPendingDelegateTransaction)
-    }, 10000)
+    }, 1000)
 
     return () => clearInterval(subscriptionId)
   }, [isPendingDelegateTransaction])
