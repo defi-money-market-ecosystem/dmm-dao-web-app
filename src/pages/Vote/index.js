@@ -320,9 +320,13 @@ async function getProposals(walletAddress) {
 
 async function getAccountInfo(walletAddress) {
   const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
-    .then(response => response.json())
-    .then(response => !!response.data ? new AccountDetails(response.data) : null)
+  if (walletAddress) {
+    return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+      .then(response => response.json())
+      .then(response => !!response.data ? new AccountDetails(response.data) : null)
+  } else {
+    return Promise.resolve(null)
+  }
 }
 
 export default function Vote() {
@@ -375,10 +379,8 @@ export default function Vote() {
       })
     }
 
-    perform()
-    const subscriptionId = setInterval(() => {
-      perform()
-    }, 5000)
+    perform() // Do the first action
+    const subscriptionId = setInterval(() => perform(), 5000)
 
     return () => clearInterval(subscriptionId)
   }, [walletAddress])
@@ -441,10 +443,12 @@ export default function Vote() {
     }
     return (
       index === 0 ? (
-          isActivating ? (<div style={{ float: 'right', bottom: '15px', position: 'relative' }}>
+          isActivating ?
+            (<div style={{ float: 'right', bottom: '15px', position: 'relative' }}>
               <CircularProgress style={{ color: primaryColor }}/>
-            </div>) :
-            (<ActivateWallet hidden={isDelegating || voteCountBN.gt(new BN('0'))}
+            </div>)
+            :
+            (<ActivateWallet hidden={!walletAddress || isDelegating || voteCountBN.gt(new BN('0'))}
                              onClick={() => activateWallet(web3, walletAddress)}>
               Activate Wallet
             </ActivateWallet>)
