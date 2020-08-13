@@ -231,12 +231,13 @@ const Check = styled.div`
 	color: #FFFFFF;
 	font-weight: 700;
 	font-size: 18px;
-	padding: 2px 1px 3px 4px;
 	display: inline-block;
 	vertical-align: middle;
+	padding: 2px 4px 2px 4px;
 
 	${({ active }) => active && `
     background-color: #4487CE;
+    padding: 2px 1px 3px 4px;
   `}
 `
 
