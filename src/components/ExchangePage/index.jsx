@@ -9,7 +9,7 @@ import * as foo from './styles.css'
 
 import Web3 from 'web3'
 
-import { useInterval, useTokenContract, useWeb3React } from '../../hooks'
+import { useInterval, useTokenContract, useWeb3React, useDmmTokenContract } from '../../hooks'
 import { brokenTokens } from '../../constants'
 import {
   amountFormatter,
@@ -205,7 +205,8 @@ function calculateSlippageBounds(value, token = false, tokenAllowedSlippage, all
 
 function getInitialSwapState(state) {
   return {
-    independentValue: state.exactFieldURL && state.exactAmountURL ? state.exactAmountURL : '', // this is a user input
+    independentValue: state.exactFieldURL && state.exactAmount
+     ? state.exactAmountURL : '', // this is a user input
     dependentValue: '', // this is a calculated number
     independentField: state.exactFieldURL === 'output' ? OUTPUT : INPUT,
     inputCurrency: state.inputCurrencyURL ? state.inputCurrencyURL : state.outputCurrencyURL === 'ETH' ? '' : 'ETH',
@@ -304,9 +305,17 @@ function getExchangeRate(inputValue, inputDecimals, outputValue, outputDecimals,
   }
 }
 
-export default function ExchangePage({ initialCurrency, sending = false, params }) {
+function getEarnRates(inputValue, inputDecimals, outputValue, outputDecimals, invert = false) {
+  try {
+    
+  } catch {
+  }
+}
+
+export default function ExchangePage({ initialCurrency, sending = false, earning = false, params }) {
   const { t } = useTranslation()
   const { library, account, chainId, error } = useWeb3React()
+  // console.log(initialCurrency)
 
   const urlAddedTokens = {}
   if (params.inputCurrency) {
@@ -627,17 +636,47 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
     return `Balance: ${value}`
   }
 
+  //find error codes
   function onSwap() {
-    onSwapAsync().catch(error => {
-      if (error?.code !== 4001 && error?.code !== -32603) {
-        // Ignore handled errors
-        console.error('Found error while attempting to swap: ', error)
-        Sentry.captureException(error)
-      }
-      if (process.env.NODE_ENV !== 'production') {
-        console.error('Found error ', error)
-      }
-    })
+    !!earning ? (
+      onSwapAsyncInternal().catch(error => {
+        if (error?.code !== 1) {
+          // Ignore handled errors
+          console.error('Found error while attempting to mint: ', error)
+        }
+        if (error?.code !== 1) {
+          // Ignore handled errors
+          console.error('Found error while attempting to redeem: ', error)
+        }
+      })
+      ):(
+      onSwapAsync().catch(error => {
+        if (error?.code !== 4001 && error?.code !== -32603) {
+          // Ignore handled errors
+          console.error('Found error while attempting to swap: ', error)
+          Sentry.captureException(error)
+        }
+        if (process.env.NODE_ENV !== 'production') {
+          console.error('Found error ', error)
+        }
+      })
+    )
+  }
+
+  const mint = true
+  const dmmContract = useDmmTokenContract(effectiveInputCurrency)
+
+  //output currency for mint, input for redeem
+  //?? - formatted or parsed
+  //?? - right address
+  async function onSwapAsyncInternal() {
+    let receiptPromise
+    if(mint){
+      receiptPromise = dmmContract.methods.mint(outputValueFormatted.toString(10)).send({from: account});;
+    } else {
+      receiptPromise = dmmContract.methods.redeem(inputValueFormatted.toString(10)).send({from: account});
+    }
+    return receiptPromise
   }
 
   async function onSwapAsync() {
@@ -940,7 +979,11 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
       }
     } else if (customSlippageError === 'warning') {
       return t('swapAnyway')
-    } else {
+    } else if (!!earning && mint) {
+      return t('mint')
+    } else if (!!earning && !mint) {
+      return t('redeem')
+    }else {
       return t('swap')
     }
   }
@@ -1022,6 +1065,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         errorMessage={inputError ? inputError : independentField === INPUT ? independentError : ''}
         tokenAddress={effectiveInputCurrency}
         market={market}
+        earning={earning}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -1062,6 +1106,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         disableWrap
         tokenAddress={outputCurrency}
         market={market}
+        earning={earning}        
       />
       {sending ? (
         <>

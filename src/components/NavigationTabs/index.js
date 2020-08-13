@@ -27,7 +27,7 @@ const tabOrder = [
   },
   {
     path: '/earn',
-    textKey: 'Earn',
+    textKey: 'earn',
     regex: /\/earn/
   },
   {
@@ -37,7 +37,7 @@ const tabOrder = [
   },
   {
     path: '/vote',
-    textKey: 'Vote',
+    textKey: 'vote',
     regex: /\/vote/
   },
 ]

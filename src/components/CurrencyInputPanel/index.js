@@ -290,7 +290,8 @@ export default function CurrencyInputPanel({
   urlAddedTokens,
   hideETH = false,
   market,
-  tokenAddress
+  tokenAddress,
+  earning
 }) {
   const { t } = useTranslation()
 
@@ -448,18 +449,20 @@ export default function CurrencyInputPanel({
           onTokenSelect={onCurrencySelected}
           allBalances={allBalances}
           hideETH={hideETH}
+          earning={earning}
         />
       )}
     </InputPanel>
   )
 }
 
-function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens, hideETH }) {
+function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens, hideETH, earning }) {
   const { t } = useTranslation()
 
   const [searchQuery, setSearchQuery] = useState('')
   const { exchangeAddress } = useTokenDetails(searchQuery)
 
+  // const allTokens = earning ? useEarnTokenDetails() : useAllTokenDetails()
   const allTokens = useAllTokenDetails()
   Object.keys(useAllTokenDetails()).forEach(token => {
     if (token === DMG_ADDRESS) {
@@ -468,6 +471,13 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
   })
 
   const { account } = useWeb3React()
+
+  //cannot use the hook iteratively or within another function
+  const mTokens = Object.values([earning['1']][0])
+  let balances = new Array(0)
+  balances.push(useAddressBalance(account, mTokens[0].underlyingAddress))
+  balances.push(useAddressBalance(account, mTokens[1].underlyingAddress))
+  balances.push(useAddressBalance(account, mTokens[2].underlyingAddress))
 
   // BigNumber.js instance
   const ethPrice = useETHPriceInUSD()
@@ -599,6 +609,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
     onDismiss()
   }
 
+
   function renderTokenList() {
     if (isAddress(searchQuery) && exchangeAddress === undefined) {
       return <TokenModalInfo>Searching for Exchange...</TokenModalInfo>
@@ -616,8 +627,29 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
     if (!filteredTokenList.length) {
       return <TokenModalInfo>{t('noExchange')}</TokenModalInfo>
     }
+     
+    let finalList = filteredTokenList
+    if(earning) {
+      const minted = mTokens.map((coin, i) => {
+        const k = coin.mSymbol
+        const ad = coin.underlyingAddress
+        const usdBalance = usdAmounts[k]
 
-    return filteredTokenList.map(({ address, symbol, name, balance, usdBalance }) => {
+        return (
+          {
+            address: ad,
+            symbol: coin.mSymbol,
+            name: coin.mName,
+            balance: balances[i],
+            usdBalance: usdBalance
+          }
+        )
+      })
+      finalList = [...minted, ...filteredTokenList]
+      finalList.pop()
+    }
+
+    return finalList.map(({ address, symbol, name, balance, usdBalance }) => {
       if (hideETH && address === 'ETH') {
         return null
       }

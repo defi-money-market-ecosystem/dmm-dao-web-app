@@ -1,0 +1,46 @@
+export const DAI_TOKEN_ID = 1
+export const USDC_TOKEN_ID = 2
+export const ETH_TOKEN_ID = 3
+
+export const UNDERLYING_ADDRESS = 'underlyingAddress'
+export const UNDERLYING_NAME = 'underlyingName'
+export const UNDERLYING_SYMBOL = 'underlyingSymbol'
+export const M_ADDRESS = 'mAddress'
+export const M_NAME = 'mName'
+export const M_SYMBOL = 'mSymbol'
+
+export const M_DAI_ADDRESS = process.env.REACT_APP_DAI_ADDRESS
+export const M_USDC_ADDRESS = process.env.REACT_APP_USDC_ADDRESS
+export const M_ETH_ADDRESS = process.env.REACT_APP_WETH_ADDRESS
+
+export const M_TOKENS = {
+  1: {
+    [DAI_TOKEN_ID]: {
+      [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].decimals,
+      [UNDERLYING_ADDRESS]: DAI_ADDRESS,
+      [UNDERLYING_NAME]: INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].name,
+      [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol,
+      [M_ADDRESS]: M_DAI_ADDRESS,
+      [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol}`,
+      [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol}`,
+    },
+    [USDC_TOKEN_ID]: {
+      [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].decimals,
+      [UNDERLYING_ADDRESS]: USDC_ADDRESS,
+      [UNDERLYING_NAME]: INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].name,
+      [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol,
+      [M_ADDRESS]: M_USDC_ADDRESS,
+      [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol}`,
+      [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol}`,
+    },
+    [ETH_TOKEN_ID]: {
+      [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][ETH_ADDRESS].decimals,
+      [UNDERLYING_ADDRESS]: ETH_ADDRESS,
+      [UNDERLYING_NAME]: INITIAL_TOKENS_CONTEXT['1'][ETH_ADDRESS].name,
+      [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][ETH_ADDRESS].symbol,
+      [M_ADDRESS]: M_ETH_ADDRESS,
+      [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][ETH_ADDRESS].symbol}`,
+      [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][ETH_ADDRESS].symbol}`,
+    },
+  }
+}
