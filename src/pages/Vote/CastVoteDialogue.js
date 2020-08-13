@@ -185,7 +185,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     bodyJsx = (
       <>
         <TextualBody>
-          You currently have a vote that has been casted and is waiting to be confirmed. Please wait for the
+          You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the
           confirmation to finish.
         </TextualBody>
         <CircularProgress style={{ color: primaryColor }}/>
