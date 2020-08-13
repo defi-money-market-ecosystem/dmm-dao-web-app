@@ -24,7 +24,7 @@ const Main = styled.div`
   }
 
   @media (max-width: 100000px) {
-    height: calc(100vh)
+    height: calc(100vh - 204px)
   }
   
   @media (max-width: 1000px) {
