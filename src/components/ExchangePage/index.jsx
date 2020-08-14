@@ -17,7 +17,7 @@ import {
   getProviderOrSigner,
   isAddress,
   MIN_DECIMALS,
-  MIN_DECIMALS_EXCHANGE_RATE
+  MIN_DECIMALS_EXCHANGE_RATE,
 } from '../../utils'
 import {
   DECIMALS,
@@ -663,7 +663,8 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
     )
   }
 
-  const mint = true
+  console.log(inputSymbol)
+  const mint = !!earning && inputSymbol.startsWith("s")
   const dmmContract = useDmmTokenContract(effectiveInputCurrency)
 
   //output currency for mint, input for redeem
