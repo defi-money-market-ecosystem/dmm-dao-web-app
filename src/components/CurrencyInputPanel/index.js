@@ -645,8 +645,11 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
           }
         )
       })
-      finalList = [...minted, ...filteredTokenList]
-      finalList.pop()
+
+      //filters the token list to only display that with associated 
+      const mSymbols = minted.map(({ symbol }) => symbol)
+      const filtered = filteredTokenList.filter(({ symbol }) => {return mSymbols.includes(`m${symbol}`)})
+      finalList = [...minted, ...filtered]
     }
 
     return finalList.map(({ address, symbol, name, balance, usdBalance }) => {
