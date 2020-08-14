@@ -65,29 +65,32 @@ const Status = styled.div`
 `
 
 const VoteButton = styled.div`
-  height: 100%;
+  height: 56px;
+  line-height: 56px;
   display: inline-block;
   font-size: 15px;
   font-weight: 600;
-  color: #b7c3cc;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
-  width: 20%;
+  width: 64px;
 
   @media (max-width: 540px) {
     margin-top: 12px;
   }
 
-  ${({ cast }) => cast && `
-    color: black;
-    cursor: pointer;
+  color: black;
+  cursor: pointer;
     
-    :hover {
-      opacity: 0.7;
-    }
-  `}
+  :hover {
+    opacity: 0.7;
+  }
+  
   ${({ disabled }) => disabled && `
-    cursor: none;
+    cursor: not-allowed;
+    color: #b7c3cc;
+    :hover {
+      opacity: 1.0;
+    }
   `}
 `
 
@@ -106,8 +109,6 @@ const link = {
 export default function ProposalItem(props) {
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
-
-  console.log('proposal ', proposal)
 
   let initialVoteStatus
   if (!props.walletAddress) {
@@ -144,16 +145,18 @@ export default function ProposalItem(props) {
       <VoteButton onClick={() => !isVoteButtonDisabled && setShowCastDialogue(true)} disabled={isVoteButtonDisabled}>
         {AccountProposalVoteInfo.toFormattedVoteButtonString(voteStatus)}
       </VoteButton>
-      {showCastDialogue ?
-        <CastVoteDialogue
-          proposal={proposal}
-          timestamp={proposal.mostRecentDateText()}
-          isDelegating={props.isDelegating}
-          votesBN={props.votesBN}
-          onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
-          vote={(v) => setVoteStatus(v)}/>
-        : <div/>
-      }
+      <div>
+        {showCastDialogue ?
+          <CastVoteDialogue
+            proposal={proposal}
+            timestamp={proposal.mostRecentDateText()}
+            isDelegating={props.isDelegating}
+            votesBN={props.votesBN}
+            onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
+            vote={(v) => setVoteStatus(v)}/>
+          : <div/>
+        }
+      </div>
     </Main>
   )
 }
