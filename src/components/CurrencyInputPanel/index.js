@@ -24,7 +24,10 @@ import {
   SECONDARY_DECIMALS,
   useAllTokenDetails,
   useTokenDetails,
-  WETH_ADDRESS
+  WETH_ADDRESS,
+  M_ADDRESS,
+  M_NAME,
+  M_SYMBOL
 } from '../../contexts/Tokens'
 import { useAddressBalance, useAllBalances, useETHPriceInUSD } from '../../contexts/Balances'
 import { ReactComponent as Close } from '../../assets/images/x.svg'
@@ -631,15 +634,14 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
     let finalList = filteredTokenList
     if(earning) {
       const minted = mTokens.map((coin, i) => {
-        const k = coin.mSymbol
-        const ad = coin.underlyingAddress
+        const k = coin[M_SYMBOL]
         const usdBalance = usdAmounts[k]
 
         return (
           {
-            address: ad,
-            symbol: coin.mSymbol,
-            name: coin.mName,
+            address: coin[M_ADDRESS],
+            symbol: k,
+            name: coin[M_NAME],
             balance: balances[i],
             usdBalance: usdBalance
           }
