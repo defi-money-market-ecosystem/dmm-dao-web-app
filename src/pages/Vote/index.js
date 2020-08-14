@@ -464,7 +464,7 @@ export default function Vote() {
           Votes
         </VoteTitle>
         <Amount>
-          {!!accountInfo?.voteInfo?.votesBN ? amountFormatter(accountInfo?.voteInfo?.votesBN, 18, 2) : '0.00'}
+          {!!accountInfo?.voteInfo?.votesBN ? amountFormatter(accountInfo?.voteInfo?.votesBN, 18, 2, true, true) : '0.00'}
         </Amount>
       </Votes>
       <Voting>
@@ -479,7 +479,7 @@ export default function Vote() {
                 {title}
               </DMGTitle>
               <Value active={index === 0}>
-                {!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2)}
+                {!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2, true, true)}
               </Value>
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
             </Balance>

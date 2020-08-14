@@ -10,8 +10,6 @@ import { formatFixed } from '@uniswap/sdk'
 import UncheckedJsonRpcSigner from './eth-signer'
 import { DMG_ADDRESS, ETH_ADDRESS } from '../contexts/Tokens'
 
-import { BigNumber } from 'ethers-utils'
-
 export const MIN_DECIMALS = 6
 export const MIN_DECIMALS_EXCHANGE_RATE = 8
 
@@ -326,20 +324,28 @@ export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN
       }
       // if there is a decimal portion
       else {
-        const [wholeComponent, decimalComponent] = stringAmount.split('.')
-        const roundedDecimalComponent = ethers.BigNumber
-          .from(decimalComponent.padEnd(baseDecimals, '0'))
-          .toString()
-          .padStart(baseDecimals, '0')
-          .substring(0, displayDecimals)
+        if (format) {
+          return parseFloat(stringAmount).toLocaleString('en-US', {
+            useGrouping: true,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        } else {
+          const [wholeComponent, decimalComponent] = stringAmount.split('.')
+          const roundedDecimalComponent = ethers.BigNumber
+            .from(decimalComponent.padEnd(baseDecimals, '0'))
+            .toString()
+            .padStart(baseDecimals, '0')
+            .substring(0, displayDecimals)
 
-        // decimals are too small to show
-        if (roundedDecimalComponent === '0'.repeat(displayDecimals)) {
-          return wholeComponent
-        }
-        // decimals are not too small to show
-        else {
-          return `${wholeComponent}.${roundedDecimalComponent.toString().replace(/0*$/, '')}`
+          // decimals are too small to show
+          if (roundedDecimalComponent === '0'.repeat(displayDecimals)) {
+            return wholeComponent
+          }
+          // decimals are not too small to show
+          else {
+            return `${wholeComponent}.${roundedDecimalComponent.toString().replace(/0*$/, '')}`
+          }
         }
       }
     }

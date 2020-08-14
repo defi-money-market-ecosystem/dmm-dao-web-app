@@ -409,7 +409,7 @@ export default function ProposalDetailsPage() {
     return () => clearInterval(subscriptionId)
   }, [walletAddress])
 
-  const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Addresses'}`
+  const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Top Addresses'}`
   const proposalId = useParams().proposal_id
   if (!isValidProposalId(proposalId) || proposal === 'BAD') {
     return <Redirect to={{ pathname: '/governance/proposals', state: { isBadPath: true } }}/>
@@ -486,7 +486,7 @@ export default function ProposalDetailsPage() {
                     <Address active key={`voter-${topVoter.walletAddress}`}>
                       {shorten(topVoter.walletAddress)}
                       <Votes>
-                        {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2)}
+                        {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2, true, true)}
                       </Votes>
                     </Address>
                   )

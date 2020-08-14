@@ -1,7 +1,10 @@
 import React from 'react'
 import Close from '../../assets/svg/close-black-18dp.svg'
 import styled from 'styled-components'
-import { amountFormatter, shorten } from '../../utils'
+import { amountFormatter, MIN_DECIMALS, shorten } from '../../utils'
+import { primaryColor } from '../../theme'
+
+import { ReactComponent as ExternalLink } from '../../assets/svg/ExternalLink.svg'
 
 const BackDrop = styled.div`
   width: 100vw;
@@ -47,18 +50,6 @@ const Title = styled.div`
   color: #0a2a5a;
 `
 
-const Proposal = styled.div`
-	font-size: 16px;
-	text-align: left;
-`
-
-const Time = styled.div`
-	font-size: 12px;
-	color: #4487CE;
-	text-align: left;
-	opacity: 0.6;
-`
-
 const Exit = styled.div`
 	position: absolute;
 	right: 12px;
@@ -67,14 +58,10 @@ const Exit = styled.div`
 	font-size: 20px;
 `
 
-const Buttons = styled.div`
-	margin-bottom: 10px;
-`
-
-const TextualBody = styled.div`
-	padding-top: 16px;
-	padding-bottom: 16px;
-	text-align: left;
+const VoterBackground = styled.div`
+	max-height: 500px;
+	overflow-y: scroll;
+	margin-bottom: 16px;
 `
 
 const Underline = styled.div`
@@ -89,10 +76,17 @@ const VoterRow = styled.div`
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 28px;
+  
+  ${({ active }) => active && `
+    background-color: #E8E8E8;
+  `}
 `
 
 const VoterAddress = styled.a`
-
+  color: ${primaryColor};
+  text-decoration: none;
+  text-align: left;
 `
 
 const VoteCount = styled.div`
@@ -103,7 +97,7 @@ export default function ViewMoreVotersDialogue({ proposal, voters, onClose }) {
     <BackDrop>
       <Card>
         <Title>
-          Voters
+          Top Voters
         </Title>
         <Underline/>
         {/*<Proposal>*/}
@@ -112,16 +106,21 @@ export default function ViewMoreVotersDialogue({ proposal, voters, onClose }) {
         {/*<Time>*/}
         {/*  {proposal.timestampFormatted()}*/}
         {/*</Time>*/}
-        {voters.map(voter =>
-          (<VoterRow key={`voter-${voter.walletAddress}`}>
-            <VoterAddress href={`https://etherscan.io/addresses/${voter.walletAddress}`}>
-              {shorten(voter.walletAddress)}
-            </VoterAddress>
-            <VoteCount>
-              {amountFormatter(voter.voteCountBN)}
-            </VoteCount>
-          </VoterRow>)
-        )}
+        <VoterBackground>
+          {voters.map((voter, index) =>
+            (
+              <VoterRow key={`voter-${voter.walletAddress}`} active={index % 2 === 1}>
+                <VoterAddress href={`https://etherscan.io/address/${voter.walletAddress}`} target={'_blank'}>
+                  {shorten(voter.walletAddress)}
+                  &nbsp;
+                  <ExternalLink/>
+                </VoterAddress>
+                <VoteCount>
+                  {amountFormatter(voter.proposalVoteInfo?.votesCastedBN, 18, MIN_DECIMALS, true, true)}
+                </VoteCount>
+              </VoterRow>)
+          )}
+        </VoterBackground>
         <Exit onClick={() => onClose()}>
           <img src={Close} alt={'X'}/>
         </Exit>
