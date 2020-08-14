@@ -80,8 +80,11 @@ const Buttons = styled.div`
 
 const SpinnerWrapper = styled.div`
 	height: 64px;
-	padding-top: 24px;
 	padding-bottom: 14px;
+	font-weight: 430;
+  font-size: 15px;
+  text-align: left;
+  padding-top: 10px;
 	
 	@media (max-width: 540px) {
     height: 96px;	
@@ -185,7 +188,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     bodyJsx = (
       <>
         <TextualBody>
-          You currently have a vote that has been casted and is waiting to be confirmed. Please wait for the
+          You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the
           confirmation to finish.
         </TextualBody>
         <CircularProgress style={{ color: primaryColor }}/>
@@ -207,7 +210,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
         {<SpinnerWrapper>
           {loading ? <CircularProgress style={{ color: primaryColor }}/> :
             <span>
-              Cast your vote using the options below. Keep in mind, all votes are final and &nbsp;
+              Cast your vote using the options below. Keep in mind, all votes are final and&nbsp;
               <strong>cannot</strong> be undone.</span>}
         </SpinnerWrapper>}
         <Buttons>

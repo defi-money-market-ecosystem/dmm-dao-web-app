@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ProposalItem from './ProposalItem'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 import { useHistory } from 'react-router-dom'
 import LeftArrow from '../../assets/svg/keyboard_arrow_left-black-18dp.svg'
 import RightArrow from '../../assets/svg/keyboard_arrow_right-black-18dp.svg'
@@ -119,21 +119,6 @@ const Title = styled.div`
 
 const Proposals = styled.div`
   height: calc(100% - 62px);
-`
-
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`
-
-const Loader = styled.div`
-  border: 8px solid #f3f3f3; /* Light grey */
-  border-top: 8px solid #3498db; /* Blue */
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ${spin} 2s linear infinite;
-  margin: 50px auto;
 `
 
 const Balance = styled.div`
@@ -284,18 +269,29 @@ function withdrawEarnedDmg(web3, walletAddress) {
   console.log('walletAddress ', walletAddress, web3)
 }
 
-function display(p, selected, l) {
-  if (l <= displayPages) return true //displays all pages if it is less than the diplayed amount
+function shouldDisplayPage(p, selected, l) {
+  if (l <= displayPages) {
+    // Displays all pages if it is less than the displayed amount
+    return true
+  }
 
   const half = (displayPages - 1) / 2
 
-  if (p <= displayPages && selected <= half) return true //displays displayed amount pages even if is does not have half on the left
-  if (p > l - displayPages && selected > l - half) return true //displays displayed amount pages even if is does not have half on the right
+  if (p <= displayPages && selected <= half) {
+    // Displays displayed amount pages even if is does not have half on the left
+    return true
+  }
+  if (p > l - displayPages && selected > l - half) {
+    // Displays displayed amount pages even if is does not have half on the right
+    return true
+  }
 
-  const fill = [...Array(half).keys()].map(i => i + 1) //gets a half array
-  const left = fill.map(i => selected - i) //uses the half array to find values to left of selected
-  const right = fill.map(i => selected + i) //uses the half array to find values to right of selected
-  return [...left, selected, ...right].includes(p) //combines the selected value and two arrays to check if the value falls in here
+  const fill = [...Array(half).keys()].map(i => i + 1)
+  const left = fill.map(i => selected - i) // Uses the half array to find values to left of selected
+  const right = fill.map(i => selected + i) // Uses the half array to find values to right of selected
+
+  // Combines the selected value and two arrays to check if the value falls in here
+  return [...left, selected, ...right].includes(p)
 }
 
 async function getProposals(walletAddress) {
@@ -339,11 +335,10 @@ export default function Vote() {
   let history = useHistory()
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
-  // const proposalsPerPage = window.innerWidth > 900 ? (window.innerHeight - 350) / 130 : (window.innerHeight - 620) / 130 || 1
 
   const mp = page * proposalsPerPage - proposalsPerPage
   const proposalPage = proposals.slice(mp, mp + proposalsPerPage)
-  const pages = [...Array(Math.ceil(proposals.length / proposalsPerPage)).keys()].map(i => i + 1) //creates pages off of proposals
+  const pages = [...Array(Math.ceil(proposals.length / proposalsPerPage)).keys()].map(i => i + 1) // Creates pages off of proposals
   const l = pages.length
 
   const checkChange = (i) => {
@@ -514,7 +509,7 @@ export default function Vote() {
             <Page onClick={() => checkChange(page - 1)} off={page === 1}>
               <img src={LeftArrow} alt={'Left Arrow'}/>
             </Page>
-            {pages.filter(i => display(i, page, l)).map((p, index) => (
+            {pages.filter(i => shouldDisplayPage(i, page, l)).map((p, index) => (
               <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
                 {p}
               </Page>

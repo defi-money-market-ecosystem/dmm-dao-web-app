@@ -4,7 +4,7 @@ import CastVoteDialogue from './CastVoteDialogue'
 import { Link, Redirect, useParams } from 'react-router-dom'
 import { ProposalDetails } from '../../models/ProposalDetails'
 import { useWeb3React } from '../../hooks'
-import { amountFormatter } from '../../utils'
+import { amountFormatter, shorten } from '../../utils'
 import { ReactComponent as ExternalLink } from '../../assets/svg/ExternalLink.svg'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { useAllTransactions } from '../../contexts/Transactions'
@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown'
 import { fromWei } from 'web3-utils'
 import ethers from 'ethers'
 import { AccountDetails } from '../../models/AccountDetails'
+import ViewMoreVotersDialogue from './ViewMoreVotersDialogue'
 
 const Main = styled.div`
   width: 60vw;
@@ -24,7 +25,7 @@ const Main = styled.div`
   }
 
   @media (max-width: 100000px) {
-    height: calc(100vh)
+    height: calc(100vh - 204px)
   }
   
   @media (max-width: 1000px) {
@@ -225,18 +226,22 @@ const History = styled.div`
 
 const Check = styled.div`
 	border-radius: 50%;
-	height: 20px;
-	width: 20px;
-	background-color: #b0bdc5;
+	height: 24px;
+	width: 24px;
+	line-height: 24px;
+	text-align: center;
 	color: #FFFFFF;
 	font-weight: 700;
 	font-size: 18px;
-	padding: 2px 1px 3px 4px;
 	display: inline-block;
-	vertical-align: middle;
+	background-color: #b0bdc5;
+	padding-left: 1.75px;
+	padding-right: 1.75px
 
 	${({ active }) => active && `
     background-color: #4487CE;
+    padding-left: 0;
+    padding-right: 0;
   `}
 `
 
@@ -335,6 +340,8 @@ export default function ProposalDetailsPage() {
 
   const [topVotersAmount] = useState(5)
 
+  const [viewMoreVoters, setViewMoreVoters] = useState([])
+
   const handleClick = (e) => {
     if (e) {
       setVote(e)
@@ -402,12 +409,7 @@ export default function ProposalDetailsPage() {
     return () => clearInterval(subscriptionId)
   }, [walletAddress])
 
-  const shorten = (a) => `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`
   const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Addresses'}`
-  const showMoreTopVoters = (topVoters) => {
-    console.log('showing more...')
-  }
-
   const proposalId = useParams().proposal_id
   if (!isValidProposalId(proposalId) || proposal === 'BAD') {
     return <Redirect to={{ pathname: '/governance/proposals', state: { isBadPath: true } }}/>
@@ -490,12 +492,11 @@ export default function ProposalDetailsPage() {
                   )
                 })}
               </Addresses>
-              {filteredTopVoters.length > topVotersAmount ? (
-                // <View onClick={() => showMoreTopVoters(topVoters)}>
-                //   {'View More'}
-                // </View>
-                <span/>
-              ) : (<span/>)}
+              {topVoters.length > topVotersAmount && (
+                <View onClick={() => setViewMoreVoters(topVoters)}>
+                  {'View More'}
+                </View>
+              )}
             </Card>
           )
         })}
@@ -551,7 +552,8 @@ export default function ProposalDetailsPage() {
           {vote}
         </Vote>
       }
-      {showCast ?
+      <div>
+        {showCast &&
         <CastVoteDialogue
           proposal={proposal}
           timestamp={proposal.mostRecentDateText()}
@@ -561,8 +563,17 @@ export default function ProposalDetailsPage() {
           onVoteCasted={(hash) => {
             setCastHash(hash)
           }}/>
-        : null
-      }
+        }
+      </div>
+      <div>
+        {viewMoreVoters.length !== 0 &&
+        <ViewMoreVotersDialogue
+          proposal={proposal}
+          voters={viewMoreVoters}
+          onClose={() => setViewMoreVoters([])}
+        />
+        }
+      </div>
     </Main>
   )
 }

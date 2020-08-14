@@ -65,13 +65,14 @@ const Status = styled.div`
 `
 
 const VoteButton = styled.div`
-  height: 100%;
+  height: 56px;
+  line-height: 56px;
   display: inline-block;
   font-size: 15px;
   font-weight: 600;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
-  width: 20%;
+  width: 64px;
 
   @media (max-width: 540px) {
     margin-top: 12px;
@@ -87,6 +88,9 @@ const VoteButton = styled.div`
   ${({ disabled }) => disabled && `
     cursor: not-allowed;
     color: #b7c3cc;
+    :hover {
+      opacity: 1.0;
+    }
   `}
 `
 
@@ -141,16 +145,18 @@ export default function ProposalItem(props) {
       <VoteButton onClick={() => !isVoteButtonDisabled && setShowCastDialogue(true)} disabled={isVoteButtonDisabled}>
         {AccountProposalVoteInfo.toFormattedVoteButtonString(voteStatus)}
       </VoteButton>
-      {showCastDialogue ?
-        <CastVoteDialogue
-          proposal={proposal}
-          timestamp={proposal.mostRecentDateText()}
-          isDelegating={props.isDelegating}
-          votesBN={props.votesBN}
-          onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
-          vote={(v) => setVoteStatus(v)}/>
-        : <div/>
-      }
+      <div>
+        {showCastDialogue ?
+          <CastVoteDialogue
+            proposal={proposal}
+            timestamp={proposal.mostRecentDateText()}
+            isDelegating={props.isDelegating}
+            votesBN={props.votesBN}
+            onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
+            vote={(v) => setVoteStatus(v)}/>
+          : <div/>
+        }
+      </div>
     </Main>
   )
 }

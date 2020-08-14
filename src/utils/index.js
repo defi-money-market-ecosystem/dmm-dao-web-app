@@ -290,7 +290,7 @@ export async function getTokenAllowance(address, tokenAddress, spenderAddress, l
 }
 
 // amount must be a BigNumber, {base,display}Decimals must be Numbers
-export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN_DECIMALS, useLessThan = true) {
+export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN_DECIMALS, useLessThan = true, format = false) {
   if (baseDecimals > 18 || displayDecimals > 18 || displayDecimals > baseDecimals) {
     throw Error(`Invalid combination of baseDecimals '${baseDecimals}' and displayDecimals '${displayDecimals}.`)
   }
@@ -345,3 +345,5 @@ export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN
     }
   }
 }
+
+export const shorten = (a) => `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`
