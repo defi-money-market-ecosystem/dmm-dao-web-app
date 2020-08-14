@@ -342,9 +342,9 @@ export default function ProposalDetailsPage() {
 
   const [viewMoreVoters, setViewMoreVoters] = useState([])
 
-  const handleClick = (e) => {
-    if (e) {
-      setVote(e)
+  const setShowCastDialogue = (shouldShowCastDialogue) => {
+    if (shouldShowCastDialogue) {
+      setVote(shouldShowCastDialogue)
       setCast(false)
     }
     changeShowCast(false)
@@ -557,7 +557,7 @@ export default function ProposalDetailsPage() {
         <CastVoteDialogue
           proposal={proposal}
           timestamp={proposal.mostRecentDateText()}
-          onChange={e => handleClick(e)}
+          onClose={() => setShowCastDialogue(false)}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
           votesBN={accountInfo?.voteInfo?.votesBN}
           onVoteCasted={(hash) => {

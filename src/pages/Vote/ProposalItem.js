@@ -67,12 +67,12 @@ const Status = styled.div`
 const VoteButton = styled.div`
   height: 56px;
   line-height: 56px;
+  width: 80px;
   display: inline-block;
   font-size: 15px;
   font-weight: 600;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
-  width: 64px;
 
   @media (max-width: 540px) {
     margin-top: 12px;
@@ -110,18 +110,19 @@ export default function ProposalItem(props) {
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
 
-  let initialVoteStatus
-  if (!props.walletAddress) {
-    initialVoteStatus = ''
+  let voteStatus
+  if (props.voteStatus) {
+    voteStatus = props.voteStatus
+  } else if (!props.walletAddress) {
+    voteStatus = ''
   } else if (
     proposal.proposalStatus === ProposalSummary.statuses.ACTIVE &&
     (proposalVoteInfo?.voteStatus === AccountProposalVoteInfo.statuses.NO_VOTE || !proposalVoteInfo)
   ) {
-    initialVoteStatus = AccountProposalVoteInfo.statuses.VOTE
+    voteStatus = AccountProposalVoteInfo.statuses.VOTE
   } else {
-    initialVoteStatus = proposalVoteInfo?.voteStatus || AccountProposalVoteInfo.statuses.NO_VOTE
+    voteStatus = proposalVoteInfo?.voteStatus || AccountProposalVoteInfo.statuses.NO_VOTE
   }
-  const [voteStatus, setVoteStatus] = useState(initialVoteStatus)
 
   const [showCastDialogue, setShowCastDialogue] = useState(false)
 
@@ -152,8 +153,8 @@ export default function ProposalItem(props) {
             timestamp={proposal.mostRecentDateText()}
             isDelegating={props.isDelegating}
             votesBN={props.votesBN}
-            onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
-            vote={(v) => setVoteStatus(v)}/>
+            onClose={() => setShowCastDialogue(false)}
+            vote={(v) => props.setVoteStatus(v)}/>
           : <div/>
         }
       </div>

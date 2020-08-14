@@ -11,7 +11,7 @@ export class AccountProposalVoteInfo {
 
   static toFormattedVoteString(voteStatus) {
     const split = voteStatus.split('_')
-    const value = split[0].substring(0, 1) + split[0].substring(1).toLowerCase();
+    const value = split[0].substring(0, 1) + split[0].substring(1).toLowerCase()
     if (split.length >= 2) {
       return value + ' ' + split[1].substring(0, 1) + split[1].substring(1).toLowerCase()
     } else {
@@ -21,6 +21,10 @@ export class AccountProposalVoteInfo {
 
   static toFormattedVoteButtonString(voteStatus) {
     return AccountProposalVoteInfo.toFormattedVoteString(voteStatus).toUpperCase()
+  }
+
+  static isVoteCasted(voteStatus) {
+    return voteStatus === AccountProposalVoteInfo.statuses.FOR || voteStatus === AccountProposalVoteInfo.statuses.AGAINST
   }
 
   constructor({ vote_status, votes_casted_padded }) {

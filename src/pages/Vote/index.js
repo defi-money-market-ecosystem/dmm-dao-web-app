@@ -360,6 +360,7 @@ export default function Vote() {
 
   // When component mounts - data retrieval and path check
   useEffect(() => {
+    console.log('running effect for walletAddress', walletAddress)
     const perform = () => {
       const proposalPromise = getProposals(walletAddress).then(data => {
         setProposals(data)
@@ -497,10 +498,14 @@ export default function Vote() {
             :
             (<Proposals>
               {proposalPage.map((proposal) => (
-                <ProposalItem key={`proposal-${proposal.proposalId}`}
+                <ProposalItem key={`proposal-${proposal.proposalId}-${walletAddress}`}
                               proposal={proposal}
                               isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
                               votesBN={accountInfo?.voteInfo?.votesBN}
+                              voteStatus={proposal.voteStatus}
+                              setVoteStatus={(voteStatus) => {
+                                proposal.voteStatus = voteStatus
+                              }}
                               walletAddress={walletAddress}/>
               ))}
             </Proposals>)
