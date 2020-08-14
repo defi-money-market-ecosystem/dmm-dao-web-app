@@ -469,7 +469,7 @@ export default function ProposalDetailsPage() {
           return (
             <Card width={50} key={`vote-details-${color}`}>
               <Title>
-                {title}:&nbsp;&nbsp;&nbsp;{amountFormatter(votesBN, 18, 2)}
+                {title}:&nbsp;&nbsp;&nbsp;{amountFormatter(votesBN, 18, 2, true, true)}
                 <Bar>
                   <Color color={color} percentage={!!votesBN ? percentage : '50'}/>
                 </Bar>
