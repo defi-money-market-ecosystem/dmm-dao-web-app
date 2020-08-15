@@ -42,7 +42,7 @@ export class ProposalSummary {
     return this
   }
 
-  mostRecentDateText() {
+  mostRecentDateText(currentBlock) {
     const momentFormatterDate = 'l'
     const momentFormatterTime = 'LT'
     if (this.proposalStatus === ProposalSummary.statuses.CANCELLED) {
@@ -88,10 +88,21 @@ export class ProposalSummary {
         return `Proposal was defeated on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.ACTIVE) {
+      const durationSeconds = (this.endBlock - (currentBlock || this.startBlock)) * 15
+      const endTimestamp = moment().add(durationSeconds, 'seconds')
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Voting started at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterTime)
+        const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
+        return `Voting started at ${startTimestampFormatted} and ends on roughly ${endTimestampFormatted}`
       } else {
-        return `Voting started on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterDate)
+        if (endTimestamp.isSame(moment(), 'day')) {
+          const endTimestampFormatted = endTimestamp.format(momentFormatterTime)
+          return `Voting started on ${startTimestampFormatted} and ends at roughly ${endTimestampFormatted}`
+        } else {
+          const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
+          return `Voting started on ${startTimestampFormatted} and ends on roughly ${endTimestampFormatted}`
+        }
       }
 
     }

@@ -53,9 +53,9 @@ const Title = styled.div`
 const Exit = styled.div`
 	position: absolute;
 	right: 12px;
-	top: 11px;
+	top: 12px;
 	cursor: pointer;
-	font-size: 20px;
+	font-size: 24px;
 `
 
 const VoterBackground = styled.div`
@@ -100,12 +100,6 @@ export default function ViewMoreVotersDialogue({ proposal, voters, onClose }) {
           Top Voters
         </Title>
         <Underline/>
-        {/*<Proposal>*/}
-        {/*  {proposal.timestampFormatted()}*/}
-        {/*</Proposal>*/}
-        {/*<Time>*/}
-        {/*  {proposal.timestampFormatted()}*/}
-        {/*</Time>*/}
         <VoterBackground>
           {voters.map((voter, index) =>
             (

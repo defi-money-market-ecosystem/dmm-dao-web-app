@@ -4,6 +4,7 @@ import CastVoteDialogue from './CastVoteDialogue'
 import { Link } from 'react-router-dom'
 import { AccountProposalVoteInfo } from '../../models/AccountProposalVoteInfo'
 import { ProposalSummary } from '../../models/ProposalSummary'
+import { useBlockNumber } from '../../contexts/Application'
 
 const Main = styled.div`
   font-size: 18px;
@@ -128,6 +129,8 @@ export default function ProposalItem(props) {
 
   const isVoteButtonDisabled = voteStatus !== AccountProposalVoteInfo.statuses.VOTE
 
+  const currentBlock = useBlockNumber();
+
   return (
     <Main>
       <Wrapper>
@@ -139,7 +142,7 @@ export default function ProposalItem(props) {
             {proposal.proposalStatusFormatted()}
           </Status>
           <Extra>
-            {proposal.proposalId} &#8226; {proposal.mostRecentDateText()}
+            {proposal.proposalId} &#8226; {proposal.mostRecentDateText(currentBlock)}
           </Extra>
         </Info>
       </Wrapper>
@@ -150,7 +153,7 @@ export default function ProposalItem(props) {
         {showCastDialogue ?
           <CastVoteDialogue
             proposal={proposal}
-            timestamp={proposal.mostRecentDateText()}
+            timestamp={proposal.mostRecentDateText(currentBlock)}
             isDelegating={props.isDelegating}
             votesBN={props.votesBN}
             onClose={() => setShowCastDialogue(false)}

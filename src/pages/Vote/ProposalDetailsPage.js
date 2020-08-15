@@ -14,6 +14,7 @@ import { fromWei } from 'web3-utils'
 import ethers from 'ethers'
 import { AccountDetails } from '../../models/AccountDetails'
 import ViewMoreVotersDialogue from './ViewMoreVotersDialogue'
+import { useBlockNumber } from '../../contexts/Application'
 
 const Main = styled.div`
   width: 60vw;
@@ -368,6 +369,8 @@ export default function ProposalDetailsPage() {
   const allTransactions = useAllTransactions()
   const pending = Object.keys(allTransactions).filter(hash => !allTransactions[hash].receipt)
 
+  const currentBlock = useBlockNumber()
+
   useEffect(() => {
     let subscriptionId
     if (Object.keys(pending).filter(hash => hash === castHash).length === 0) {
@@ -438,7 +441,7 @@ export default function ProposalDetailsPage() {
               {proposal?.proposalStatus}
             </Status>
             <Extra>
-              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText() : undefined}
+              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText(currentBlock) : undefined}
             </Extra>
           </Info>
         </Wrapper>
@@ -556,7 +559,7 @@ export default function ProposalDetailsPage() {
         {showCast &&
         <CastVoteDialogue
           proposal={proposal}
-          timestamp={proposal.mostRecentDateText()}
+          timestamp={proposal.mostRecentDateText(currentBlock)}
           onClose={() => setShowCastDialogue(false)}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
           votesBN={accountInfo?.voteInfo?.votesBN}

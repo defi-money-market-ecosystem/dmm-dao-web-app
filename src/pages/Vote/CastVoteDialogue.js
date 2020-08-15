@@ -272,7 +272,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
           {timestamp}
         </Time>
         {bodyJsx}
-        <Exit onClick={() => onClose(false)}>
+        <Exit onClick={() => onClose()}>
           <img src={Close} alt={'X'}/>
         </Exit>
       </Card>
