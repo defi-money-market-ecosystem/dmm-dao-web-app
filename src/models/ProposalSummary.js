@@ -101,7 +101,7 @@ export class ProposalSummary {
           return `Voting started on ${startTimestampFormatted} and ends at roughly ${endTimestampFormatted}`
         } else {
           const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
-          return `Voting started on ${startTimestampFormatted} and ends on roughly ${endTimestampFormatted}`
+          return `Voting started on ${startTimestampFormatted} and ends roughly ${endTimestampFormatted}`
         }
       }
 
