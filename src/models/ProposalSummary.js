@@ -93,7 +93,7 @@ export class ProposalSummary {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
         const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterTime)
         const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
-        return `Voting started at ${startTimestampFormatted} and ends on roughly ${endTimestampFormatted}`
+        return `Voting started at ${startTimestampFormatted} and ends roughly ${endTimestampFormatted}`
       } else {
         const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterDate)
         if (endTimestamp.isSame(moment(), 'day')) {
