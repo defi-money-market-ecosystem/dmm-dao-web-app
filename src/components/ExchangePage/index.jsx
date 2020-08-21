@@ -31,7 +31,11 @@ import {
   SECONDARY_DECIMALS,
   SYMBOL,
   useTokenDetails,
-  WETH_ADDRESS
+  WETH_ADDRESS,
+  M_SYMBOL,
+  UNDERLYING_ADDRESS,
+  USDC_ADDRESS,
+  M_ETH_ADDRESS,
 } from '../../contexts/Tokens'
 import { usePendingWrapping, useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressBalance } from '../../contexts/Balances'
@@ -315,7 +319,6 @@ function getEarnRates(inputValue, inputDecimals, outputValue, outputDecimals, in
 export default function ExchangePage({ initialCurrency, sending = false, earning = false, params }) {
   const { t } = useTranslation()
   const { library, account, chainId, error } = useWeb3React()
-  // console.log(initialCurrency)
 
   const urlAddedTokens = {}
   if (params.inputCurrency) {
@@ -424,17 +427,45 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
   const market = !!MARKETS['1'][`${inputCurrency}-${outputCurrency}`]
     ? MARKETS['1'][`${effectiveInputCurrency}-${outputCurrency}`]
     : MARKETS['1'][`${outputCurrency}-${effectiveInputCurrency}`]
-  const inputFormatDecimals =
-    market[PRIMARY] === effectiveInputCurrency ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
-  const outputFormatDecimals =
-    market[PRIMARY] === outputCurrency ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
+
+  const isMinted = (address) => {if(!!earning) return earning['1'][address]}
+
+  const mint = !!earning && !isMinted(effectiveInputCurrency)
+  let earningOutputCurrency 
+  if(!!earning) {
+    if(mint) { 
+      Object.values(earning['1']).map((token, i) => {
+        if(token)
+        if(token[M_SYMBOL] === `m${INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency][SYMBOL]}`) {
+          earningOutputCurrency = Object.keys(earning['1'])[i]
+        }
+      })
+    }
+    else {
+      earningOutputCurrency = 
+        effectiveInputCurrency === WETH_ADDRESS ? M_ETH_ADDRESS : earning['1'][effectiveInputCurrency][UNDERLYING_ADDRESS] 
+    }
+  }
+
+  let inputFormatDecimals
+  let outputFormatDecimals
+  let isInputIndependent
+  if(market){
+    inputFormatDecimals =
+      market[PRIMARY] === effectiveInputCurrency ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
+    outputFormatDecimals =
+      market[PRIMARY] === outputCurrency ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
+    isInputIndependent =
+      independentField === INPUT ? effectiveInputCurrency === market[PRIMARY] : outputCurrency === market[PRIMARY]
+  }
 
   // get input allowance
   const inputAllowance = useAddressAllowance(account, effectiveInputCurrency, DELEGATE_ADDRESS)
 
   // fetch reserves for each of the currency types
   const primarySymbol = INITIAL_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
-  const secondarySymbol = INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency].symbol
+  const secondarySymbol = 
+    !!isMinted(effectiveInputCurrency) ? earning['1'][effectiveInputCurrency].symbol : INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency].symbol
   const orderBooks = useDolomiteOrderBooks(primarySymbol, secondarySymbol)
 
   const tokenContract = useTokenContract(effectiveInputCurrency)
@@ -448,8 +479,7 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
   const outputBalanceFormatted = !!(outputBalance && Number.isInteger(outputDecimals))
     ? amountFormatter(outputBalance, outputDecimals, Math.min(MIN_DECIMALS, outputFormatDecimals))
     : ''
-  const isInputIndependent =
-    independentField === INPUT ? effectiveInputCurrency === market[PRIMARY] : outputCurrency === market[PRIMARY]
+  
 
   // compute useful transforms of the data above
   const independentDecimals = independentField === INPUT ? inputDecimals : outputDecimals
@@ -663,8 +693,6 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
     )
   }
 
-  console.log(inputSymbol)
-  const mint = !!earning && inputSymbol.startsWith("s")
   const dmmContract = useDmmTokenContract(effectiveInputCurrency)
 
   //output currency for mint, input for redeem
@@ -980,9 +1008,9 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
       }
     } else if (customSlippageError === 'warning') {
       return t('swapAnyway')
-    } else if (!!earning && mint) {
-      return t('mint')
     } else if (!!earning && !mint) {
+      return t('mint')
+    } else if (!!earning && mint) {
       return t('redeem')
     }else {
       return t('swap')
@@ -1099,13 +1127,13 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
           })
         }}
         selectedTokens={[inputCurrency, outputCurrency]}
-        selectedTokenAddress={outputCurrency}
+        selectedTokenAddress={!!earning ? earningOutputCurrency : outputCurrency}
         value={outputValueFormatted}
         errorMessage={independentField === OUTPUT ? independentError : ''}
         disableTokenSelect
         disableUnlock
         disableWrap
-        tokenAddress={outputCurrency}
+        tokenAddress={!!earning ? earningOutputCurrency : outputCurrency}
         market={market}
         earning={earning}        
       />

@@ -4,13 +4,14 @@ import withUseWeb3React from '../../hoc/withUseWeb3React'
 import withUseTransactionAdder from '../../hoc/withUseTransactionAdder'
 import ExchangePage from '../../components/ExchangePage'
 
-import { M_TOKENS } from '../../contexts/Tokens'
-import { USDC } from '../../models/Tokens'
+import { M_TOKENS, INITIAL_TOKENS_CONTEXT, USDC_ADDRESS } from '../../contexts/Tokens'
 
 function Earn({ initialCurrency, params }) {
+  initialCurrency = initialCurrency || USDC_ADDRESS
+
   return (
     <div>
-      <ExchangePage initialCurrency={USDC} params={params} earning={M_TOKENS}/>
+      <ExchangePage initialCurrency={USDC_ADDRESS} params={params} earning={M_TOKENS}/>
     </div>
   );
 }

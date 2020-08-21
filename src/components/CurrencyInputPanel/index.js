@@ -16,6 +16,7 @@ import { ReactComponent as DropDown } from '../../assets/images/dropdown.svg'
 import Modal from '../Modal'
 import TokenLogo from '../TokenLogo'
 import { usePendingApproval, useTransactionAdder } from '../../contexts/Transactions'
+import { useDmmTokenContract, useContract } from '../../hooks'
 import {
   DELEGATE_ADDRESS,
   DMG_ADDRESS,
@@ -27,7 +28,8 @@ import {
   WETH_ADDRESS,
   M_ADDRESS,
   M_NAME,
-  M_SYMBOL
+  M_SYMBOL,
+  M_ETH_ADDRESS,
 } from '../../contexts/Tokens'
 import { useAddressBalance, useAllBalances, useETHPriceInUSD } from '../../contexts/Balances'
 import { ReactComponent as Close } from '../../assets/images/x.svg'
@@ -363,7 +365,10 @@ export default function CurrencyInputPanel({
       return renderInput()
     }
 
-    const decimals = market[PRIMARY] === tokenAddress ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
+    let decimals
+    if(market) {
+      decimals = market[PRIMARY] === tokenAddress ? market[PRIMARY_DECIMALS] : market[SECONDARY_DECIMALS]
+    }
 
     const min = '0.' + '0'.repeat(decimals - 1) + '1'
 
@@ -474,13 +479,6 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
   })
 
   const { account } = useWeb3React()
-
-  //cannot use the hook iteratively or within another function
-  const mTokens = Object.values([earning['1']][0])
-  let balances = new Array(0)
-  balances.push(useAddressBalance(account, mTokens[0].underlyingAddress))
-  balances.push(useAddressBalance(account, mTokens[1].underlyingAddress))
-  balances.push(useAddressBalance(account, mTokens[2].underlyingAddress))
 
   // BigNumber.js instance
   const ethPrice = useETHPriceInUSD()
@@ -612,6 +610,13 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
     onDismiss()
   }
 
+  const mAddresses = !!earning ? Object.keys(earning['1']) : []
+
+  //cannot use the hook iteratively or within another function
+  let balances = new Array(0)
+  balances.push(useAddressBalance(account, mAddresses[!!earning ? 0 : 0]))
+  balances.push(useAddressBalance(account, mAddresses[!!earning ? 1 : 0]))
+  balances.push(useAddressBalance(account, mAddresses[!!earning ? 2 : 0]))
 
   function renderTokenList() {
     if (isAddress(searchQuery) && exchangeAddress === undefined) {
@@ -630,16 +635,17 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
     if (!filteredTokenList.length) {
       return <TokenModalInfo>{t('noExchange')}</TokenModalInfo>
     }
-     
+    
     let finalList = filteredTokenList
-    if(earning) {
+    if(!!earning) {
+      const mTokens = Object.values(earning['1'])
       const minted = mTokens.map((coin, i) => {
         const k = coin[M_SYMBOL]
         const usdBalance = usdAmounts[k]
 
         return (
           {
-            address: coin[M_ADDRESS],
+            address: mAddresses[i],
             symbol: k,
             name: coin[M_NAME],
             balance: balances[i],
@@ -648,6 +654,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
         )
       })
 
+      //fix balances
       //filters the token list to only display that with associated 
       const mSymbols = minted.map(({ symbol }) => symbol)
       const filtered = filteredTokenList.filter(({ symbol }) => {return mSymbols.includes(`m${symbol}`)})

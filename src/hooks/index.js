@@ -212,7 +212,7 @@ export function useDmmTokenContract(tokenAddress, withSignerIfPossible = true) {
     try {
       const abi = DMMToken_ABI
       return getContract(tokenAddress, abi, library, withSignerIfPossible ? account : undefined)
-    } catch {
+    } catch(error) {
       return null
     }
   }, [tokenAddress, library, withSignerIfPossible, account])
