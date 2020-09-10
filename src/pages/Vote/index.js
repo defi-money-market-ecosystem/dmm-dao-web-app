@@ -260,7 +260,8 @@ const balances = [
     valueBN: new BN('0')
   },
   {
-    title: 'DMG Earned',
+    // title: 'DMG Earned',
+    title: '',
     valueBN: null
   }
 ]
@@ -470,7 +471,8 @@ export default function Vote() {
                 {title}
               </DMGTitle>
               <Value active={index === 0}>
-                {!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2, true, true)}
+                {/*{!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2, true, true)}*/}
+                {!valueBN ? '' : amountFormatter(valueBN, 18, 2, true, true)}
               </Value>
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
             </Balance>
