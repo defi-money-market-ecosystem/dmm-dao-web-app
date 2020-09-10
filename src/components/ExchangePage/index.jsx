@@ -9,7 +9,7 @@ import * as foo from './styles.css'
 
 import Web3 from 'web3'
 
-import { useInterval, useTokenContract, useWeb3React, useDmmTokenContract } from '../../hooks'
+import { useInterval, useTokenContract, useWeb3React, useDmmTokenContract, useEarnRates } from '../../hooks'
 import { brokenTokens } from '../../constants'
 import {
   amountFormatter,
@@ -36,6 +36,10 @@ import {
   UNDERLYING_ADDRESS,
   USDC_ADDRESS,
   M_ETH_ADDRESS,
+  DMM_TOKEN_ID,
+  ETH_TOKEN_ID,
+  M_TOKENS,
+  USDT_ADDRESS
 } from '../../contexts/Tokens'
 import { usePendingWrapping, useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressBalance } from '../../contexts/Balances'
@@ -146,18 +150,26 @@ function getSwapType(inputCurrency, outputCurrency) {
   }
 }
 
-function calculateTokenOutputFromInput(inputAmount, books, inputCurrency, outputCurrency) {
-  return calculateTokenValueFromOtherValue(inputAmount, books, inputCurrency, outputCurrency, false)
+function calculateTokenOutputFromInput(inputAmount, type, inputCurrency, outputCurrency) {
+  return calculateTokenValueFromOtherValue(inputAmount, type, inputCurrency, outputCurrency, false)
 }
 
-function calculateTokenInputFromOutput(outputAmount, books, inputCurrency, outputCurrency) {
-  return calculateTokenValueFromOtherValue(outputAmount, books, inputCurrency, outputCurrency, true)
+function calculateTokenInputFromOutput(outputAmount, type, inputCurrency, outputCurrency) {
+  return calculateTokenValueFromOtherValue(outputAmount, type, inputCurrency, outputCurrency, true)
 }
 
-function calculateTokenValueFromOtherValue(valueAmount, books, inputCurrency, outputCurrency, isValueAmountOutputValue) {
-  if (!books) {
+function calculateTokenValueFromOtherValue(valueAmount, type, inputCurrency, outputCurrency, isValueAmountOutputValue) {
+  if (!type) {
     return ethers.constants.Zero
+  } else if(type.rate) {
+    let outputAmount = ethers.constants.Zero
+    const rate = type.rate
+    const bn = new BigNumber(1000000000000000000)
+    if(!!M_TOKENS['1'][inputCurrency]) outputAmount = rate.mul(valueAmount).div(bn)
+    else outputAmount = rate.div(valueAmount).div(bn)
+    return outputAmount
   } else {
+    const books = type.books
     let fillAmount = ethers.constants.Zero
     let outputAmount = ethers.constants.Zero
     for (let i = 0; i < books.sellDepths.length; i++) {
@@ -309,13 +321,6 @@ function getExchangeRate(inputValue, inputDecimals, outputValue, outputDecimals,
   }
 }
 
-function getEarnRates(inputValue, inputDecimals, outputValue, outputDecimals, invert = false) {
-  try {
-    
-  } catch {
-  }
-}
-
 export default function ExchangePage({ initialCurrency, sending = false, earning = false, params }) {
   const { t } = useTranslation()
   const { library, account, chainId, error } = useWeb3React()
@@ -424,26 +429,36 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
   const { symbol: outputSymbol, decimals: outputDecimals } = useTokenDetails(outputCurrency)
 
   const effectiveInputCurrency = getEffectiveInputCurrency(inputCurrency)
-  const market = !!MARKETS['1'][`${inputCurrency}-${outputCurrency}`]
+  let market = null
+  if(effectiveInputCurrency !== USDT_ADDRESS){
+    market = !!MARKETS['1'][`${inputCurrency}-${outputCurrency}`]
     ? MARKETS['1'][`${effectiveInputCurrency}-${outputCurrency}`]
     : MARKETS['1'][`${outputCurrency}-${effectiveInputCurrency}`]
+  }
 
   const isMinted = (address) => {if(!!earning) return earning['1'][address]}
+  const minted = !!isMinted(effectiveInputCurrency)
+  const mint = !!earning && !minted
+  let earningOutputCurrency
+  let dmmTokenID = 1
 
-  const mint = !!earning && !isMinted(effectiveInputCurrency)
-  let earningOutputCurrency 
   if(!!earning) {
     if(mint) { 
-      Object.values(earning['1']).map((token, i) => {
-        if(token)
-        if(token[M_SYMBOL] === `m${INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency][SYMBOL]}`) {
-          earningOutputCurrency = Object.keys(earning['1'])[i]
-        }
-      })
+      if(effectiveInputCurrency === WETH_ADDRESS ) {
+        earningOutputCurrency = M_ETH_ADDRESS
+        dmmTokenID = ETH_TOKEN_ID
+      } else {
+        Object.values(earning['1']).map((token, i) => {
+          if(token[M_SYMBOL] === `m${INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency][SYMBOL]}`) {
+            earningOutputCurrency = Object.keys(earning['1'])[i]
+            dmmTokenID = token[DMM_TOKEN_ID]
+          }
+        })
+      }
     }
     else {
-      earningOutputCurrency = 
-        effectiveInputCurrency === WETH_ADDRESS ? M_ETH_ADDRESS : earning['1'][effectiveInputCurrency][UNDERLYING_ADDRESS] 
+     earningOutputCurrency = earning['1'][effectiveInputCurrency][UNDERLYING_ADDRESS] 
+     dmmTokenID = earning['1'][effectiveInputCurrency][DMM_TOKEN_ID] 
     }
   }
 
@@ -465,7 +480,7 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
   // fetch reserves for each of the currency types
   const primarySymbol = INITIAL_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
   const secondarySymbol = 
-    !!isMinted(effectiveInputCurrency) ? earning['1'][effectiveInputCurrency].symbol : INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency].symbol
+    minted ? earning['1'][effectiveInputCurrency].symbol : INITIAL_TOKENS_CONTEXT['1'][effectiveInputCurrency].symbol
   const orderBooks = useDolomiteOrderBooks(primarySymbol, secondarySymbol)
 
   const tokenContract = useTokenContract(effectiveInputCurrency)
@@ -517,7 +532,8 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
         }
 
         let minValue
-        if (isPrimary) {
+        if(!market) {console.log('e')}
+        else if (isPrimary) {
           const decimalsDiff = INITIAL_TOKENS_CONTEXT['1'][market.primary][DECIMALS] - market[PRIMARY_DECIMALS]
           minValue = ethers.BigNumber.from(10).pow(decimalsDiff)
         } else {
@@ -609,14 +625,19 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
     orderSubmissionError
   ])
 
+  const earnRate = useEarnRates(dmmTokenID)
+
   // calculate dependent value
   useEffect(() => {
     const amount = independentValueParsed
+    let type = {rate: false, books: false}
+    if(!!earning) type.rate = earnRate
+    else type.books = orderBooks
 
     if (amount) {
       try {
         if (independentField === INPUT) {
-          const calculatedDependentValue = calculateTokenOutputFromInput(amount, orderBooks, effectiveInputCurrency, outputCurrency)
+          const calculatedDependentValue = calculateTokenOutputFromInput(amount, type, effectiveInputCurrency, outputCurrency)
           if (calculatedDependentValue.lte(ethers.constants.Zero)) {
             throw Error()
           }
@@ -625,7 +646,7 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
             payload: calculatedDependentValue
           })
         } else {
-          const calculatedDependentValue = calculateTokenInputFromOutput(amount, orderBooks, effectiveInputCurrency, outputCurrency)
+          const calculatedDependentValue = calculateTokenInputFromOutput(amount, type, effectiveInputCurrency, outputCurrency)
           if (calculatedDependentValue.lte(ethers.constants.Zero)) {
             throw Error()
           }
@@ -1008,9 +1029,9 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
       }
     } else if (customSlippageError === 'warning') {
       return t('swapAnyway')
-    } else if (!!earning && !mint) {
-      return t('mint')
     } else if (!!earning && mint) {
+      return t('mint')
+    } else if (!!earning && !mint) {
       return t('redeem')
     }else {
       return t('swap')

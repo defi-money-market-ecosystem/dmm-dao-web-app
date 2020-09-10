@@ -22,6 +22,7 @@ export const PRIMARY = 'primary'
 export const PRIMARY_DECIMALS = 'primaryDecimals'
 export const SECONDARY = 'secondary'
 export const SECONDARY_DECIMALS = 'secondaryDecimals'
+export const DMM_TOKEN_ID = 'dmmTokenID'
 
 const UPDATE = 'UPDATE'
 
@@ -30,6 +31,7 @@ export const ETH_ADDRESS = 'ETH'
 export const DMG_ADDRESS = '0xEd91879919B71bB6905f23af0A68d231EcF87b14'
 export const USDC_ADDRESS = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 export const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
+export const USDT_ADDRESS = '0xdAC17F958D2ee523a2206206994597C13D831ec7'
 
 const _0 = new BigNumber(0)
 
@@ -77,13 +79,22 @@ export const INITIAL_TOKENS_CONTEXT = {
       [EXCHANGE_ADDRESS]: '0xA539BAaa3aCA455c986bB1E25301CEF936CE1B65',
       [MIN_ORDER]: new BigNumber('10000000000000000000'),
       // [MIN_ORDER]: _0,
-    }
+    },
+    // [USDT_ADDRESS]: {
+    //   [NAME]: 'Tether',
+    //   [SYMBOL]: 'USDT',
+    //   [DECIMALS]: 6,
+    //   [EXCHANGE_ADDRESS]: USDT_ADDRESS,
+    //   [MIN_ORDER]: new BigNumber('1'),
+    //   // [MIN_ORDER]: _0,
+    // }
   }
 }
 
-export const DAI_TOKEN_ID = 1
-export const USDC_TOKEN_ID = 2
-export const ETH_TOKEN_ID = 3
+export const USDT_TOKEN_ID = 1
+export const DAI_TOKEN_ID = 2
+export const USDC_TOKEN_ID = 3
+export const ETH_TOKEN_ID = 4
 
 export const UNDERLYING_ADDRESS = 'underlyingAddress'
 export const UNDERLYING_NAME = 'underlyingName'
@@ -92,9 +103,10 @@ export const M_ADDRESS = 'mAddress'
 export const M_NAME = 'mName'
 export const M_SYMBOL = 'mSymbol'
 
-export const M_DAI_ADDRESS = "0x06301057D77D54B6e14c7FafFB11Ffc7Cab4eaa7"
-export const M_USDC_ADDRESS = "0x3564ad35b9E95340E5Ace2D6251dbfC76098669B"
-export const M_ETH_ADDRESS ="0xdF9307DFf0a1B57660F60f9457D32027a55ca0B2"
+export const M_DAI_ADDRESS = '0x06301057D77D54B6e14c7FafFB11Ffc7Cab4eaa7'
+export const M_USDC_ADDRESS = '0x3564ad35b9E95340E5Ace2D6251dbfC76098669B'
+export const M_ETH_ADDRESS = '0xdF9307DFf0a1B57660F60f9457D32027a55ca0B2'
+export const M_USDT_ADDRESS = '0x84d4afe150da7ea1165b9e45ff8ee4798d7c38da'
 
 export const M_TOKENS = {
   1: {
@@ -105,6 +117,7 @@ export const M_TOKENS = {
       [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol,
       [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol}`,
       [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][DAI_ADDRESS].symbol}`,
+      [DMM_TOKEN_ID]: DAI_TOKEN_ID
     },
     [M_USDC_ADDRESS]: {
       [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].decimals,
@@ -113,6 +126,7 @@ export const M_TOKENS = {
       [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol,
       [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol}`,
       [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][USDC_ADDRESS].symbol}`,
+      [DMM_TOKEN_ID]: USDC_TOKEN_ID
     },
     [M_ETH_ADDRESS]: {
       [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][WETH_ADDRESS].decimals,
@@ -121,7 +135,17 @@ export const M_TOKENS = {
       [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][WETH_ADDRESS].symbol,
       [M_NAME]: `DMM: ETH`,
       [M_SYMBOL]: `mETH`,
+      [DMM_TOKEN_ID]: ETH_TOKEN_ID
     },
+    // [M_USDT_ADDRESS]: {
+    //   [DECIMALS]: INITIAL_TOKENS_CONTEXT['1'][USDT_ADDRESS].decimals,
+    //   [UNDERLYING_ADDRESS]: USDT_ADDRESS,
+    //   [UNDERLYING_NAME]: INITIAL_TOKENS_CONTEXT['1'][USDT_ADDRESS].name,
+    //   [UNDERLYING_SYMBOL]: INITIAL_TOKENS_CONTEXT['1'][USDT_ADDRESS].symbol,
+    //   [M_NAME]: `DMM: ${INITIAL_TOKENS_CONTEXT['1'][USDT_ADDRESS].symbol}`,
+    //   [M_SYMBOL]: `m${INITIAL_TOKENS_CONTEXT['1'][USDT_ADDRESS].symbol}`,
+    //   [DMM_TOKEN_ID]: USDT_TOKEN_ID
+    // },
   }
 }
 

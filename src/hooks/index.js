@@ -11,6 +11,8 @@ import DMMToken_ABI from '../constants/abis/DmmToken'
 import { getContract, getFactoryContract, getExchangeContract, isAddress } from '../utils'
 import { injected } from '../connectors'
 import { WETH_ADDRESS } from '../contexts/Tokens'
+import { ethers } from 'ethers'
+import { BigNumber } from 'ethers-utils'
 
 export function useWeb3React() {
   const context = useWeb3ReactCore()
@@ -257,6 +259,26 @@ export function useExchangeContract(exchangeAddress, withSignerIfPossible = true
     }
   }, [exchangeAddress, library, withSignerIfPossible, account])
 }
+
+export function useEarnRates(dmmTokenId) {
+  const [rate, setRate] = useState(null)
+
+  useEffect(() => {
+    try {
+      fetch(
+        `https://api.defimoneymarket.com/v1/dmm/tokens/${dmmTokenId.toString(10)}/exchange-rate`,
+        {headers: {'Accept': 'application/json'}},
+      )
+      .then(res  => res.json())
+      .then(response => setRate(ethers.BigNumber.from(response["data"]["exchange_rate"])))
+      .catch(err => console.error(err))
+    } catch {
+      return null
+    }
+  })
+  return rate
+}
+
 
 export function useCopyClipboard(timeout = 500) {
   const [isCopied, setIsCopied] = useState(false)

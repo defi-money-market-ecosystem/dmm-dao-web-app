@@ -617,6 +617,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
   balances.push(useAddressBalance(account, mAddresses[!!earning ? 0 : 0]))
   balances.push(useAddressBalance(account, mAddresses[!!earning ? 1 : 0]))
   balances.push(useAddressBalance(account, mAddresses[!!earning ? 2 : 0]))
+  balances.push(useAddressBalance(account, mAddresses[!!earning ? 3 : 0]))
 
   function renderTokenList() {
     if (isAddress(searchQuery) && exchangeAddress === undefined) {
@@ -636,7 +637,8 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
       return <TokenModalInfo>{t('noExchange')}</TokenModalInfo>
     }
     
-    let finalList = filteredTokenList
+    const ordered = (list) => list.sort((a, b) => a.symbol.localeCompare(b.symbol))
+    let finalList = ordered(filteredTokenList)
     if(!!earning) {
       const mTokens = Object.values(earning['1'])
       const minted = mTokens.map((coin, i) => {
@@ -658,7 +660,11 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, urlAddedTokens,
       //filters the token list to only display that with associated 
       const mSymbols = minted.map(({ symbol }) => symbol)
       const filtered = filteredTokenList.filter(({ symbol }) => {return mSymbols.includes(`m${symbol}`)})
-      finalList = [...minted, ...filtered]
+      ordered(minted) 
+
+      finalList = filtered.map((token, i) => {
+        return [token, minted[i]]
+      }).flat()
     }
 
     return finalList.map(({ address, symbol, name, balance, usdBalance }) => {
