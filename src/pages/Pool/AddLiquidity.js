@@ -95,6 +95,7 @@ const Flex = styled.div`
 `
 
 const WrappedPlus = ({ isError, highSlippageWarning, ...rest }) => <Plus {...rest} />
+
 const ColoredWrappedPlus = styled(WrappedPlus)`
   width: 0.625rem;
   height: 0.625rem;

@@ -4,7 +4,7 @@ import CastVoteDialogue from './CastVoteDialogue'
 import { Link, Redirect, useParams } from 'react-router-dom'
 import { ProposalDetails } from '../../models/ProposalDetails'
 import { useWeb3React } from '../../hooks'
-import { amountFormatter, shorten } from '../../utils'
+import { amountFormatter, DMM_API_URL, shorten } from '../../utils'
 import { ReactComponent as ExternalLink } from '../../assets/svg/ExternalLink.svg'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { useAllTransactions } from '../../contexts/Transactions'
@@ -308,13 +308,12 @@ function isValidProposalId(proposalId) {
 }
 
 async function getDetails(proposalId, walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/proposals/${proposalId}`)
+  return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposalId}`)
     .then(response => response.json())
     .then(response => !!response.data ? new ProposalDetails(response.data) : null)
     .then(proposal => {
       if (proposal && walletAddress) {
-        return fetch(`${baseUrl}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
+        return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
           .then(response => response.json())
           .then(response => proposal.withAccount(response.data))
       } else {
@@ -326,8 +325,7 @@ async function getDetails(proposalId, walletAddress) {
 const CAST_VOTE = 'Vote'
 
 async function getAccountInfo(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+  return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
     .then(response => response.json())
     .then(response => !!response.data ? new AccountDetails(response.data) : null)
 }
@@ -383,6 +381,8 @@ export default function ProposalDetailsPage() {
     return () => !!subscriptionId && clearInterval(subscriptionId)
   }, [castHash, pending])
 
+  const proposalId = useParams().proposal_id
+
   useEffect(() => {
     const perform = () => {
       const proposalDetailsPromise = getDetails(proposalId, walletAddress).then(proposal => {
@@ -410,10 +410,9 @@ export default function ProposalDetailsPage() {
     }, 15000)
 
     return () => clearInterval(subscriptionId)
-  }, [walletAddress])
+  }, [proposalId, walletAddress])
 
   const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Top Addresses'}`
-  const proposalId = useParams().proposal_id
   if (!isValidProposalId(proposalId) || proposal === 'BAD') {
     return <Redirect to={{ pathname: '/governance/proposals', state: { isBadPath: true } }}/>
   }
@@ -529,7 +528,7 @@ export default function ProposalDetailsPage() {
                   <HistoryTitle>
                     {breadcrumb.statusFormatted()}
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href={`https://etherscan.io/tx/${breadcrumb.transactionHash}`} target={'_blank'}>
+                    <a href={`https://etherscan.io/tx/${breadcrumb.transactionHash}`} target={'_blank'} rel="noopener noreferrer">
                       <ExternalLink/>
                     </a>
                   </HistoryTitle>

@@ -7,7 +7,7 @@ import { ReactComponent as Dropdown } from '../../assets/images/dropdown-blue.sv
 
 const SummaryWrapper = styled.div`
   color: ${({ error, brokenTokenWarning, theme }) =>
-    error ? theme.salmonRed : brokenTokenWarning ? theme.chaliceGray : theme.chaliceGray};
+    error ? theme.salmonRed : brokenTokenWarning ? theme.black : theme.black};
   font-size: 0.75rem;
   text-align: center;
   margin-top: 0rem;
@@ -41,6 +41,7 @@ const Details = styled.div`
 const ErrorSpan = styled.span`
   font-size: 0.75rem;
   line-height: 0.75rem;
+  height: 0.75rem;
 
   color: ${({ isError, theme }) => isError && theme.salmonRed};
   ${({ slippageWarning, highSlippageWarning, theme }) =>

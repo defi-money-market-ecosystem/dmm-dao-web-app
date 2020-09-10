@@ -10,6 +10,8 @@ import LocalStorageContextProvider, { Updater as LocalStorageContextUpdater } fr
 import ApplicationContextProvider, { Updater as ApplicationContextUpdater } from './contexts/Application'
 import TransactionContextProvider, { Updater as TransactionContextUpdater } from './contexts/Transactions'
 import BalancesContextProvider, { Updater as BalancesContextUpdater } from './contexts/Balances'
+import YieldFarmingBalancesContextProvider, { Updater as YieldFarmingBalancesContextUpdater } from './contexts/YieldFarmingBalances'
+import DmgRewardBalancesContextProvider, { Updater as DmgRewardBalancesContextUpdater } from './contexts/DmgRewardBalances'
 import TokensContextProvider from './contexts/Tokens'
 import AllowancesContextProvider from './contexts/Allowances'
 import DolomiteOrderBooksContextProvider from './contexts/DolomiteOrderBooks'
@@ -55,7 +57,11 @@ function ContextProviders({ children }) {
           <TokensContextProvider>
             <BalancesContextProvider>
               <AllowancesContextProvider>
-                <DolomiteOrderBooksContextProvider>{children}</DolomiteOrderBooksContextProvider>
+                <YieldFarmingBalancesContextProvider>
+                  <DmgRewardBalancesContextProvider>
+                    <DolomiteOrderBooksContextProvider>{children}</DolomiteOrderBooksContextProvider>
+                  </DmgRewardBalancesContextProvider>
+                </YieldFarmingBalancesContextProvider>
               </AllowancesContextProvider>
             </BalancesContextProvider>
           </TokensContextProvider>
@@ -72,6 +78,8 @@ function Updaters() {
       <ApplicationContextUpdater />
       <TransactionContextUpdater />
       <BalancesContextUpdater />
+      <YieldFarmingBalancesContextUpdater />
+      <DmgRewardBalancesContextUpdater />
     </>
   )
 }

@@ -24,8 +24,6 @@ function useDolomiteOrderBooksContext() {
 }
 
 export function useDolomiteOrderBooks(primarySymbol, secondarySymbol) {
-  // const [state] = useDolomiteOrderBooksContext()
-  // return useMemo(() => undefined, undefined)
   const { chainId } = useWeb3React()
   const [state, { startListening, stopListening }] = useDolomiteOrderBooksContext()
 

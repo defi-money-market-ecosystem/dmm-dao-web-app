@@ -50,10 +50,6 @@ import { useInterval, useTokenContract, useWeb3React } from '../../hooks'
 const INPUT = 0
 const OUTPUT = 1
 
-const ETH_TO_TOKEN = 0
-const TOKEN_TO_ETH = 1
-const TOKEN_TO_TOKEN = 2
-
 // denominated in bips
 const ALLOWED_SLIPPAGE_DEFAULT = 50
 const TOKEN_ALLOWED_SLIPPAGE_DEFAULT = 50
@@ -120,18 +116,6 @@ function getEffectiveCurrency(currencyAddress) {
   }
 }
 
-function getSwapType(inputCurrency, outputCurrency) {
-  if (!inputCurrency || !outputCurrency) {
-    return null
-  } else if (inputCurrency === 'ETH') {
-    return ETH_TO_TOKEN
-  } else if (outputCurrency === 'ETH') {
-    return TOKEN_TO_ETH
-  } else {
-    return TOKEN_TO_TOKEN
-  }
-}
-
 function calculateTokenOutputFromInput(inputAmount, books, inputCurrency, outputCurrency) {
   return calculateTokenValueFromOtherValue(inputAmount, books, inputCurrency, outputCurrency, false)
 }
@@ -181,9 +165,9 @@ function calculateTokenValueFromOtherValue(valueAmount, books, inputCurrency, ou
   }
 }
 
-function calculateSlippageBounds(value, token = false, tokenAllowedSlippage, allowedSlippage) {
+function calculateSlippageBounds(value, tokenAllowedSlippage) {
   if (value) {
-    const offset = value.mul(token ? tokenAllowedSlippage : allowedSlippage).div(ethers.BigNumber.from(10000))
+    const offset = value.mul(tokenAllowedSlippage).div(ethers.BigNumber.from(10000))
     const minimum = value.sub(offset)
     const maximum = value.add(offset)
     return {
@@ -396,9 +380,6 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
   })
   const [recipientError, setRecipientError] = useState()
 
-  // get swap type from the currency types
-  const swapType = getSwapType(inputCurrency, outputCurrency)
-
   // get decimals and exchange address for each of the currency types
   const { symbol: inputSymbol, decimals: inputDecimals } = useTokenDetails(inputCurrency)
   const { symbol: outputSymbol, decimals: outputDecimals } = useTokenDetails(outputCurrency)
@@ -501,9 +482,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
   // // calculate slippage from target rate
   const { minimum: dependentValueMinimum, maximum: dependentValueMaximum } = calculateSlippageBounds(
     dependentValue,
-    swapType === TOKEN_TO_TOKEN,
     tokenAllowedSlippageBig,
-    allowedSlippageBig
   )
 
   const pendingWrapping = usePendingWrapping(effectiveInputCurrency)
@@ -598,7 +577,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         dispatchSwapState({ type: 'UPDATE_DEPENDENT', payload: '' })
       }
     }
-  }, [independentValueParsed, swapType, orderBooks, independentField, t, effectiveInputCurrency, effectiveOutputCurrency])
+  }, [independentValueParsed, orderBooks, independentField, t, effectiveInputCurrency, effectiveOutputCurrency])
 
   useEffect(() => {
     const history = createBrowserHistory()
@@ -1064,6 +1043,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         errorMessage={inputError ? inputError : independentField === INPUT ? independentError : ''}
         tokenAddress={effectiveInputCurrency}
         market={market}
+        unlockAddress={DELEGATE_ADDRESS}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -1104,6 +1084,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         disableWrap
         tokenAddress={outputCurrency}
         market={market}
+        unlockAddress={DELEGATE_ADDRESS}
       />
       {sending ? (
         <>

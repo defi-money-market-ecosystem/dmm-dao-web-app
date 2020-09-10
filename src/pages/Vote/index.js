@@ -10,7 +10,7 @@ import { useAddressBalance } from '../../contexts/Balances'
 import BN from 'bn.js'
 import Web3 from 'web3'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
-import { amountFormatter, calculateGasMargin } from '../../utils'
+import { amountFormatter, calculateGasMargin, DMM_API_URL } from '../../utils'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/browser'
 import { usePendingDelegation, useTransactionAdder } from '../../contexts/Transactions'
@@ -295,15 +295,14 @@ function shouldDisplayPage(p, selected, l) {
 }
 
 async function getProposals(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/proposals`)
+  return fetch(`${DMM_API_URL}/v1/governance/proposals`)
     .then(response => response.json())
     .then(response => response.data.map(proposal => new ProposalSummary(proposal)))
     .then(proposals => {
       if (walletAddress) {
         return Promise.all(
           proposals.map(proposal => {
-            return fetch(`${baseUrl}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
+            return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
               .then(response => response.json())
               .then(response => proposal.withAccount(response.data))
           })
@@ -315,9 +314,8 @@ async function getProposals(walletAddress) {
 }
 
 async function getAccountInfo(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
   if (walletAddress) {
-    return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+    return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
       .then(response => response.json())
       .then(response => !!response.data ? new AccountDetails(response.data) : null)
   } else {
@@ -360,7 +358,6 @@ export default function Vote() {
 
   // When component mounts - data retrieval and path check
   useEffect(() => {
-    console.log('running effect for walletAddress', walletAddress)
     const perform = () => {
       const proposalPromise = getProposals(walletAddress).then(data => {
         setProposals(data)

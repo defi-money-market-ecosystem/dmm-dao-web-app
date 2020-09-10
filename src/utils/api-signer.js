@@ -3,27 +3,26 @@ import { v4 as uuidv4 } from 'uuid'
 import { SUPPORTED_WALLETS } from '../constants'
 import React from 'react'
 import { injected } from '../connectors'
-
-const host = 'https://api.defimoneymarket.com'
+import { DMM_API_URL } from './index'
 
 export const sessionId = uuidv4()
 
 export const routes = {
   insertReferral: {
     method: 'POST',
-    url: `${host}/v1/dmg-sale/insert-referral`,
+    url: `${DMM_API_URL}/v1/dmg-sale/insert-referral`,
   },
   insertEvent: {
     method: 'POST',
-    url: `${host}/v1/analytics/insert-event`,
+    url: `${DMM_API_URL}/v1/analytics/insert-event`,
   },
   verifyPrivateSalePassword: {
     method: 'POST',
-    url: `${host}/v1/dmg-sale/verify-password`,
+    url: `${DMM_API_URL}/v1/dmg-sale/verify-password`,
   },
   getIpAddress: {
     method: 'GET',
-    url: 'https://api.defimoneymarket.com/ip-address',
+    url: `${DMM_API_URL}/ip-address`,
   }
 }
 

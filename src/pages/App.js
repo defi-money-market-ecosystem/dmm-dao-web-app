@@ -13,6 +13,7 @@ import Send from './Send'
 import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
 import { isAddress } from '../utils/index'
+import Farm from './Farm/index'
 
 const Swap = lazy(() => import('./Swap'))
 
@@ -96,6 +97,9 @@ class App extends React.Component {
                     { /*this Suspense is for route code-splitting*/ }
                     <Suspense fallback={null}>
                       <Switch>
+                        <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
+                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
+                        <Route exact strict path="/farm" component={() => <Farm params={params} />} />
                         <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
                         <Route
                           exact
@@ -115,10 +119,7 @@ class App extends React.Component {
                             }
                           }}
                         />
-                        <Route exact strict path="/burn" component={() => <Send params={params} />} />
-                        <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
-                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
-                        <Redirect to="/swap"/>
+                        <Redirect to="/governance/proposals"/>
                       </Switch>
                     </Suspense>
                   </BrowserRouter>

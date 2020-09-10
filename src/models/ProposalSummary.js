@@ -1,5 +1,4 @@
 import moment from 'moment'
-import React from 'react'
 import { AccountSummary } from './AccountSummary'
 import { AccountProposalVoteInfo } from './AccountProposalVoteInfo'
 

@@ -2,16 +2,21 @@ import { ethers } from 'ethers'
 
 import FACTORY_ABI from '../constants/abis/factory'
 import EXCHANGE_ABI from '../constants/abis/exchange'
+
 import ERC20_ABI from '../constants/abis/erc20'
+import DMG_YIELD_FARMING_PROXY_ABI from '../constants/abis/yield_farming_proxy.json'
 import ERC20_BYTES32_ABI from '../constants/abis/erc20_bytes32'
 import { FACTORY_ADDRESSES, SUPPORTED_THEMES } from '../constants'
 import { formatFixed } from '@uniswap/sdk'
 
 import UncheckedJsonRpcSigner from './eth-signer'
-import { DMG_ADDRESS, ETH_ADDRESS } from '../contexts/Tokens'
+import { DMG_ADDRESS, ETH_ADDRESS, WETH_ADDRESS } from '../contexts/Tokens'
+import { YIELD_FARMING_PROXY_ADDRESS } from '../contexts/YieldFarming'
 
 export const MIN_DECIMALS = 6
 export const MIN_DECIMALS_EXCHANGE_RATE = 8
+
+export const DMM_API_URL = 'https://api.defimoneymarket.com'
 
 export const ERROR_CODES = ['TOKEN_NAME', 'TOKEN_SYMBOL', 'TOKEN_DECIMALS'].reduce(
   (accumulator, currentValue, currentIndex) => {
@@ -268,11 +273,37 @@ export function formatToUsd(price) {
 
 // get the token balance of an address
 export async function getTokenBalance(tokenAddress, address, library) {
+  tokenAddress = tokenAddress === ETH_ADDRESS ? WETH_ADDRESS : tokenAddress
   if (!isAddress(tokenAddress) || !isAddress(address)) {
     throw Error(`Invalid 'tokenAddress' or 'address' parameter '${tokenAddress}' or '${address}'.`)
   }
 
   return getContract(tokenAddress, ERC20_ABI, library).balanceOf(address)
+}
+
+export async function getYieldFarmingBalance(tokenAddress, address, library) {
+  tokenAddress = tokenAddress === ETH_ADDRESS ? WETH_ADDRESS : tokenAddress
+  if (!isAddress(tokenAddress) || !isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter '${tokenAddress}' or '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).balanceOf(address, tokenAddress)
+}
+
+export async function getDmgRewardBalance(address, library) {
+  if (!isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).getRewardBalanceByOwner(address)
+}
+
+export async function getDmgRewardBalanceByToken(tokenAddress, address, library) {
+  if (!isAddress(tokenAddress) || !isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter  '${tokenAddress}' '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).getRewardBalanceByOwnerAndToken(address, tokenAddress)
 }
 
 // get the token allowance

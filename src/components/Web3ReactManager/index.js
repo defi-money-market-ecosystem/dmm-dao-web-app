@@ -57,7 +57,7 @@ export default function Web3ReactManager({ children }) {
           return fetch(routes.insertEvent.url, options)
         })
     }
-  }, [account])
+  }, [account, connector])
 
   // try to eagerly connect to an injected provider, if it exists and has granted access already
   const triedEager = useEagerConnect()
