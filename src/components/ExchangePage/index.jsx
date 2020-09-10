@@ -162,6 +162,7 @@ function calculateTokenValueFromOtherValue(valueAmount, type, inputCurrency, out
   if (!type) {
     return ethers.constants.Zero
   } else if(type.rate) {
+    console.log(rate)
     let outputAmount = ethers.constants.Zero
     const rate = type.rate
     const bn = new BigNumber(1000000000000000000)
@@ -521,6 +522,7 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
   // validate + parse independent value
   const [independentError, setIndependentError] = useState()
   useEffect(() => {
+    if(!market) {return}
     if (independentValue && (independentDecimals || independentDecimals === 0)) {
       try {
         const parsedValue = ethers.utils.parseUnits(independentValue, independentDecimals)
@@ -532,8 +534,7 @@ export default function ExchangePage({ initialCurrency, sending = false, earning
         }
 
         let minValue
-        if(!market) {console.log('e')}
-        else if (isPrimary) {
+        if (isPrimary) {
           const decimalsDiff = INITIAL_TOKENS_CONTEXT['1'][market.primary][DECIMALS] - market[PRIMARY_DECIMALS]
           minValue = ethers.BigNumber.from(10).pow(decimalsDiff)
         } else {
