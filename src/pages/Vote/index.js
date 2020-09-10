@@ -265,10 +265,6 @@ const balances = [
   }
 ]
 
-function withdrawEarnedDmg(web3, walletAddress) {
-  console.log('walletAddress ', walletAddress, web3)
-}
-
 function shouldDisplayPage(p, selected, l) {
   if (l <= displayPages) {
     // Displays all pages if it is less than the displayed amount
@@ -447,10 +443,7 @@ export default function Vote() {
             </ActivateWallet>)
         ) :
         (
-          <Withdraw active={!!valueBN && valueBN.gt(new BN('0'))}
-                    onClick={() => withdrawEarnedDmg(web3, walletAddress)}>
-            Withdraw
-          </Withdraw>
+          <div/>
         )
     )
   }
