@@ -460,10 +460,10 @@ export default function FarmPanel({ params }) {
       setIsBeginValid(false)
     } else if (showUnlockCurrencyB) {
       setIsBeginValid(false)
-    } else if (currencyABalance.lt(currencyAInputValueParsed)) {
+    } else if (!currencyABalance || currencyABalance.lt(currencyAInputValueParsed)) {
       setIndependentError(t('insufficientBalanceForSymbol', { symbol: currencyASymbol }))
       setIsBeginValid(false)
-    } else if (currencyBBalance.lt(currencyBInputValueParsed)) {
+    } else if (!currencyBBalance || currencyBBalance.lt(currencyBInputValueParsed)) {
       setIndependentError(t('insufficientBalanceForSymbol', { symbol: currencyBSymbol }))
       setIsBeginValid(false)
     } else if (!currencyAInputValueParsed || currencyAInputValueParsed.eq(ethers.constants.Zero)) {
