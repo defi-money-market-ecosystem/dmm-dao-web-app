@@ -40,6 +40,7 @@ import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
 const Wrapper = styled.div`
   width: 100%;
   margin-top: 32px;
+  opacity: ${props => props.disabled ? '0.4' : '1'}
 `
 
 const DownArrowBackground = styled.div`
@@ -49,6 +50,47 @@ const DownArrowBackground = styled.div`
 `
 
 const WrappedPlus = ({ isError, highSlippageWarning, ...rest }) => <Plus {...rest} />
+
+const OverlayContent = styled.div`
+    width: 580px;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 100;
+    text-align: left;
+    margin: 0 auto;
+    margin-top: 60px;
+    background: white;
+    border-radius: 5px;
+    padding: 30px 40px;
+    color: black;
+    position: fixed;
+    z-index: 999;
+    margin-left: -60px;
+    
+    @media (max-width: 700px) {
+      max-width: calc(90vw - 80px);
+      left: 5vw;
+      right: 5vw;
+      margin-left: 0;
+      margin-right: 0;
+    }
+    
+    @media (max-width: 450px) {
+      font-size: 15px;
+      margin-top: 30px;
+    }
+    
+    @media (max-width: 350px) {
+      margin-top: 0;
+      font-size: 14px;
+    }
+`
+
+const OverlayAcceptButton = styled.div`
+  margin: 0 auto;
+  margin-top: 40px;
+  width: 200px;
+`
 
 const ColoredWrappedPlus = styled(WrappedPlus)`
   width: 0.625rem;
@@ -218,6 +260,14 @@ export default function FarmPanel({ params }) {
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
+
+  localStorage.setItem('dmmYieldFarmingDisclaimerAccepted', false)
+
+  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
+
+  if (!disclaimerAccepted && localStorage.getItem('dmmYieldFarmingDisclaimerAccepted') && localStorage.getItem('dmmYieldFarmingDisclaimerAccepted') === 'true') {
+    setDisclaimerAccepted(true);
+  }
 
   const yieldFarmingTokens = useAllYieldFarmingTokens()
   const mTokens = Object.keys(yieldFarmingTokens)
@@ -676,155 +726,185 @@ export default function FarmPanel({ params }) {
   }
 
   return (
-    <Wrapper>
-      {/* CURRENCY A */}
-      <CurrencyInputPanel
-        title={t('deposit', { extra: 'mTokens' })}
-        extraText={currencyABalance ? formatBalance(amountFormatter(currencyABalance, currencyADecimals, 6)) : ''}
-        onValueChange={inputValue => {
-          dispatchFarmState({
-            type: 'UPDATE_INDEPENDENT',
-            payload: { value: inputValue, field: INDEPENDENT_CURRENCY_A }
-          })
-        }}
-        extraTextClickHander={() => {
-          if (currencyABalance) {
+    <div style={{width: '100%'}}>
+      {!disclaimerAccepted && (<OverlayContent>
+        The smart contracts powering DMM yield farming have been developed using best practices by experts in smart contract development, however they have not yet been audited by a third party firm.
+        <br/>
+        <br/>
+        To yield farm with DMM you must accept this and use at your own risk.
+        <OverlayAcceptButton>
+          <Button
+            onClick={() => {localStorage.setItem('dmmYieldFarmingDisclaimerAccepted', 'true'); setDisclaimerAccepted(true)}}
+          >
+            I accept
+          </Button>
+        </OverlayAcceptButton>
+      </OverlayContent>)}
+      <Wrapper disabled={!disclaimerAccepted}>
+        {/* CURRENCY A */}
+        {/*<Overlay>
+          <OverlayContent>
+            The smart contracts powering DMM yield farming have been developed using best practices by experts in smart contract development, however they have not yet been professionally audited.
+            <br/>
+            <br/>
+            To yield farm with DMM you must accept this and use at your own risk.
+            <OverlayAcceptButton>
+              <Button
+                onClick={() => alert('accepted')}
+              >
+                I accept
+              </Button>
+            </OverlayAcceptButton>
+          </OverlayContent>
+        </Overlay>*/}
+        <CurrencyInputPanel
+          title={t('deposit', { extra: 'mTokens' })}
+          extraText={currencyABalance ? formatBalance(amountFormatter(currencyABalance, currencyADecimals, 6)) : ''}
+          onValueChange={inputValue => {
             dispatchFarmState({
               type: 'UPDATE_INDEPENDENT',
-              payload: {
-                value: amountFormatter(calculateMaxOutputVal(currencyABalance, currencyA), currencyADecimals, currencyADecimals, false),
-                field: INDEPENDENT_CURRENCY_A
-              }
+              payload: { value: inputValue, field: INDEPENDENT_CURRENCY_A }
             })
-          }
-        }}
-        selectedTokenAddress={currencyA}
-        value={currencyAInputValueFormatted}
-        onCurrencySelected={currencyA => {
-          dispatchFarmState({
-            type: 'SELECT_CURRENCY',
-            payload: { currency: currencyA, field: INDEPENDENT_CURRENCY_A }
-          })
-        }}
-        errorMessage={currencyAError ? currencyAError : independentField === INDEPENDENT_CURRENCY_A ? independentError : ''}
-        showUnlock={showUnlockCurrencyA}
-        minDecimals={Math.min(currencyADecimals, 6)}
-        unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
-        tokenList={mTokens}
-      />
-      {/* END CURRENCY A */}
-      <OversizedPanel>
-        <DownArrowBackground>
-          <ColoredWrappedPlus active={'true'} alt="plus"/>
-        </DownArrowBackground>
-      </OversizedPanel>
-      {/* CURRENCY B */}
-      <CurrencyInputPanel
-        title={t('deposit', { extra: 'Tokens' })}
-        description={''}
-        extraText={currencyBBalance ? formatBalance(amountFormatter(currencyBBalance, currencyBDecimals, 6)) : ''}
-        selectedTokenAddress={currencyB}
-        onCurrencySelected={currencyB => {
-          dispatchFarmState({
-            type: 'SELECT_CURRENCY',
-            payload: { currency: currencyB, field: INDEPENDENT_CURRENCY_B }
-          })
-        }}
-        onValueChange={outputValue => {
-          dispatchFarmState({
-            type: 'UPDATE_INDEPENDENT',
-            payload: { value: outputValue, field: INDEPENDENT_CURRENCY_B }
-          })
-        }}
-        extraTextClickHander={() => {
-          if (currencyBBalance) {
+          }}
+          extraTextClickHander={() => {
+            if (currencyABalance) {
+              dispatchFarmState({
+                type: 'UPDATE_INDEPENDENT',
+                payload: {
+                  value: amountFormatter(calculateMaxOutputVal(currencyABalance, currencyA), currencyADecimals, currencyADecimals, false),
+                  field: INDEPENDENT_CURRENCY_A
+                }
+              })
+            }
+          }}
+          selectedTokenAddress={currencyA}
+          value={currencyAInputValueFormatted}
+          onCurrencySelected={currencyA => {
+            dispatchFarmState({
+              type: 'SELECT_CURRENCY',
+              payload: { currency: currencyA, field: INDEPENDENT_CURRENCY_A }
+            })
+          }}
+          errorMessage={currencyAError ? currencyAError : independentField === INDEPENDENT_CURRENCY_A ? independentError : ''}
+          showUnlock={showUnlockCurrencyA}
+          minDecimals={Math.min(currencyADecimals, 6)}
+          unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
+          tokenList={mTokens}
+        />
+        {/* END CURRENCY A */}
+        <OversizedPanel>
+          <DownArrowBackground>
+            <ColoredWrappedPlus active={'true'} alt="plus"/>
+          </DownArrowBackground>
+        </OversizedPanel>
+        {/* CURRENCY B */}
+        <CurrencyInputPanel
+          title={t('deposit', { extra: 'Tokens' })}
+          description={''}
+          extraText={currencyBBalance ? formatBalance(amountFormatter(currencyBBalance, currencyBDecimals, 6)) : ''}
+          selectedTokenAddress={currencyB}
+          onCurrencySelected={currencyB => {
+            dispatchFarmState({
+              type: 'SELECT_CURRENCY',
+              payload: { currency: currencyB, field: INDEPENDENT_CURRENCY_B }
+            })
+          }}
+          onValueChange={outputValue => {
             dispatchFarmState({
               type: 'UPDATE_INDEPENDENT',
-              payload: {
-                value: amountFormatter(calculateMaxOutputVal(currencyBBalance, currencyB), currencyBDecimals, currencyBDecimals, false),
-                field: INDEPENDENT_CURRENCY_B
-              }
+              payload: { value: outputValue, field: INDEPENDENT_CURRENCY_B }
             })
-          }
-        }}
-        value={currencyBInputValueFormatted}
-        showUnlock={showUnlockCurrencyB}
-        errorMessage={currencyBError ? currencyBError : independentField === INDEPENDENT_CURRENCY_B ? independentError : ''}
-        minDecimals={Math.min(currencyBDecimals, 6)}
-        unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
-        tokenList={underlyingTokens}
-      />
-      {/* END CURRENCY B */}
-      <OversizedPanel hideBottom>
-        <SummaryPanel>
-          <ExchangeRateWrapper>
-            <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
-            <span>{exchangeRate ? `1 ${currencyASymbol} = ${amountFormatter(exchangeRate, 18, 6)} ${currencyBSymbol}` : ' - '}</span>
-          </ExchangeRateWrapper>
-          <ExchangeRateWrapper>
-            <ExchangeRate>{t('currentPoolSize')}</ExchangeRate>
-            <span>{
-              (exchangeCurrencyABalance.eq(ethers.constants.Zero)) ? '-' :
-                `${amountFormatter(exchangeCurrencyABalance, currencyADecimals, 4)} ${currencyASymbol}`
-            }</span>
-          </ExchangeRateWrapper>
-          <ExchangeRateWrapper>
-            <ExchangeRate>
-              {t('yourPoolShare')} ({currencyABalance && currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
-            </ExchangeRate>
-            <span>{
-              currencyAShare.eq(ethers.constants.Zero) ? '-' :
-                `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`
-            }</span>
-          </ExchangeRateWrapper>
-          <ExchangeRateWrapper>
-            <ExchangeRate>
-              {t('dmgRewardBalance')}
-            </ExchangeRate>
-            <span>{
-              !userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`
-            }</span>
-          </ExchangeRateWrapper>
-        </SummaryPanel>
-      </OversizedPanel>
-      {}
-      <TransactionDetails
-        account={account}
-        setRawSlippage={() => undefined}
-        setRawTokenSlippage={() => undefined}
-        rawSlippage={0}
-        slippageWarning={false}
-        highSlippageWarning={false}
-        inputError={currencyAError}
-        independentError={independentError}
-        inputCurrency={currencyA}
-        outputCurrency={currencyB}
-        independentValue={independentValue}
-        independentValueParsed={independentValueParsed}
-        independentField={independentField}
-        INPUT={INDEPENDENT_CURRENCY_A}
-        inputValueParsed={currencyAInputValueParsed}
-        outputValueParsed={currencyBInputValueParsed}
-        inputSymbol={currencyASymbol}
-        outputSymbol={currencyBSymbol}
-        dependentValueMinimum={dependentValueMinimum}
-        dependentValueMaximum={dependentValueMaximum}
-        dependentDecimals={dependentDecimals}
-        independentDecimals={independentDecimals}
-        setCustomSlippageError={() => undefined}
-        wrapWarning={false}
-        recipientAddress={undefined}
-        sending={false}
-      />
-      <Flex>
-        <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
-          {isFarmingApproved ? t('farm') : t('approveFarming')}
-        </Button>
-        <Button disabled={!isEndValid || !isFarmingApproved} onClick={endYieldFarming}>
-          {isFarmingActive ? t('endFarming') : t('withdraw')}
-        </Button>
-      </Flex>
-    </Wrapper>
+          }}
+          extraTextClickHander={() => {
+            if (currencyBBalance) {
+              dispatchFarmState({
+                type: 'UPDATE_INDEPENDENT',
+                payload: {
+                  value: amountFormatter(calculateMaxOutputVal(currencyBBalance, currencyB), currencyBDecimals, currencyBDecimals, false),
+                  field: INDEPENDENT_CURRENCY_B
+                }
+              })
+            }
+          }}
+          value={currencyBInputValueFormatted}
+          showUnlock={showUnlockCurrencyB}
+          errorMessage={currencyBError ? currencyBError : independentField === INDEPENDENT_CURRENCY_B ? independentError : ''}
+          minDecimals={Math.min(currencyBDecimals, 6)}
+          unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
+          tokenList={underlyingTokens}
+        />
+        {/* END CURRENCY B */}
+        <OversizedPanel hideBottom>
+          <SummaryPanel>
+            <ExchangeRateWrapper>
+              <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
+              <span>{exchangeRate ? `1 ${currencyASymbol} = ${amountFormatter(exchangeRate, 18, 6)} ${currencyBSymbol}` : ' - '}</span>
+            </ExchangeRateWrapper>
+            <ExchangeRateWrapper>
+              <ExchangeRate>{t('currentPoolSize')}</ExchangeRate>
+              <span>{
+                (exchangeCurrencyABalance.eq(ethers.constants.Zero)) ? '-' :
+                  `${amountFormatter(exchangeCurrencyABalance, currencyADecimals, 4)} ${currencyASymbol}`
+              }</span>
+            </ExchangeRateWrapper>
+            <ExchangeRateWrapper>
+              <ExchangeRate>
+                {t('yourPoolShare')} ({currencyABalance && currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
+              </ExchangeRate>
+              <span>{
+                currencyAShare.eq(ethers.constants.Zero) ? '-' :
+                  `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`
+              }</span>
+            </ExchangeRateWrapper>
+            <ExchangeRateWrapper>
+              <ExchangeRate>
+                {t('dmgRewardBalance')}
+              </ExchangeRate>
+              <span>{
+                !userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`
+              }</span>
+            </ExchangeRateWrapper>
+          </SummaryPanel>
+        </OversizedPanel>
+        {}
+        <TransactionDetails
+          account={account}
+          setRawSlippage={() => undefined}
+          setRawTokenSlippage={() => undefined}
+          rawSlippage={0}
+          slippageWarning={false}
+          highSlippageWarning={false}
+          inputError={currencyAError}
+          independentError={independentError}
+          inputCurrency={currencyA}
+          outputCurrency={currencyB}
+          independentValue={independentValue}
+          independentValueParsed={independentValueParsed}
+          independentField={independentField}
+          INPUT={INDEPENDENT_CURRENCY_A}
+          inputValueParsed={currencyAInputValueParsed}
+          outputValueParsed={currencyBInputValueParsed}
+          inputSymbol={currencyASymbol}
+          outputSymbol={currencyBSymbol}
+          dependentValueMinimum={dependentValueMinimum}
+          dependentValueMaximum={dependentValueMaximum}
+          dependentDecimals={dependentDecimals}
+          independentDecimals={independentDecimals}
+          setCustomSlippageError={() => undefined}
+          wrapWarning={false}
+          recipientAddress={undefined}
+          sending={false}
+        />
+        <Flex>
+          <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
+            {isFarmingApproved ? t('farm') : t('approveFarming')}
+          </Button>
+          <Button disabled={!isEndValid || !isFarmingApproved} onClick={endYieldFarming}>
+            {isFarmingActive ? t('endFarming') : t('withdraw')}
+          </Button>
+        </Flex>
+      </Wrapper>
+    </div>
   )
 
 }
