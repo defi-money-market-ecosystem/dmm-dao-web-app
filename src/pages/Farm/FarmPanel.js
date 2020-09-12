@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react'
 import {
   useExchangeContract,
-  useInterval,
   useWeb3React,
   useYieldFarmingProxyContract,
   useYieldFarmingRouterContract
@@ -22,14 +21,18 @@ import {
   YIELD_FARMING_TOKENS
 } from '../../contexts/Tokens'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { amountFormatter, calculateGasMargin, DMM_API_URL, isAddress, MIN_DECIMALS } from '../../utils'
+import { amountFormatter, calculateGasMargin, isAddress, MIN_DECIMALS } from '../../utils'
 import { ethers } from 'ethers'
 import OversizedPanel from '../../components/OversizedPanel'
 import { Button } from '../../theme'
 import { useAddressBalance } from '../../contexts/Balances'
 import styled from 'styled-components'
 import { ReactComponent as Plus } from '../../assets/images/plus-blue.svg'
-import { YIELD_FARMING_PROXY_ADDRESS, YIELD_FARMING_ROUTER_ADDRESS } from '../../contexts/YieldFarming'
+import {
+  useIsYieldFarmingActive,
+  YIELD_FARMING_PROXY_ADDRESS,
+  YIELD_FARMING_ROUTER_ADDRESS
+} from '../../contexts/YieldFarming'
 import { useAddressAllowance } from '../../contexts/Allowances'
 import { useTranslation } from 'react-i18next'
 import TransactionDetails from '../../components/TransactionDetails'
@@ -141,7 +144,7 @@ const Flex = styled.div`
 const INDEPENDENT_CURRENCY_A = 0
 const INDEPENDENT_CURRENCY_B = 1
 
-const IS_DISCLAIMER_ACCEPTED = 'dmmYieldFarmingDisclaimerAccepted'
+const ACCEPT_FARMING_KEY = 'DMM_ACCEPT_FARMING_KEY'
 
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
@@ -264,11 +267,9 @@ export default function FarmPanel({ params }) {
 
   const { library, account, chainId } = useWeb3React()
 
-  const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState(localStorage.getItem(IS_DISCLAIMER_ACCEPTED) === 'true')
-
-  // if (!isDisclaimerAccepted && ) {
-  //   setIsDisclaimerAccepted(true)
-  // }
+  const [isDisclaimerAccepted, setIsDisclaimerAccepted] = useState(
+    localStorage.getItem(ACCEPT_FARMING_KEY) === 'true'
+  )
 
   const yieldFarmingTokens = useAllYieldFarmingTokens()
   const mTokens = Object.keys(yieldFarmingTokens)
@@ -276,7 +277,6 @@ export default function FarmPanel({ params }) {
       tokens[key] = ALL_TOKENS_CONTEXT[chainId][yieldFarmingTokens[key][CURRENCY_A]]
       return tokens
     }, {})
-  // .filter((value, index, list) => list.indexOf(value) === index)
 
   const underlyingTokens = Object.keys(yieldFarmingTokens)
     .reduce((tokens, key) => {
@@ -287,7 +287,6 @@ export default function FarmPanel({ params }) {
       }
       return tokens
     }, {})
-  // .filter((value, index, list) => list.indexOf(value) === index)
 
   const [farmState, dispatchFarmState] = useReducer(
     (state, action) => farmStateReducer(state, chainId, action),
@@ -305,18 +304,35 @@ export default function FarmPanel({ params }) {
   const yieldFarmingContract = useYieldFarmingProxyContract(YIELD_FARMING_PROXY_ADDRESS)
   const [isFarmingApproved, setIsFarmingApproved] = useState(false)
 
-  const [isFarmingActive, setIsFarmingActive] = useState(false)
-  const getIsActiveCallback = useCallback(() => {
-    fetch(`${DMM_API_URL}/v1/yield-farming/is-active`)
-      .then(response => response.json())
-      .then(response => {
-        setIsFarmingActive(response?.data)
-      })
-      .catch(() => {
-        setIsFarmingActive(false)
-      })
-  }, [])
-  useInterval(getIsActiveCallback, 15 * 1000, true)
+  const fetchIsFarmingApproved = useCallback(() => {
+    if (isAddress(account)) {
+      yieldFarmingContract
+        .isGloballyTrustedProxy(YIELD_FARMING_ROUTER_ADDRESS)
+        .then((isGloballyApproved) => {
+          if (!isGloballyApproved) {
+            return yieldFarmingContract
+              .isApproved(account, YIELD_FARMING_ROUTER_ADDRESS)
+              .then(isApproved => setIsFarmingApproved(isApproved))
+          } else {
+            setIsFarmingApproved(true)
+          }
+        })
+        .catch(error => {
+          console.error('Error getting is approved ', error)
+          setIsFarmingApproved(false)
+        })
+    }
+  }, [account, yieldFarmingContract])
+  useEffect(() => {
+    fetchIsFarmingApproved()
+    library.on('block', fetchIsFarmingApproved)
+
+    return () => {
+      library.removeListener('block', fetchIsFarmingApproved)
+    }
+  }, [fetchIsFarmingApproved, library])
+
+  const isFarmingActive = useIsYieldFarmingActive()
 
   const dmgDecimals = 18
   const currencyADecimals = ALL_TOKENS_CONTEXT[chainId][currencyA][DECIMALS]
@@ -430,36 +446,14 @@ export default function FarmPanel({ params }) {
       })
     }
   }, [exchangeContract, account])
-  const getIsYieldFarmingApproved = useCallback(() => {
-    if (isAddress(account)) {
-      yieldFarmingContract
-        .isGloballyTrustedProxy(YIELD_FARMING_ROUTER_ADDRESS)
-        .then((isGloballyApproved) => {
-          if (!isGloballyApproved) {
-            return yieldFarmingContract
-              .isApproved(account, YIELD_FARMING_ROUTER_ADDRESS)
-              .then(isApproved => setIsFarmingApproved(isApproved))
-          } else {
-            setIsFarmingApproved(true)
-          }
-        })
-        .catch(error => {
-          console.error('Error getting is approved ', error)
-          setIsFarmingApproved(false)
-        })
-    }
-  }, [yieldFarmingContract, account])
   useEffect(() => {
     fetchPoolTokens()
-    getIsYieldFarmingApproved()
     library.on('block', fetchPoolTokens)
-    library.on('block', getIsYieldFarmingApproved)
 
     return () => {
       library.removeListener('block', fetchPoolTokens)
-      library.removeListener('block', getIsYieldFarmingApproved)
     }
-  }, [fetchPoolTokens, getIsYieldFarmingApproved, library])
+  }, [fetchPoolTokens, library])
 
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
@@ -556,8 +550,8 @@ export default function FarmPanel({ params }) {
   const addTransaction = useTransactionAdder()
   const dmgYieldFarmingRouter = useYieldFarmingRouterContract(YIELD_FARMING_ROUTER_ADDRESS, true)
 
-  const onAcceptYieldFarming = () => {
-    localStorage.setItem(IS_DISCLAIMER_ACCEPTED, 'true')
+  const acceptFarmingDisclaimer = () => {
+    localStorage.setItem(ACCEPT_FARMING_KEY, 'true')
     setIsDisclaimerAccepted(true)
   }
 
@@ -733,13 +727,13 @@ export default function FarmPanel({ params }) {
   return (
     <div style={{ width: '100%' }}>
       {!isDisclaimerAccepted && (<OverlayContent>
-        {t('yieldFarmingNoAuditYet_1')}
+        {t('yieldFarmingDisclaimer_1')}
         <br/>
         <br/>
-        {t('yieldFarmingNoAuditYet_2')}
+        {t('yieldFarmingDisclaimer_2')}
         <OverlayAcceptButton>
-          <Button onClick={onAcceptYieldFarming}>
-            {t('yieldFarmingNoAuditYet_accept')}
+          <Button onClick={acceptFarmingDisclaimer}>
+            {t('iAccept')}
           </Button>
         </OverlayAcceptButton>
       </OverlayContent>)}

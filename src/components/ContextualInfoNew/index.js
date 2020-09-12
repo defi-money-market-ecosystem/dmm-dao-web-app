@@ -73,8 +73,7 @@ export default function ContextualInfo({
     <>
       <SummaryWrapperContainer
         onClick={() => {
-          !showDetails &&
-          setShowDetails(previousValue => !previousValue)
+          setShowDetails(value => !value)
         }}
       >
         <>

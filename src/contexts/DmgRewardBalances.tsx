@@ -164,15 +164,7 @@ export function Updater() {
   const [state, { update, batchUpdateAccount }] = useDmgRewardBalancesContext()
 
   const allTokens = useAllTokenDetails()
-  let allYieldFarmingTokens = useAllYieldFarmingTokens()
-  allYieldFarmingTokens = Object.keys(allYieldFarmingTokens)
-    .reduce((map: any, key: string) => {
-      map[allYieldFarmingTokens[key][EXCHANGE_ADDRESS]] = allTokens[allYieldFarmingTokens[key][EXCHANGE_ADDRESS]]
-      return map
-    }, {})
-
-  allYieldFarmingTokens = useMemo(() => Object.keys(allYieldFarmingTokens), [allYieldFarmingTokens])
-  allYieldFarmingTokens = Object.keys(allYieldFarmingTokens).map(key => allYieldFarmingTokens[key])
+  const allYieldFarmingTokens = useAllYieldFarmingTokens()
 
   // debounce state a little bit to prevent useEffect craziness
   const debouncedState = useDebounce(state, 1000)
@@ -227,7 +219,7 @@ export function Updater() {
 
       }
     }
-  }, [chainId, blockNumber, debouncedState, update, fetchAggregateBalance, allYieldFarmingTokens])
+  }, [chainId, blockNumber, debouncedState, update, fetchAggregateBalance])
 
   // generic balances fetcher abstracting away difference between fetching ETH + token balances
   const fetchBalanceByToken = useCallback(
@@ -279,8 +271,11 @@ export function Updater() {
   // ensure that we have the user balances for all tokens
   useEffect(() => {
     if (typeof chainId === 'number' && typeof account === 'string' && typeof blockNumber === 'number') {
+      const mappedYieldFarmingTokens = Object.keys(allYieldFarmingTokens)
+        .map((key) => allTokens[allYieldFarmingTokens[key][EXCHANGE_ADDRESS]], {})
+      // mappedYieldFarmingTokens = Object.keys(allYieldFarmingTokens).map(key => allYieldFarmingTokens[key])
       Promise.all(
-        allYieldFarmingTokens
+        mappedYieldFarmingTokens
           .filter((tokenAddress: any) => {
             const hasValue = !!stateRef.current?.[chainId]?.[account]?.[tokenAddress]?.value
             const cachedFetchedAsOf = fetchedAsOfCache.current?.[chainId]?.[account]?.[tokenAddress]
@@ -324,7 +319,7 @@ export function Updater() {
         )
       })
     }
-  }, [chainId, account, blockNumber, allTokens, fetchBalanceByToken, batchUpdateAccount, allYieldFarmingTokens])
+  }, [chainId, account, blockNumber, allTokens, fetchBalanceByToken, batchUpdateAccount])
 
 
   return null
