@@ -21,24 +21,24 @@ import { NetworkContextName } from '../../constants'
 import Identicon from '../Identicon'
 import Button from '@material-ui/core/Button'
 
-const Web3StatusGeneric = styled.button`
-  ${({ theme }) => theme.flexRowNoWrap}
-  width: 100%;
-  font-size: 0.9rem;
-  align-items: center;
-  padding: 0.5rem;
-  border-radius: 5px;
-  box-sizing: border-box;
-  cursor: pointer;
-  user-select: none;
-  box-shadow: 1px 1px 8px -4px rgba(0, 0, 0, 0.5), 1px 1px 4px -4px rgba(0, 0, 0, 0.5);
-  margin-top: 10px;
-  height: 40px;
-  border: none !important;
-  :focus {
-    outline: none;
-  }
-`
+// const Web3StatusGeneric = styled.button`
+//   ${({ theme }) => theme.flexRowNoWrap}
+//   width: 100%;
+//   font-size: 0.9rem;
+//   align-items: center;
+//   padding: 0.5rem;
+//   border-radius: 5px;
+//   box-sizing: border-box;
+//   cursor: pointer;
+//   user-select: none;
+//   box-shadow: 1px 1px 8px -4px rgba(0, 0, 0, 0.5), 1px 1px 4px -4px rgba(0, 0, 0, 0.5);
+//   margin-top: 10px;
+//   height: 40px;
+//   border: none !important;
+//   :focus {
+//     outline: none;
+//   }
+// `
 // const Web3StatusError = styled(Web3StatusGeneric)`
 //   background-color: ${({ theme }) => theme.salmonRed};
 //   color: #ffffff;

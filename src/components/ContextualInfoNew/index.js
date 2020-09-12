@@ -1,13 +1,10 @@
 import React, { useState } from 'react'
 import styled, { css } from 'styled-components'
 import { transparentize } from 'polished'
-import ReactGA from 'react-ga'
-import { ReactComponent as Dropup } from '../../assets/images/dropup-blue.svg'
-import { ReactComponent as Dropdown } from '../../assets/images/dropdown-blue.svg'
 
 const SummaryWrapper = styled.div`
   color: ${({ error, brokenTokenWarning, theme }) =>
-    error ? theme.salmonRed : brokenTokenWarning ? theme.black : theme.black};
+  error ? theme.salmonRed : brokenTokenWarning ? theme.black : theme.black};
   font-size: 0.75rem;
   text-align: center;
   margin-top: 0rem;
@@ -45,56 +42,30 @@ const ErrorSpan = styled.span`
 
   color: ${({ isError, theme }) => isError && theme.salmonRed};
   ${({ slippageWarning, highSlippageWarning, theme }) =>
-    highSlippageWarning
-      ? css`
+  highSlippageWarning
+    ? css`
           color: ${theme.salmonRed};
           font-weight: 600;
         `
-      : slippageWarning &&
-        css`
+    : slippageWarning &&
+    css`
           background-color: ${transparentize(0.6, theme.warningYellow)};
           font-weight: 600;
           padding: 0.25rem;
         `}
 `
 
-const WrappedDropup = ({ isError, highSlippageWarning, ...rest }) => <Dropup {...rest} />
-const ColoredDropup = styled(WrappedDropup)`
-  path {
-    stroke: ${({ isError, theme }) => (isError ? theme.salmonRed : theme.royalBlue)};
-
-    ${({ highSlippageWarning, theme }) =>
-      highSlippageWarning &&
-      css`
-        stroke: ${theme.salmonRed};
-      `}
-  }
-`
-
-const WrappedDropdown = ({ isError, highSlippageWarning, ...rest }) => <Dropdown {...rest} />
-const ColoredDropdown = styled(WrappedDropdown)`
-  path {
-    stroke: ${({ isError, theme }) => (isError ? theme.salmonRed : theme.royalBlue)};
-
-    ${({ highSlippageWarning, theme }) =>
-      highSlippageWarning &&
-      css`
-        stroke: ${theme.salmonRed};
-      `}
-  }
-`
-
 export default function ContextualInfo({
-  openDetailsText = '',
-  closeDetailsText = '',
-  contextualInfo = '',
-  allowExpand = false,
-  isError = false,
-  slippageWarning,
-  highSlippageWarning,
-  brokenTokenWarning,
-  dropDownContent
-}) {
+                                         openDetailsText = '',
+                                         closeDetailsText = '',
+                                         contextualInfo = '',
+                                         allowExpand = false,
+                                         isError = false,
+                                         slippageWarning,
+                                         highSlippageWarning,
+                                         brokenTokenWarning,
+                                         dropDownContent
+                                       }) {
   const [showDetails, setShowDetails] = useState(false)
   return !allowExpand ? (
     <SummaryWrapper brokenTokenWarning={brokenTokenWarning}>{contextualInfo}</SummaryWrapper>
@@ -102,15 +73,8 @@ export default function ContextualInfo({
     <>
       <SummaryWrapperContainer
         onClick={() => {
-          // {/*    !showDetails &&*/}
-          // {/*      ReactGA.event({*/}
-          // {/*        category: 'Advanced Interaction',*/}
-          // {/*        action: 'Open Advanced Details',*/}
-          // {/*        label: 'Swap/Send Page Details'*/}
-          // {/*      })*/}
-          // {/*    setShowDetails(s => !s)*/}
-          // {/*  }}*/}
-          // {/*>*/}
+          !showDetails &&
+          setShowDetails(previousValue => !previousValue)
         }}
       >
         <>

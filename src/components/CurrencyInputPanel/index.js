@@ -580,7 +580,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
           usdBalance: usdBalance
         }
       })
-  }, [allBalances, allTokens, usdAmounts, account])
+  }, [allBalances, allTokens, tokenList, isTokenListSet, usdAmounts, account])
 
   const filteredTokenList = useMemo(() => {
     const list = tokenList.filter(tokenEntry => {

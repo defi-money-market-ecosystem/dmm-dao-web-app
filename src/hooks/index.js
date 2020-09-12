@@ -326,13 +326,17 @@ export function usePrevious(value) {
   return ref.current
 }
 
-export function useInterval(callback, tickDuration, executeImmediately) {
+export function useInterval(callback, tickDuration, shouldExecutedImmediately) {
   const savedCallback = useRef()
+  const _shouldExecutedImmediately = useRef(false)
 
   // Remember the latest callback.
   useEffect(() => {
     savedCallback.current = callback
   }, [callback])
+  useEffect(() => {
+    _shouldExecutedImmediately.current = shouldExecutedImmediately
+  }, [shouldExecutedImmediately])
 
   // Set up the interval.
   useEffect(() => {
@@ -340,14 +344,15 @@ export function useInterval(callback, tickDuration, executeImmediately) {
       savedCallback.current()
     }
 
+    console.log('Executing immediately ', _shouldExecutedImmediately.current, shouldExecutedImmediately)
+    if (_shouldExecutedImmediately.current) {
+      savedCallback.current()
+      _shouldExecutedImmediately.current = !_shouldExecutedImmediately.current
+    }
+
     if (tickDuration !== null) {
       let id = setInterval(tick, tickDuration)
       return () => clearInterval(id)
     }
-    if (executeImmediately) {
-      console.log('Executing immediately...')
-      savedCallback.current()
-      executeImmediately = false
-    }
-  }, [tickDuration, executeImmediately])
+  }, [tickDuration, shouldExecutedImmediately])
 }

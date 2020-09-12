@@ -22,5 +22,5 @@ export function useIsYieldFarmingActive() {
       })
   }, 15 * 1000)
 
-  return useMemo(() => state[IS_FARMING_ACTIVE], state[IS_FARMING_ACTIVE])
+  return useMemo(() => state[IS_FARMING_ACTIVE], [state])
 }
