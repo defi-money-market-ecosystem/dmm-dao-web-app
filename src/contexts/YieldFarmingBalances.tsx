@@ -277,17 +277,6 @@ export function Updater() {
     }
   }, [chainId, account, blockNumber, allTokens, fetchBalance, batchUpdateAccount])
 
-  // ensure that we have the eth and token balances for all exchanges
-  const allExchanges = useMemo(
-    () =>
-      Object.keys(allTokenDetails)
-        .filter(tokenAddress => tokenAddress !== 'ETH')
-        .map(tokenAddress => ({
-          tokenAddress,
-          exchangeAddress: allTokenDetails[tokenAddress].exchangeAddress
-        })),
-    [allTokenDetails]
-  )
   return null
 }
 
