@@ -211,6 +211,7 @@ const Description = styled.div`
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 1.4;
+	overflow: hidden;
 `
 
 
@@ -236,8 +237,7 @@ const Check = styled.div`
 	font-size: 18px;
 	display: inline-block;
 	background-color: #b0bdc5;
-	padding-left: 1.75px;
-	padding-right: 1.75px
+	flex-shrink: 0 !important;
 
 	${({ active }) => active && `
     background-color: #4487CE;
