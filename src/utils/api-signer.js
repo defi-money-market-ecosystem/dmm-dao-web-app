@@ -1,7 +1,6 @@
 import crypto from 'crypto'
 import { v4 as uuidv4 } from 'uuid'
 import { SUPPORTED_WALLETS } from '../constants'
-import React from 'react'
 import { injected } from '../connectors'
 import { DMM_API_URL } from './index'
 

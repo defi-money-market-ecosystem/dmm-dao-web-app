@@ -40,8 +40,6 @@ export const M_USDT_ADDRESS = '0x84d4afe150da7ea1165b9e45ff8ee4798d7c38da'
 export const USDT_ADDRESS = '0xdac17f958d2ee523a2206206994597c13d831ec7'
 export const WETH_ADDRESS = '0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2'
 
-const _0 = new BigNumber(0)
-
 export const ETH = {
   ETH: {
     [NAME]: 'Ethereum',

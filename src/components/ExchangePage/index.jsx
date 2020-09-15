@@ -135,9 +135,9 @@ function calculateTokenValueFromOtherValue(valueAmount, books, inputCurrency, ou
     isValueAmountOutputValue = isBuys ? !isValueAmountOutputValue : isValueAmountOutputValue
     for (let i = 0; i < depths.length; i++) {
       const tuple = depths[i]
-      const secondaryTokenDecimals = inputCurrency === DMG_ADDRESS ?
-        INITIAL_TOKENS_CONTEXT['1'][outputCurrency][DECIMALS] :
-        INITIAL_TOKENS_CONTEXT['1'][inputCurrency][DECIMALS]
+      // const secondaryTokenDecimals = inputCurrency === DMG_ADDRESS ?
+      //   INITIAL_TOKENS_CONTEXT['1'][outputCurrency][DECIMALS] :
+      //   INITIAL_TOKENS_CONTEXT['1'][inputCurrency][DECIMALS]
 
       const primaryAmount = new BigNumber(tuple.quantity.valueString)
       const priceAmount = new BigNumber(tuple.price.valueString)
@@ -334,12 +334,11 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
           }
         })
     }
-  }, 1000)
+  }, 1000, true)
 
   const [rawSlippage, setRawSlippage] = useState(() => initialSlippage())
   const [rawTokenSlippage, setRawTokenSlippage] = useState(() => initialSlippage(true))
 
-  const allowedSlippageBig = ethers.BigNumber.from(rawSlippage)
   const tokenAllowedSlippageBig = ethers.BigNumber.from(rawTokenSlippage)
 
   // analytics

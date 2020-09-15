@@ -15,7 +15,7 @@ import { ethers } from 'ethers'
 import { useDebounce, useWeb3React } from '../hooks'
 import { getEtherBalance, getTokenBalance, isAddress } from '../utils'
 import { useBlockNumber } from './Application'
-import { useAllTokenDetails, useTokenDetails } from './Tokens'
+import { useAllTokenDetails } from './Tokens'
 import { getUSDPrice } from '../utils/price'
 
 const LOCAL_STORAGE_KEY = 'BALANCES'
@@ -65,12 +65,12 @@ function reducer(state: BalancesState, { type, payload }: { type: Action; payloa
             ...state?.[chainId]?.[address],
             [tokenAddress]: uninitialized
               ? {
-                  listenerCount: 1
-                }
+                listenerCount: 1
+              }
               : {
-                  ...state[chainId][address][tokenAddress],
-                  listenerCount: state[chainId][address][tokenAddress].listenerCount + 1
-                }
+                ...state[chainId][address][tokenAddress],
+                listenerCount: state[chainId][address][tokenAddress].listenerCount + 1
+              }
           }
         }
       }
@@ -461,6 +461,7 @@ const usdcTokenAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
 const usdcExchangeAddress = '0x97deC872013f6B5fB443861090ad931542878126'
 const tusdTokenAddress = '0x0000000000085d4780B73119b644AE5ecd22b376'
 const tusdExchangeAddress = '0x5048b9d01097498Fd72F3F14bC9Bc74A5aAc8fA7'
+
 export function useETHPriceInUSD() {
   const { chainId } = useWeb3React()
 

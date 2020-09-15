@@ -8,8 +8,6 @@ import Footer from '../components/Footer'
 
 import NavigationTabs from '../components/NavigationTabs'
 import { getAllQueryParams } from '../utils'
-
-import Send from './Send'
 import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
 import { isAddress } from '../utils/index'
@@ -94,12 +92,13 @@ class App extends React.Component {
                 <Web3ReactManager>
                   <BrowserRouter>
                     <NavigationTabs/>
-                    { /*this Suspense is for route code-splitting*/ }
+                    { /*this Suspense is for route code-splitting*/}
                     <Suspense fallback={null}>
                       <Switch>
                         <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
-                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
-                        <Route exact strict path="/farm" component={() => <Farm params={params} />} />
+                        <Route exact strict path="/governance/proposals/:proposal_id"
+                               component={() => <ProposalDetailsPage/>}/>
+                        <Route exact strict path="/farm" component={() => <Farm params={params}/>}/>
                         <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
                         <Route
                           exact
@@ -115,7 +114,7 @@ class App extends React.Component {
                                 />
                               )
                             } else {
-                              return <Redirect to={{ pathname: '/swap' }} />
+                              return <Redirect to={{ pathname: '/swap' }}/>
                             }
                           }}
                         />

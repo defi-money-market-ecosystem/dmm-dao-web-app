@@ -149,21 +149,6 @@ const Value = styled.div`
 
 `
 
-const Withdraw = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  color: black;
-  display: inline;
-  cursor: not-allowed;
-  color: #b7c3cc;
-  float: right;
-
-  ${({ active }) => active && `
-      color: #2fdaa5;
-      cursor: pointer
-  `}
-`
-
 const ActivateWallet = styled.div`
   font-size: 18px;
   font-weight: 700;

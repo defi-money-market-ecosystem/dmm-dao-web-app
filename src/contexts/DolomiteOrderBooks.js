@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 
 import { useInterval, useWeb3React } from '../hooks'
 import { exchange } from '../connectors/index'
@@ -54,12 +54,12 @@ function reducer(state, { type, payload }) {
           ...state?.[chainId],
           [market]: uninitialized
             ? {
-                listenerCount: 1
-              }
+              listenerCount: 1
+            }
             : {
-                ...state[chainId][market],
-                listenerCount: state[chainId][market].listenerCount + 1
-              }
+              ...state[chainId][market],
+              listenerCount: state[chainId][market].listenerCount + 1
+            }
         }
       }
     }
