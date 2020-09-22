@@ -45,6 +45,13 @@ const FarmingWrapper = styled.div`
   width: calc(150% + 25px);
   display: flex;
   justify-content: space-between;
+  
+  @media (max-width: 900px) {
+    flex-direction: column;
+    width: 100%;
+    overflow-y: scroll;
+    height: calc(100vh - 194px);
+  }
 `
 
 const InfoPanel = styled.div`
@@ -55,6 +62,10 @@ const InfoPanel = styled.div`
   margin-top: 32px;
   padding: 0 40px 30px;
   height: fit-content;
+  
+  @media (max-width: 900px) {
+    width: calc(100% - 80px);
+  }
 `
 
 const Title = styled.div`
@@ -115,6 +126,10 @@ const Wrapper = styled.div`
   width: calc(60% - 12.5px);
   margin-top: 32px;
   opacity: ${props => props.disabled ? '0.4' : '1'}
+  
+  @media (max-width: 900px) {
+    width: 100%;
+  }
 `
 
 const DownArrowBackground = styled.div`
