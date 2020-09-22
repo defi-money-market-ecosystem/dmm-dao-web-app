@@ -56,7 +56,7 @@ async function main() {
 
   console.log('Building project for production deployment. This may take a couple moments.')
   await new Promise((success, failure) => {
-    exec(`npm run build`, (error, stdout) => {
+    exec(`npm run build --max-old-space-size=8192`, (error, stdout) => {
       console.log('Build output: ', stdout)
       if (!!error) {
         failure(error.message)
