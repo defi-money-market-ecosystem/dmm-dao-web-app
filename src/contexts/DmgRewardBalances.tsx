@@ -273,7 +273,7 @@ export function Updater() {
     if (typeof chainId === 'number' && typeof account === 'string' && typeof blockNumber === 'number') {
       const mappedYieldFarmingTokens = Object.keys(allYieldFarmingTokens)
         .map((key) => allTokens[allYieldFarmingTokens[key][EXCHANGE_ADDRESS]], {})
-      // mappedYieldFarmingTokens = Object.keys(allYieldFarmingTokens).map(key => allYieldFarmingTokens[key])
+
       Promise.all(
         mappedYieldFarmingTokens
           .filter((tokenAddress: any) => {
@@ -319,7 +319,7 @@ export function Updater() {
         )
       })
     }
-  }, [chainId, account, blockNumber, allTokens, fetchBalanceByToken, batchUpdateAccount])
+  }, [chainId, account, blockNumber, allTokens, fetchBalanceByToken, batchUpdateAccount, allYieldFarmingTokens])
 
 
   return null

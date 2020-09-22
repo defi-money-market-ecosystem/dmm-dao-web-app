@@ -48,7 +48,7 @@ export default function TokenLogo({ address, size = '1rem', ...rest }) {
   } else if (address.toLowerCase() === M_USDT_ADDRESS.toLowerCase()) {
     return (
       <StyledDmmUsdtLogo size={size}>
-        <img style={{width: size, height: size}} alt={'mUSDT Logo'} src={DmmUsdtLogo}/>
+        <Image style={{width: size, height: size}} alt={'mUSDT Logo'} src={DmmUsdtLogo}/>
       </StyledDmmUsdtLogo>
     )
   } else {
