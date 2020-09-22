@@ -41,8 +41,78 @@ import { useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressYieldFarmingBalance } from '../../contexts/YieldFarmingBalances'
 import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
 
-const Wrapper = styled.div`
+const FarmingWrapper = styled.div`
+  width: calc(150% + 25px);
+  display: flex;
+  justify-content: space-between;
+`
+
+const InfoPanel = styled.div`
+  width: calc(40% - 92.5px);
+  background: white;
+  border-radius: 5px;
+  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+  margin-top: 32px;
+  padding: 0 40px 30px;
+  height: fit-content;
+`
+
+const Title = styled.div`
+  font-size: 28px;
+  font-weight: 300;
+  color: #0a2a5a;
+  padding: 20px 0 10px;
+  margin-top: 10px;
+  
+  @media (max-width: 800px) {
+    font-size: 23px;
+  }
+`
+
+const Underline = styled.div`
+  height: 2px;
+  background: #327ccb;
+  width: 50px;
+  margin-bottom: 12px;
+`
+
+const Amount = styled.div`
+  margin-top: 12px;
+  margin-bottom: 2px;
   width: 100%;
+`
+
+const InlineAmount = styled.div`
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+  margin-top: 12px;
+`
+
+const Label = styled.div`
+  font-size: 14px;
+  font-weight: 200;
+  color: black;
+  opacity: 0.8;
+`
+
+const Value = styled.div`
+  font-size: 18px;
+  font-weight: 300;
+  color: black;
+  margin-top: 4px;
+`
+
+const Unit = styled.div`
+  font-size: 14px;
+  font-weight: 200;
+  color: black;
+  display: inline;
+  opacity: 0.7;
+`
+
+const Wrapper = styled.div`
+  width: calc(60% - 12.5px);
   margin-top: 32px;
   opacity: ${props => props.disabled ? '0.4' : '1'}
 `
@@ -109,6 +179,10 @@ const ColoredWrappedPlus = styled(WrappedPlus)`
 const SummaryPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
   padding: 1rem 0;
+  background: white;
+  border-radius: 5px;
+  margin-top: 15px;
+  color: black;
 `
 
 const ExchangeRateWrapper = styled.div`
@@ -117,12 +191,16 @@ const ExchangeRateWrapper = styled.div`
   color: ${({ theme }) => theme.doveGray};
   font-size: 0.75rem;
   padding: 0.5rem 1rem;
+  
+  span {
+    color: black;
+  }
 `
 
 const ExchangeRate = styled.span`
   flex: 1 1 auto;
   width: 0;
-  color: ${({ theme }) => theme.doveGray};
+  color: black;
 `
 
 const Flex = styled.div`
@@ -725,7 +803,7 @@ export default function FarmPanel({ params }) {
   }
 
   return (
-    <div style={{ width: '100%' }}>
+    <FarmingWrapper>
       {!isDisclaimerAccepted && (<OverlayContent>
         {t('yieldFarmingDisclaimer_1')}
         <br/>
@@ -737,6 +815,85 @@ export default function FarmPanel({ params }) {
           </Button>
         </OverlayAcceptButton>
       </OverlayContent>)}
+      <InfoPanel>
+        <Title>
+          Farming Info
+        </Title>
+        <Underline/>
+        <Amount>
+          <InlineAmount>
+            <Label>
+              mUSDC APR
+            </Label>
+            <Value>
+              38.45%
+            </Value>
+          </InlineAmount>
+          <InlineAmount>
+            <Label>
+              mDAI APR
+            </Label>
+            <Value>
+              42.15%
+            </Value>
+          </InlineAmount>
+          <InlineAmount>
+            <Label>
+              mUSDT APR
+            </Label>
+            <Value>
+              47.21%
+            </Value>
+          </InlineAmount>
+          <InlineAmount>
+            <Label>
+              mETH APR
+            </Label>
+            <Value>
+              36.22%
+            </Value>
+          </InlineAmount>
+        </Amount>
+        <Amount>
+          <Label>
+            Left for redemption
+          </Label>
+          <Value>
+            762,435 DMG
+          </Value>
+        </Amount>
+        {/*<Amount>
+          <Label>
+            Currently being farmed
+          </Label>
+          <Value>
+            300,000 mTokens
+          </Value>
+        </Amount>*/}
+        <Title>
+          Your Wallet
+        </Title>
+        <Underline/>
+        <Amount>
+          <Label>
+            Currently being farmed
+          </Label>
+          <Value>
+            6,723 <Unit>mUSDC</Unit>
+          </Value>
+          <Value>
+            240 <Unit>mDAI</Unit>
+          </Value>
+        </Amount>
+        <Amount>
+          <Label>
+            Earning a net APY of
+          </Label>
+          <Value>
+            39.32%
+          </Value>
+        </Amount>
+      </InfoPanel>
       <Wrapper disabled={!isDisclaimerAccepted}>
         {/* CURRENCY A */}
         <CurrencyInputPanel
@@ -816,7 +973,7 @@ export default function FarmPanel({ params }) {
           tokenList={underlyingTokens}
         />
         {/* END CURRENCY B */}
-        <OversizedPanel hideBottom>
+        <OversizedPanel style={{boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)`}} hideTop hideBottom>
           <SummaryPanel>
             <ExchangeRateWrapper>
               <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
@@ -831,7 +988,7 @@ export default function FarmPanel({ params }) {
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
-                {t('yourPoolShare')} ({currencyABalance && currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
+                {t('yourPoolShare')} ({currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
               </ExchangeRate>
               <span>{
                 currencyAShare.eq(ethers.constants.Zero) ? '-' :
@@ -886,7 +1043,7 @@ export default function FarmPanel({ params }) {
           </Button>
         </Flex>
       </Wrapper>
-    </div>
+    </FarmingWrapper>
   )
 
 }
