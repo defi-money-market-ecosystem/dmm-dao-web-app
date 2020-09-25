@@ -26,6 +26,7 @@ import { ethers } from 'ethers'
 import OversizedPanel from '../../components/OversizedPanel'
 import { Button } from '../../theme'
 import { useAddressBalance } from '../../contexts/Balances'
+import Dialog from '@material-ui/core/Dialog'
 import styled from 'styled-components'
 import { ReactComponent as Plus } from '../../assets/images/plus-blue.svg'
 import {
@@ -40,6 +41,43 @@ import * as Sentry from '@sentry/browser'
 import { useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressYieldFarmingBalance } from '../../contexts/YieldFarmingBalances'
 import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
+
+
+const BackDrop = styled.div`
+  width: 100vw;
+	height: 100vh;
+	background-color: rgba(0,0,0,0.5);
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 110;
+	
+	@media (max-width: 700px) {
+	  background: none;
+  }
+`
+
+const Card = styled.div`
+	background-color: #FFFFFF;
+	position: relative;
+	left: 50%;
+	top: 50%;
+	max-width: 320px;
+	width: 350px;
+	transform: translate(-50%, -50%);
+	border-radius: 5px;
+	opacity: 1;
+	z-index: 5;
+	padding: 25px 40px 5px;
+	text-align: center;
+	font-weight: 600;
+	color: black;
+	max-width: calc(80vw - 30px);
+	
+	@media (max-width: 700px) {
+	  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+	}
+`
 
 const FarmingWrapper = styled.div`
   width: calc(150% + 25px);
@@ -78,6 +116,25 @@ const Title = styled.div`
   @media (max-width: 800px) {
     font-size: 23px;
   }
+`
+
+const CardTitle = styled.div`
+  font-size: 28px;
+  font-weight: 300;
+  color: #0a2a5a;
+  padding: 10px 0 10px;
+  margin-top: 0;
+  
+  @media (max-width: 800px) {
+    font-size: 23px;
+  }
+`
+
+const CardText = styled.div`
+  font-size: 16px;
+  font-weight: 300;
+  text-align: left;
+  margin-top: 10px;
 `
 
 const Underline = styled.div`
@@ -136,6 +193,21 @@ const DownArrowBackground = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   justify-content: center;
   align-items: center;
+`
+
+const ConfirmButtonsWrapper = styled.div`
+  text-align: right;
+  
+  Button {
+    display: inline-block;
+    width: 100px;
+    padding: 10px 20px;
+    margin: 20px 0 20px 10px;
+  }
+  
+  Button:first-of-type {
+    background-color: #b1becc;
+  }
 `
 
 const WrappedPlus = ({ isError, highSlippageWarning, ...rest }) => <Plus {...rest} />
@@ -817,8 +889,31 @@ export default function FarmPanel({ params }) {
     }
   }
 
+  const displayConfirmWithdraw = true;
+
   return (
     <FarmingWrapper>
+      {displayConfirmWithdraw &&
+        <BackDrop>
+          <Card>
+            <CardTitle>
+              Confirm Withdraw Farming
+            </CardTitle>
+            <Underline/>
+            <CardText>
+              Withdrawing xxx USDC and xxx mUSDC
+            </CardText>
+            <ConfirmButtonsWrapper>
+              <Button onClick={() => {/*close the window*/return;}}>
+                Deny
+              </Button>
+              <Button onClick={() => {/*submit withdraw*/return;}}>
+                Confirm
+              </Button>
+            </ConfirmButtonsWrapper>
+          </Card>
+        </BackDrop>
+      }
       {!isDisclaimerAccepted && (<OverlayContent>
         {t('yieldFarmingDisclaimer_1')}
         <br/>
