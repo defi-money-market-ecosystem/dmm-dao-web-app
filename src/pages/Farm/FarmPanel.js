@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react'
 import {
   useExchangeContract,
+  useInterval,
   useWeb3React,
   useYieldFarmingProxyContract,
   useYieldFarmingRouterContract
@@ -13,20 +14,20 @@ import {
   ETH,
   ETH_ADDRESS,
   EXCHANGE_ADDRESS,
+  LINK_ADDRESS,
   M_USDC_ADDRESS,
   SYMBOL,
   USDC_ADDRESS,
   useAllYieldFarmingTokens,
   WETH_ADDRESS,
-  YIELD_FARMING_TOKENS
+  YIELD_FARMING_TOKENS_MAP
 } from '../../contexts/Tokens'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { amountFormatter, calculateGasMargin, isAddress, MIN_DECIMALS } from '../../utils'
+import { amountFormatter, calculateGasMargin, DMM_API_URL, isAddress, MIN_DECIMALS } from '../../utils'
 import { ethers } from 'ethers'
 import OversizedPanel from '../../components/OversizedPanel'
 import { Button } from '../../theme'
 import { useAddressBalance } from '../../contexts/Balances'
-import Dialog from '@material-ui/core/Dialog'
 import styled from 'styled-components'
 import { ReactComponent as Plus } from '../../assets/images/plus-blue.svg'
 import {
@@ -290,6 +291,10 @@ const ExchangeRate = styled.span`
   color: black;
 `
 
+const CurrencySwitcher = styled.span`
+  cursor: pointer;
+`
+
 const Flex = styled.div`
   display: flex;
   justify-content: center;
@@ -329,15 +334,29 @@ function getInitialSwapState(state) {
   }
 }
 
-function farmStateReducer(state, chainId, action) {
+function farmStateReducer(state, chainId, action, currencyA) {
   switch (action.type) {
     case 'SELECT_CURRENCY': {
       const { field, currency } = action.payload
 
-      const newInputCurrency = field === INDEPENDENT_CURRENCY_A ? currency : YIELD_FARMING_TOKENS[chainId][currency][CURRENCY_A]
-      const newOutputCurrency = field === INDEPENDENT_CURRENCY_B ? currency : YIELD_FARMING_TOKENS[chainId][currency][CURRENCY_B]
+      const anyTokenPairings = [LINK_ADDRESS]
 
-      if (newInputCurrency === newOutputCurrency) {
+      let newCurrencyA
+      if (field === INDEPENDENT_CURRENCY_A) {
+        newCurrencyA = currency
+      } else {
+        const isSpecialToken = anyTokenPairings.indexOf(currency) !== -1
+        newCurrencyA = isSpecialToken ? undefined : YIELD_FARMING_TOKENS_MAP[chainId][currency][CURRENCY_A]
+      }
+      let newCurrencyB
+      if(field === INDEPENDENT_CURRENCY_B) {
+        newCurrencyB = currency
+      } else {
+        const isSpecialToken = anyTokenPairings.indexOf(state[CURRENCY_B]) !== -1
+        newCurrencyB = isSpecialToken ? undefined : YIELD_FARMING_TOKENS_MAP[chainId][currency][CURRENCY_B]
+      }
+
+      if (newCurrencyA === newCurrencyB) {
         return {
           ...state,
           currencyA: field === INDEPENDENT_CURRENCY_A ? currency : '',
@@ -346,8 +365,8 @@ function farmStateReducer(state, chainId, action) {
       } else {
         return {
           ...state,
-          currencyA: newInputCurrency,
-          currencyB: newOutputCurrency
+          currencyA: !!newCurrencyA ? newCurrencyA : state[CURRENCY_A],
+          currencyB: !!newCurrencyB ? newCurrencyB : state[CURRENCY_B],
         }
       }
     }
@@ -437,19 +456,25 @@ export default function FarmPanel({ params }) {
   )
 
   const yieldFarmingTokens = useAllYieldFarmingTokens()
-  const mTokens = Object.keys(yieldFarmingTokens)
-    .reduce((tokens, key) => {
-      tokens[key] = ALL_TOKENS_CONTEXT[chainId][yieldFarmingTokens[key][CURRENCY_A]]
+  const mTokens = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[token[1][CURRENCY_A]] = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]]
       return tokens
     }, {})
 
-  const underlyingTokens = Object.keys(yieldFarmingTokens)
-    .reduce((tokens, key) => {
-      if (yieldFarmingTokens[key][CURRENCY_B] === 'ETH') {
+  const underlyingTokens = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      if (token[1][CURRENCY_B] === 'ETH') {
         tokens['ETH'] = ETH['ETH']
       } else {
-        tokens[key] = ALL_TOKENS_CONTEXT[chainId][yieldFarmingTokens[key][CURRENCY_B]]
+        tokens[token[1][CURRENCY_B]] = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_B]]
       }
+      return tokens
+    }, {})
+
+  const pairs = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[`${token[1][CURRENCY_A]}-${token[1][CURRENCY_B]}`] = token[1][EXCHANGE_ADDRESS]
       return tokens
     }, {})
 
@@ -568,7 +593,7 @@ export default function FarmPanel({ params }) {
   const [showUnlockCurrencyA, setShowUnlockCurrencyA] = useState(true)
   const [showUnlockCurrencyB, setShowUnlockCurrencyB] = useState(true)
 
-  const exchangeAddress = yieldFarmingTokens[currencyA][EXCHANGE_ADDRESS]
+  const exchangeAddress = pairs[`${currencyA}-${currencyB}`]
   const exchangeContract = useExchangeContract(exchangeAddress)
 
   const currencyABalance = useAddressBalance(account, currencyA)
@@ -620,6 +645,23 @@ export default function FarmPanel({ params }) {
     }
   }, [fetchPoolTokens, library])
 
+  const [feesByToken, setFeesByToken] = useState('-')
+  const fetchFeesByToken = useCallback(() => {
+    if (exchangeContract && exchangeAddress) {
+      return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/fees`)
+        .then(response => response.json())
+        .then(data => setFeesByToken(data.data))
+    }
+  }, [exchangeContract, exchangeAddress])
+  useEffect(() => {
+    fetchFeesByToken()
+    library.on('block', fetchPoolTokens)
+
+    return () => {
+      library.removeListener('block', fetchPoolTokens)
+    }
+  }, [fetchPoolTokens, library])
+
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
 
@@ -630,6 +672,62 @@ export default function FarmPanel({ params }) {
 
   const currencyAShare = (!currencyABalance || !poolTokenPercentage) ? ethers.constants.Zero
     : exchangeCurrencyABalance.mul(poolTokenPercentage).div(oneWei)
+
+  const currencyBShare = (!currencyBBalance || !poolTokenPercentage) ? ethers.constants.Zero
+    : exchangeCurrencyBBalance.mul(poolTokenPercentage).div(oneWei)
+
+  const initialAprs = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]] = '...'
+      return tokens
+    }, {})
+  const [aprs, setAprs] = useState(initialAprs)
+  useInterval(async () => {
+    const responsePromises = Object.entries(yieldFarmingTokens)
+      .map(async (token) => {
+        const currencyASymbol = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]
+        if (currencyASymbol.substring(1) === ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_B]][SYMBOL]) {
+          const exchangeAddress = token[1][EXCHANGE_ADDRESS]
+          return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/current-apr`)
+            .then(response => response.json())
+            .then(data => [currencyASymbol, data.data])
+        } else {
+          return Promise.resolve()
+        }
+      })
+
+    const responses = await Promise.all(responsePromises)
+    const newAprs = responses
+      .filter(responseOpt => !!responseOpt)
+      .reduce((tokens, response) => {
+        tokens[response[0]] = response[1]
+        return tokens
+      }, {})
+    setAprs(newAprs)
+  }, 15 * 1000, true)
+
+  const [dmgLeft, setDmgLeft] = useState('...')
+  useInterval(async () => {
+    const amountLeftWei = await fetch(`${DMM_API_URL}/v1/yield-farming/dmg-left`)
+      .then(response => response.json())
+      .then(data => ethers.BigNumber.from(data.data))
+      .catch(() => '...')
+
+    if(amountLeftWei === '...') {
+      setDmgLeft('...')
+    } else {
+      const amountLeftDecimal = amountFormatter(amountLeftWei, 18, 2, true, true)
+      setDmgLeft(amountLeftDecimal)
+    }
+  }, 15 * 1000, true)
+
+  const [walletApr, setWalletApr] = useState('...')
+  useInterval(async () => {
+    await fetch(`${DMM_API_URL}/v1/yield-farming/addresses/${account}/current-apr`)
+      .then(response => response.json())
+      .then(data => setWalletApr(!!data.data ? data.data : '...'))
+      .catch(() => '...')
+  }, 15 * 1000, true, [account])
 
   useEffect(() => {
     const amount = independentValueParsed
@@ -807,6 +905,8 @@ export default function FarmPanel({ params }) {
     }
   }
 
+  const [isDisplayConfirmWithdraw, setIsDisplayConfirmWithdraw] = useState(false)
+
   const endYieldFarming = async () => {
     if (userDepositedLiquidityBalance && currencyADepositValue && currencyBDepositValue && userDepositedLiquidityBalance.gt(ethers.constants.Zero)) {
       approveFarmingIfNeeded()
@@ -875,6 +975,7 @@ export default function FarmPanel({ params }) {
             { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN).toString() }
           )
           .then(response => {
+            setIsDisplayConfirmWithdraw(false)
             addTransaction(response)
           })
           .catch(error => {
@@ -884,35 +985,37 @@ export default function FarmPanel({ params }) {
             } else {
               console.log('Could not approve tokens because the txn was cancelled')
             }
+            setIsDisplayConfirmWithdraw(false)
           })
       }
     }
   }
 
-  const displayConfirmWithdraw = true;
+  const [isCurrencyADisplayed, setIsCurrencyADisplayed] = useState(true)
 
   return (
     <FarmingWrapper>
-      {displayConfirmWithdraw &&
-        <BackDrop>
-          <Card>
-            <CardTitle>
-              Confirm Withdraw Farming
-            </CardTitle>
-            <Underline/>
-            <CardText>
-              Withdrawing xxx USDC and xxx mUSDC
-            </CardText>
-            <ConfirmButtonsWrapper>
-              <Button onClick={() => {/*close the window*/return;}}>
-                Deny
-              </Button>
-              <Button onClick={() => {/*submit withdraw*/return;}}>
-                Confirm
-              </Button>
-            </ConfirmButtonsWrapper>
-          </Card>
-        </BackDrop>
+      {isDisplayConfirmWithdraw &&
+      <BackDrop>
+        <Card>
+          <CardTitle>
+            Confirm Withdraw Farming
+          </CardTitle>
+          <Underline/>
+          <CardText>
+            You are withdrawing your active farm, which incurs a 0.50% fee on the amount of {currencyBSymbol} you
+            deposited.
+          </CardText>
+          <ConfirmButtonsWrapper>
+            <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>
+              Deny
+            </Button>
+            <Button onClick={endYieldFarming}>
+              Confirm
+            </Button>
+          </ConfirmButtonsWrapper>
+        </Card>
+      </BackDrop>
       }
       {!isDisclaimerAccepted && (<OverlayContent>
         {t('yieldFarmingDisclaimer_1')}
@@ -931,76 +1034,37 @@ export default function FarmPanel({ params }) {
         </Title>
         <Underline/>
         <Amount>
-          <InlineAmount>
-            <Label>
-              mUSDC APR
-            </Label>
-            <Value>
-              38.45%
-            </Value>
-          </InlineAmount>
-          <InlineAmount>
-            <Label>
-              mDAI APR
-            </Label>
-            <Value>
-              42.15%
-            </Value>
-          </InlineAmount>
-          <InlineAmount>
-            <Label>
-              mUSDT APR
-            </Label>
-            <Value>
-              47.21%
-            </Value>
-          </InlineAmount>
-          <InlineAmount>
-            <Label>
-              mETH APR
-            </Label>
-            <Value>
-              36.22%
-            </Value>
-          </InlineAmount>
+          {Object.keys(aprs).map((key) => {
+            return (
+              <InlineAmount>
+                <Label>
+                  {key} APR
+                </Label>
+                <Value>
+                  {aprs[key]}
+                </Value>
+              </InlineAmount>
+            )
+          })}
         </Amount>
         <Amount>
           <Label>
             Left for redemption
           </Label>
           <Value>
-            762,435 DMG
+            {dmgLeft} DMG
           </Value>
         </Amount>
-        {/*<Amount>
-          <Label>
-            Currently being farmed
-          </Label>
-          <Value>
-            300,000 mTokens
-          </Value>
-        </Amount>*/}
         <Title>
           Your Wallet
         </Title>
         <Underline/>
         <Amount>
           <Label>
-            Currently being farmed
-          </Label>
-          <Value>
-            6,723 <Unit>mUSDC</Unit>
-          </Value>
-          <Value>
-            240 <Unit>mDAI</Unit>
-          </Value>
-        </Amount>
-        <Amount>
-          <Label>
             Earning a net APY of
           </Label>
           <Value>
-            39.32%
+            {walletApr}
           </Value>
         </Amount>
       </InfoPanel>
@@ -1083,7 +1147,8 @@ export default function FarmPanel({ params }) {
           tokenList={underlyingTokens}
         />
         {/* END CURRENCY B */}
-        <OversizedPanel style={{boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)`}} hideTop hideBottom>
+        <OversizedPanel style={{ boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)` }}
+                        hideTop hideBottom>
           <SummaryPanel>
             <ExchangeRateWrapper>
               <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
@@ -1100,10 +1165,10 @@ export default function FarmPanel({ params }) {
               <ExchangeRate>
                 {t('yourPoolShare')} ({currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
               </ExchangeRate>
-              <span>{
-                currencyAShare.eq(ethers.constants.Zero) ? '-' :
-                  `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`
-              }</span>
+              <CurrencySwitcher onClick={() => setIsCurrencyADisplayed(!isCurrencyADisplayed)}>
+                {isCurrencyADisplayed && (currencyAShare.eq(ethers.constants.Zero) ? '-' : `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`)}
+                {!isCurrencyADisplayed && (currencyBShare.eq(ethers.constants.Zero) ? '-' : `${amountFormatter(currencyBShare, currencyBDecimals, 4)} ${currencyBSymbol}`)}
+              </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
@@ -1112,6 +1177,12 @@ export default function FarmPanel({ params }) {
               <span>{
                 !userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`
               }</span>
+            </ExchangeRateWrapper>
+            <ExchangeRateWrapper>
+              <ExchangeRate>
+                {t('withdrawalFee')}
+              </ExchangeRate>
+              <span>{feesByToken}</span>
             </ExchangeRateWrapper>
           </SummaryPanel>
         </OversizedPanel>
@@ -1148,7 +1219,7 @@ export default function FarmPanel({ params }) {
           <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
             {isFarmingApproved ? t('farm') : t('approveFarming')}
           </Button>
-          <Button disabled={!isEndValid || !isFarmingApproved} onClick={endYieldFarming}>
+          <Button disabled={!isEndValid || !isFarmingApproved} onClick={() => setIsDisplayConfirmWithdraw(true)}>
             {isFarmingActive ? t('endFarming') : t('withdraw')}
           </Button>
         </Flex>

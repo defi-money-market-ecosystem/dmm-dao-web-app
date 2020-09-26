@@ -326,7 +326,7 @@ export function usePrevious(value) {
   return ref.current
 }
 
-export function useInterval(callback, tickDuration, executeImmediately) {
+export function useInterval(callback, tickDuration, executeImmediately, extraDeps) {
   const savedCallback = useRef()
   const savedExecuteImmediately = useRef(executeImmediately)
 
@@ -350,5 +350,5 @@ export function useInterval(callback, tickDuration, executeImmediately) {
       let id = setInterval(tick, tickDuration)
       return () => clearInterval(id)
     }
-  }, [tickDuration, executeImmediately])
+  }, [tickDuration, executeImmediately, ...(!!extraDeps ? extraDeps : [])])
 }

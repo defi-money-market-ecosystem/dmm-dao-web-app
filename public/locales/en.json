@@ -21,6 +21,7 @@
   "yieldFarmingNoAuditYet_2": "To yield farm with DMM you must accept this and use at your own risk.",
   "yieldFarmingNoAuditYet_accept": "I accept",
   "input": "Input",
+  "withdrawalFee": "Harvest Fee",
   "output": "Output",
   "estimated": "estimated",
   "iAccept": "I Accept",
