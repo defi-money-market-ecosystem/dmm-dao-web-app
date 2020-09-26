@@ -598,6 +598,7 @@ export default function FarmPanel({ params }) {
   const userDmgRewardBalance = useAddressDmgRewardBalance(account, exchangeAddress)
 
   const exchangeRate = getExchangeRate(exchangeCurrencyABalance, currencyADecimals, exchangeCurrencyBBalance, currencyBDecimals)
+  const exchangeRateInverted = getExchangeRate(exchangeCurrencyABalance, currencyADecimals, exchangeCurrencyBBalance, currencyBDecimals, true)
 
   const currencyASymbol = ALL_TOKENS_CONTEXT['1'][currencyA][SYMBOL]
   const currencyBSymbol = ALL_TOKENS_CONTEXT['1'][currencyB][SYMBOL]
@@ -984,6 +985,7 @@ export default function FarmPanel({ params }) {
   }
 
   const [isCurrencyADisplayed, setIsCurrencyADisplayed] = useState(true)
+  const [isExchangeRateInverted, setIsExchangeRateInverted] = useState(false)
   const fees = feesByToken === '-' ? 0 : parseFloat(feesByToken.substring(0, feesByToken.length - 1)) / 100.0
   const feesWei = ethers.utils.parseEther(fees.toString())
   const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
@@ -1148,14 +1150,17 @@ export default function FarmPanel({ params }) {
           <SummaryPanel>
             <ExchangeRateWrapper>
               <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
-              <span>{exchangeRate ? `1 ${currencyASymbol} = ${amountFormatter(exchangeRate, 18, 6)} ${currencyBSymbol}` : ' - '}</span>
+              <CurrencySwitcher onClick={() => setIsExchangeRateInverted(!isExchangeRateInverted)}>
+                {!isExchangeRateInverted && (exchangeRate ? `1 ${currencyASymbol} = ${amountFormatter(exchangeRate, 18, 6)} ${currencyBSymbol}` : ' - ')}
+                {isExchangeRateInverted && (exchangeRateInverted ? `1 ${currencyBSymbol} = ${amountFormatter(exchangeRateInverted, 18, 6)} ${currencyASymbol}` : ' - ')}
+              </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>{t('currentPoolSize')}</ExchangeRate>
-              <span>{
-                (exchangeCurrencyABalance.eq(ethers.constants.Zero)) ? '-' :
-                  `${amountFormatter(exchangeCurrencyABalance, currencyADecimals, 4)} ${currencyASymbol}`
-              }</span>
+              <CurrencySwitcher onClick={() => setIsCurrencyADisplayed(!isCurrencyADisplayed)}>
+                {isCurrencyADisplayed && ((exchangeCurrencyABalance.eq(ethers.constants.Zero)) ? '-' : `${amountFormatter(exchangeCurrencyABalance, currencyADecimals, 4)} ${currencyASymbol}`)}
+                {!isCurrencyADisplayed && ((exchangeCurrencyBBalance.eq(ethers.constants.Zero)) ? '-' : `${amountFormatter(exchangeCurrencyBBalance, currencyBDecimals, 4)} ${currencyBSymbol}`)}
+              </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
