@@ -640,12 +640,12 @@ export default function FarmPanel({ params }) {
 
   const [feesByToken, setFeesByToken] = useState('-')
   const fetchFeesByToken = useCallback(() => {
-    if (exchangeContract && exchangeAddress) {
+    if (exchangeAddress) {
       return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/fees`)
         .then(response => response.json())
         .then(data => setFeesByToken(data.data))
     }
-  }, [exchangeContract, exchangeAddress])
+  }, [exchangeAddress])
   useEffect(() => {
     fetchFeesByToken()
     library.on('block', fetchFeesByToken)
@@ -654,6 +654,21 @@ export default function FarmPanel({ params }) {
       library.removeListener('block', fetchFeesByToken)
     }
   }, [fetchFeesByToken, library])
+
+  const [dmgPriceUsdWei, setDmgPriceUsdWei] = useState(undefined)
+  const fetchDmgPriceWei = useCallback(() => {
+    return fetch(`${DMM_API_URL}/v1/dmg/price/wei`)
+      .then(response => response.json())
+      .then(data => setDmgPriceUsdWei(data.data))
+  })
+  useEffect(() => {
+    fetchDmgPriceWei()
+    library.on('block', fetchDmgPriceWei)
+
+    return () => {
+      library.removeListener('block', fetchDmgPriceWei)
+    }
+  }, [fetchDmgPriceWei, library])
 
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
@@ -986,10 +1001,17 @@ export default function FarmPanel({ params }) {
 
   const [isCurrencyADisplayed, setIsCurrencyADisplayed] = useState(true)
   const [isExchangeRateInverted, setIsExchangeRateInverted] = useState(false)
+  const [isUsingDmgPriceUsd, setIsUsingDmgPriceUsd] = useState(false)
   const fees = feesByToken === '-' ? 0 : parseFloat(feesByToken.substring(0, feesByToken.length - 1)) / 100.0
   const feesWei = ethers.utils.parseEther(fees.toString())
   const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
   const feeAmountFormatted = amountFormatter(feeAmountWei, currencyBDecimals, 6, false, false)
+
+  let dmgRewardValueUsd = '0.00'
+  if (isUsingDmgPriceUsd && !!dmgPriceUsdWei) {
+    dmgRewardValueUsd = userDmgRewardBalance.mul(dmgPriceUsdWei).div(ethers.BigNumber.from('1000000000000000000'))
+    dmgRewardValueUsd = amountFormatter(dmgRewardValueUsd, 18, 2, true, true)
+  }
 
   return (
     <FarmingWrapper>
@@ -1175,9 +1197,10 @@ export default function FarmPanel({ params }) {
               <ExchangeRate>
                 {t('dmgRewardBalance')}
               </ExchangeRate>
-              <span>{
-                !userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`
-              }</span>
+              <CurrencySwitcher onClick={() => setIsUsingDmgPriceUsd(!isUsingDmgPriceUsd)}>
+                {!isUsingDmgPriceUsd && (!userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`)}
+                {isUsingDmgPriceUsd && `~ $${dmgRewardValueUsd}`}
+              </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
