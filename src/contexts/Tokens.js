@@ -29,6 +29,7 @@ export const CURRENCY_B = 'currencyB'
 
 const UPDATE = 'UPDATE'
 
+export const LINK_ADDRESS = '0x514910771af9ca656af840dff83e8264ecf986ca'
 export const M_DAI_ADDRESS = '0x06301057d77d54b6e14c7faffb11ffc7cab4eaa7'
 export const DAI_ADDRESS = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
 export const ETH_ADDRESS = 'ETH'
@@ -46,7 +47,7 @@ export const ETH = {
     [SYMBOL]: 'ETH',
     [DECIMALS]: 18,
     [EXCHANGE_ADDRESS]: null,
-    [ADDRESS]: 'ETH',
+    [ADDRESS]: 'ETH'
   }
 }
 
@@ -97,34 +98,40 @@ function initializeAllTokens() {
     [NAME]: 'DMM: DAI',
     [SYMBOL]: 'mDAI',
     [DECIMALS]: 18,
-    [ADDRESS]: M_DAI_ADDRESS,
+    [ADDRESS]: M_DAI_ADDRESS
   }
   allTokens['1'][M_ETH_ADDRESS] = {
     [NAME]: 'DMM: ETH',
     [SYMBOL]: 'mETH',
     [DECIMALS]: 18,
-    [ADDRESS]: M_ETH_ADDRESS,
+    [ADDRESS]: M_ETH_ADDRESS
   }
   allTokens['1'][M_USDC_ADDRESS] = {
     [NAME]: 'DMM: USDC',
     [SYMBOL]: 'mUSDC',
     [DECIMALS]: 6,
-    [ADDRESS]: M_USDC_ADDRESS,
+    [ADDRESS]: M_USDC_ADDRESS
   }
   allTokens['1'][M_USDT_ADDRESS] = {
     [NAME]: 'DMM: USDT',
     [SYMBOL]: 'mUSDT',
     [DECIMALS]: 6,
-    [ADDRESS]: M_USDT_ADDRESS,
+    [ADDRESS]: M_USDT_ADDRESS
   }
 
   // Add tokens not available for swapping
   allTokens['1'][ETH_ADDRESS] = ETH['ETH']
+  allTokens['1'][LINK_ADDRESS] = {
+    [NAME]: 'ChainLink Token',
+    [SYMBOL]: 'LINK',
+    [DECIMALS]: 18,
+    [ADDRESS]: LINK_ADDRESS
+  }
   allTokens['1'][USDT_ADDRESS] = {
     [NAME]: 'Tether USD',
     [SYMBOL]: 'USDT',
     [DECIMALS]: 6,
-    [ADDRESS]: USDT_ADDRESS,
+    [ADDRESS]: USDT_ADDRESS
   }
 
   return allTokens
@@ -156,6 +163,65 @@ export const MARKETS = {
 }
 
 export const YIELD_FARMING_TOKENS = {
+  1: [
+    // [DMG_ADDRESS]: {
+    //   [CURRENCY_A]: DMG_ADDRESS,
+    //   [CURRENCY_B]: ETH_ADDRESS,
+    //   [EXCHANGE_ADDRESS]: '0x8175362afbeee32afb22d05adc0bbd08de32f5ae',
+    //   [IS_M_TOKEN]: false
+    // },
+    {
+      [CURRENCY_A]: M_DAI_ADDRESS,
+      [CURRENCY_B]: DAI_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x8da81afea7986698772a611bf37501236d443528',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_ETH_ADDRESS,
+      [CURRENCY_B]: ETH_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xa896f041a2b18e58e7fbc513cd371de1348596de',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_USDC_ADDRESS,
+      [CURRENCY_B]: USDC_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x78bda7a14d31c5c845e0b8e9e9e4b119e7691723',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_USDT_ADDRESS,
+      [CURRENCY_B]: USDT_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xf2482f09f54125a3659f788cf7436af0753d969f',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_DAI_ADDRESS,
+      [CURRENCY_B]: LINK_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x36ceaf21138c6606b8361e974e68d80c6dea1038',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_ETH_ADDRESS,
+      [CURRENCY_B]: LINK_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xd52553f55deaf085f56b325ca65ccdeded25c201',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_USDC_ADDRESS,
+      [CURRENCY_B]: LINK_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xf0b5f01b2ab0d5e77487ed4f8e71a3791f9f45fe',
+      [IS_M_TOKEN]: true
+    },
+    {
+      [CURRENCY_A]: M_USDT_ADDRESS,
+      [CURRENCY_B]: LINK_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xb0931b326c083a0e57cc5a71ffb8df5e6016b6ad',
+      [IS_M_TOKEN]: true
+    }
+  ]
+}
+
+export const YIELD_FARMING_TOKENS_MAP = {
   1: {
     // [DMG_ADDRESS]: {
     //   [CURRENCY_A]: DMG_ADDRESS,
@@ -163,6 +229,30 @@ export const YIELD_FARMING_TOKENS = {
     //   [EXCHANGE_ADDRESS]: '0x8175362afbeee32afb22d05adc0bbd08de32f5ae',
     //   [IS_M_TOKEN]: false
     // },
+    [DAI_ADDRESS]: {
+      [CURRENCY_A]: M_DAI_ADDRESS,
+      [CURRENCY_B]: DAI_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x8da81afea7986698772a611bf37501236d443528',
+      [IS_M_TOKEN]: true
+    },
+    [ETH_ADDRESS]: {
+      [CURRENCY_A]: M_ETH_ADDRESS,
+      [CURRENCY_B]: ETH_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xa896f041a2b18e58e7fbc513cd371de1348596de',
+      [IS_M_TOKEN]: true
+    },
+    [USDC_ADDRESS]: {
+      [CURRENCY_A]: M_USDC_ADDRESS,
+      [CURRENCY_B]: USDC_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x78bda7a14d31c5c845e0b8e9e9e4b119e7691723',
+      [IS_M_TOKEN]: true
+    },
+    [USDT_ADDRESS]: {
+      [CURRENCY_A]: M_USDT_ADDRESS,
+      [CURRENCY_B]: USDT_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xf2482f09f54125a3659f788cf7436af0753d969f',
+      [IS_M_TOKEN]: true
+    },
     [M_DAI_ADDRESS]: {
       [CURRENCY_A]: M_DAI_ADDRESS,
       [CURRENCY_B]: DAI_ADDRESS,
@@ -186,18 +276,9 @@ export const YIELD_FARMING_TOKENS = {
       [CURRENCY_B]: USDT_ADDRESS,
       [EXCHANGE_ADDRESS]: '0xf2482f09f54125a3659f788cf7436af0753d969f',
       [IS_M_TOKEN]: true
-    }
+    },
   }
 }
-
-Object.keys(YIELD_FARMING_TOKENS).forEach((chainId => {
-  Object.keys(YIELD_FARMING_TOKENS[chainId]).forEach(tokenAddress => {
-    if (YIELD_FARMING_TOKENS[chainId][tokenAddress][IS_M_TOKEN]) {
-      const underlyingAddress = YIELD_FARMING_TOKENS[chainId][tokenAddress][CURRENCY_B]
-      YIELD_FARMING_TOKENS[chainId][underlyingAddress] = YIELD_FARMING_TOKENS[chainId][tokenAddress]
-    }
-  })
-}))
 
 const TokensContext = createContext()
 

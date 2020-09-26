@@ -39,13 +39,13 @@ const SubCurrencySelect = styled.button`
   line-height: 0;
   height: 2rem;
   align-items: center;
-  border-radius: 2.5rem;
+  border-radius: 5px;
   outline: none;
   cursor: pointer;
   user-select: none;
   background-color: #e0e0e0;
   color: #000000;
-  border: 1px solid #000000;
+  border: none;
 `
 
 const InputRow = styled.div`
@@ -76,7 +76,7 @@ const CurrencySelect = styled.button`
   font-size: 1rem;
   color: ${({ selected, theme }) => (selected ? theme.textColor : theme.royalBlue)};
   height: 2rem;
-  border-radius: 2.5rem;
+  border-radius: 5px;
   background-color: #ffffff;
   outline: none;
   cursor: pointer;
@@ -113,13 +113,13 @@ const InputPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
   box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   position: relative;
-  border-radius: 1.25rem;
+  border-radius: 5px;
   background-color: ${({ theme }) => theme.inputBackground};
   z-index: 1;
 `
 
 const Container = styled.div`
-  border-radius: 1.25rem;
+  border-radius: 5px;
 
   background-color: #ffffff;
   :focus-within {

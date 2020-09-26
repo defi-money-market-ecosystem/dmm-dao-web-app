@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react'
 import {
   useExchangeContract,
+  useInterval,
   useWeb3React,
   useYieldFarmingProxyContract,
   useYieldFarmingRouterContract
@@ -13,15 +14,16 @@ import {
   ETH,
   ETH_ADDRESS,
   EXCHANGE_ADDRESS,
+  LINK_ADDRESS,
   M_USDC_ADDRESS,
   SYMBOL,
   USDC_ADDRESS,
   useAllYieldFarmingTokens,
   WETH_ADDRESS,
-  YIELD_FARMING_TOKENS
+  YIELD_FARMING_TOKENS_MAP
 } from '../../contexts/Tokens'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { amountFormatter, calculateGasMargin, isAddress, MIN_DECIMALS } from '../../utils'
+import { amountFormatter, calculateGasMargin, DMM_API_URL, isAddress, MIN_DECIMALS } from '../../utils'
 import { ethers } from 'ethers'
 import OversizedPanel from '../../components/OversizedPanel'
 import { Button } from '../../theme'
@@ -41,16 +43,164 @@ import { useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressYieldFarmingBalance } from '../../contexts/YieldFarmingBalances'
 import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
 
-const Wrapper = styled.div`
+
+const BackDrop = styled.div`
+  width: 100vw;
+	height: 100vh;
+	background-color: rgba(0,0,0,0.5);
+	position: fixed;
+	top: 0;
+	left: 0;
+	z-index: 110;
+	
+	@media (max-width: 700px) {
+	  background: none;
+  }
+`
+
+const Card = styled.div`
+	background-color: #FFFFFF;
+	position: relative;
+	left: 50%;
+	top: 50%;
+	max-width: 320px;
+	width: 350px;
+	transform: translate(-50%, -50%);
+	border-radius: 5px;
+	opacity: 1;
+	z-index: 5;
+	padding: 25px 40px 5px;
+	text-align: center;
+	font-weight: 600;
+	color: black;
+	max-width: calc(80vw - 30px);
+	
+	@media (max-width: 700px) {
+	  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+	}
+`
+
+const FarmingWrapper = styled.div`
+  width: calc(150% + 25px);
+  display: flex;
+  justify-content: space-between;
+  
+  @media (max-width: 900px) {
+    flex-direction: column;
+    width: 100%;
+    overflow-y: scroll;
+    height: calc(100vh - 194px);
+  }
+`
+
+const InfoPanel = styled.div`
+  width: calc(40% - 92.5px);
+  background: white;
+  border-radius: 5px;
+  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+  margin-top: 32px;
+  padding: 0 40px 30px;
+  height: fit-content;
+  
+  @media (max-width: 900px) {
+    width: calc(100% - 80px);
+  }
+`
+
+const Title = styled.div`
+  font-size: 28px;
+  font-weight: 300;
+  color: #0a2a5a;
+  padding: 20px 0 10px;
+  margin-top: 10px;
+  
+  @media (max-width: 800px) {
+    font-size: 23px;
+  }
+`
+
+const CardTitle = styled.div`
+  font-size: 28px;
+  font-weight: 300;
+  color: #0a2a5a;
+  padding: 10px 0 10px;
+  margin-top: 0;
+  
+  @media (max-width: 800px) {
+    font-size: 23px;
+  }
+`
+
+const CardText = styled.div`
+  font-size: 16px;
+  font-weight: 300;
+  text-align: left;
+  margin-top: 10px;
+`
+
+const Underline = styled.div`
+  height: 2px;
+  background: #327ccb;
+  width: 50px;
+  margin-bottom: 12px;
+`
+
+const Amount = styled.div`
+  margin-top: 12px;
+  margin-bottom: 2px;
   width: 100%;
+`
+
+const InlineAmount = styled.div`
+  display: inline-block;
+  vertical-align: top;
+  width: 50%;
+  margin-top: 12px;
+`
+
+const Label = styled.div`
+  font-size: 14px;
+  font-weight: 200;
+  color: black;
+  opacity: 0.8;
+`
+
+const Value = styled.div`
+  font-size: 18px;
+  font-weight: 300;
+  color: black;
+  margin-top: 4px;
+`
+
+const Wrapper = styled.div`
+  width: calc(60% - 12.5px);
   margin-top: 32px;
   opacity: ${props => props.disabled ? '0.4' : '1'}
+  
+  @media (max-width: 900px) {
+    width: 100%;
+  }
 `
 
 const DownArrowBackground = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
   justify-content: center;
   align-items: center;
+`
+
+const ConfirmButtonsWrapper = styled.div`
+  text-align: right;
+  
+  Button {
+    display: inline-block;
+    width: 100px;
+    padding: 10px 20px;
+    margin: 20px 0 20px 10px;
+  }
+  
+  Button:first-of-type {
+    background-color: #b1becc;
+  }
 `
 
 const WrappedPlus = ({ isError, highSlippageWarning, ...rest }) => <Plus {...rest} />
@@ -109,6 +259,10 @@ const ColoredWrappedPlus = styled(WrappedPlus)`
 const SummaryPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
   padding: 1rem 0;
+  background: white;
+  border-radius: 5px;
+  margin-top: 15px;
+  color: black;
 `
 
 const ExchangeRateWrapper = styled.div`
@@ -117,12 +271,20 @@ const ExchangeRateWrapper = styled.div`
   color: ${({ theme }) => theme.doveGray};
   font-size: 0.75rem;
   padding: 0.5rem 1rem;
+  
+  span {
+    color: black;
+  }
 `
 
 const ExchangeRate = styled.span`
   flex: 1 1 auto;
   width: 0;
-  color: ${({ theme }) => theme.doveGray};
+  color: black;
+`
+
+const CurrencySwitcher = styled.span`
+  cursor: pointer;
 `
 
 const Flex = styled.div`
@@ -164,15 +326,29 @@ function getInitialSwapState(state) {
   }
 }
 
-function farmStateReducer(state, chainId, action) {
+function farmStateReducer(state, chainId, action, currencyA) {
   switch (action.type) {
     case 'SELECT_CURRENCY': {
       const { field, currency } = action.payload
 
-      const newInputCurrency = field === INDEPENDENT_CURRENCY_A ? currency : YIELD_FARMING_TOKENS[chainId][currency][CURRENCY_A]
-      const newOutputCurrency = field === INDEPENDENT_CURRENCY_B ? currency : YIELD_FARMING_TOKENS[chainId][currency][CURRENCY_B]
+      const anyTokenPairings = [LINK_ADDRESS]
 
-      if (newInputCurrency === newOutputCurrency) {
+      let newCurrencyA
+      if (field === INDEPENDENT_CURRENCY_A) {
+        newCurrencyA = currency
+      } else {
+        const isSpecialToken = anyTokenPairings.indexOf(currency) !== -1
+        newCurrencyA = isSpecialToken ? undefined : YIELD_FARMING_TOKENS_MAP[chainId][currency][CURRENCY_A]
+      }
+      let newCurrencyB
+      if (field === INDEPENDENT_CURRENCY_B) {
+        newCurrencyB = currency
+      } else {
+        const isSpecialToken = anyTokenPairings.indexOf(state[CURRENCY_B]) !== -1
+        newCurrencyB = isSpecialToken ? undefined : YIELD_FARMING_TOKENS_MAP[chainId][currency][CURRENCY_B]
+      }
+
+      if (newCurrencyA === newCurrencyB) {
         return {
           ...state,
           currencyA: field === INDEPENDENT_CURRENCY_A ? currency : '',
@@ -181,8 +357,8 @@ function farmStateReducer(state, chainId, action) {
       } else {
         return {
           ...state,
-          currencyA: newInputCurrency,
-          currencyB: newOutputCurrency
+          currencyA: !!newCurrencyA ? newCurrencyA : state[CURRENCY_A],
+          currencyB: !!newCurrencyB ? newCurrencyB : state[CURRENCY_B]
         }
       }
     }
@@ -272,19 +448,25 @@ export default function FarmPanel({ params }) {
   )
 
   const yieldFarmingTokens = useAllYieldFarmingTokens()
-  const mTokens = Object.keys(yieldFarmingTokens)
-    .reduce((tokens, key) => {
-      tokens[key] = ALL_TOKENS_CONTEXT[chainId][yieldFarmingTokens[key][CURRENCY_A]]
+  const mTokens = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[token[1][CURRENCY_A]] = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]]
       return tokens
     }, {})
 
-  const underlyingTokens = Object.keys(yieldFarmingTokens)
-    .reduce((tokens, key) => {
-      if (yieldFarmingTokens[key][CURRENCY_B] === 'ETH') {
+  const underlyingTokens = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      if (token[1][CURRENCY_B] === 'ETH') {
         tokens['ETH'] = ETH['ETH']
       } else {
-        tokens[key] = ALL_TOKENS_CONTEXT[chainId][yieldFarmingTokens[key][CURRENCY_B]]
+        tokens[token[1][CURRENCY_B]] = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_B]]
       }
+      return tokens
+    }, {})
+
+  const pairs = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[`${token[1][CURRENCY_A]}-${token[1][CURRENCY_B]}`] = token[1][EXCHANGE_ADDRESS]
       return tokens
     }, {})
 
@@ -403,7 +585,7 @@ export default function FarmPanel({ params }) {
   const [showUnlockCurrencyA, setShowUnlockCurrencyA] = useState(true)
   const [showUnlockCurrencyB, setShowUnlockCurrencyB] = useState(true)
 
-  const exchangeAddress = yieldFarmingTokens[currencyA][EXCHANGE_ADDRESS]
+  const exchangeAddress = pairs[`${currencyA}-${currencyB}`]
   const exchangeContract = useExchangeContract(exchangeAddress)
 
   const currencyABalance = useAddressBalance(account, currencyA)
@@ -455,6 +637,23 @@ export default function FarmPanel({ params }) {
     }
   }, [fetchPoolTokens, library])
 
+  const [feesByToken, setFeesByToken] = useState('-')
+  const fetchFeesByToken = useCallback(() => {
+    if (exchangeContract && exchangeAddress) {
+      return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/fees`)
+        .then(response => response.json())
+        .then(data => setFeesByToken(data.data))
+    }
+  }, [exchangeContract, exchangeAddress])
+  useEffect(() => {
+    fetchFeesByToken()
+    library.on('block', fetchFeesByToken)
+
+    return () => {
+      library.removeListener('block', fetchFeesByToken)
+    }
+  }, [fetchFeesByToken, library])
+
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
 
@@ -465,6 +664,62 @@ export default function FarmPanel({ params }) {
 
   const currencyAShare = (!currencyABalance || !poolTokenPercentage) ? ethers.constants.Zero
     : exchangeCurrencyABalance.mul(poolTokenPercentage).div(oneWei)
+
+  const currencyBShare = (!currencyBBalance || !poolTokenPercentage) ? ethers.constants.Zero
+    : exchangeCurrencyBBalance.mul(poolTokenPercentage).div(oneWei)
+
+  const initialAprs = Object.entries(yieldFarmingTokens)
+    .reduce((tokens, token) => {
+      tokens[ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]] = '...'
+      return tokens
+    }, {})
+  const [aprs, setAprs] = useState(initialAprs)
+  useInterval(async () => {
+    const responsePromises = Object.entries(yieldFarmingTokens)
+      .map(async (token) => {
+        const currencyASymbol = ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]
+        if (currencyASymbol.substring(1) === ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_B]][SYMBOL]) {
+          const exchangeAddress = token[1][EXCHANGE_ADDRESS]
+          return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/current-apr`)
+            .then(response => response.json())
+            .then(data => [currencyASymbol, data.data])
+        } else {
+          return Promise.resolve()
+        }
+      })
+
+    const responses = await Promise.all(responsePromises)
+    const newAprs = responses
+      .filter(responseOpt => !!responseOpt)
+      .reduce((tokens, response) => {
+        tokens[response[0]] = response[1]
+        return tokens
+      }, {})
+    setAprs(newAprs)
+  }, 15 * 1000, true)
+
+  const [dmgLeft, setDmgLeft] = useState('...')
+  useInterval(async () => {
+    const amountLeftWei = await fetch(`${DMM_API_URL}/v1/yield-farming/dmg-left`)
+      .then(response => response.json())
+      .then(data => ethers.BigNumber.from(data.data))
+      .catch(() => '...')
+
+    if (amountLeftWei === '...') {
+      setDmgLeft('...')
+    } else {
+      const amountLeftDecimal = amountFormatter(amountLeftWei, 18, 2, true, true)
+      setDmgLeft(amountLeftDecimal)
+    }
+  }, 15 * 1000, true)
+
+  const [walletApr, setWalletApr] = useState('...')
+  useInterval(async () => {
+    await fetch(`${DMM_API_URL}/v1/yield-farming/addresses/${account}/current-apr`)
+      .then(response => response.json())
+      .then(data => setWalletApr(!!data.data ? data.data : '...'))
+      .catch(() => '...')
+  }, 15 * 1000, true, [account])
 
   useEffect(() => {
     const amount = independentValueParsed
@@ -642,6 +897,8 @@ export default function FarmPanel({ params }) {
     }
   }
 
+  const [isDisplayConfirmWithdraw, setIsDisplayConfirmWithdraw] = useState(false)
+
   const endYieldFarming = async () => {
     if (userDepositedLiquidityBalance && currencyADepositValue && currencyBDepositValue && userDepositedLiquidityBalance.gt(ethers.constants.Zero)) {
       approveFarmingIfNeeded()
@@ -710,6 +967,7 @@ export default function FarmPanel({ params }) {
             { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN).toString() }
           )
           .then(response => {
+            setIsDisplayConfirmWithdraw(false)
             addTransaction(response)
           })
           .catch(error => {
@@ -719,13 +977,42 @@ export default function FarmPanel({ params }) {
             } else {
               console.log('Could not approve tokens because the txn was cancelled')
             }
+            setIsDisplayConfirmWithdraw(false)
           })
       }
     }
   }
 
+  const [isCurrencyADisplayed, setIsCurrencyADisplayed] = useState(true)
+  const fees = feesByToken === '-' ? 0 : parseFloat(feesByToken.substring(0, feesByToken.length - 1)) / 100.0
+  const feesWei = ethers.utils.parseEther(fees.toString())
+  const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
+  const feeAmountFormatted = amountFormatter(feeAmountWei, currencyBDecimals, 6, false, false)
+
   return (
-    <div style={{ width: '100%' }}>
+    <FarmingWrapper>
+      {isDisplayConfirmWithdraw &&
+      <BackDrop>
+        <Card>
+          <CardTitle>
+            Confirm Withdraw Farming
+          </CardTitle>
+          <Underline/>
+          <CardText>
+            You are withdrawing your active farm, which incurs a {feesByToken} fee on the amount
+            of {currencyBSymbol} you deposited. The expected fee is about {feeAmountFormatted} {currencyBSymbol}.
+          </CardText>
+          <ConfirmButtonsWrapper>
+            <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>
+              Deny
+            </Button>
+            <Button onClick={endYieldFarming}>
+              Confirm
+            </Button>
+          </ConfirmButtonsWrapper>
+        </Card>
+      </BackDrop>
+      }
       {!isDisclaimerAccepted && (<OverlayContent>
         {t('yieldFarmingDisclaimer_1')}
         <br/>
@@ -737,6 +1024,46 @@ export default function FarmPanel({ params }) {
           </Button>
         </OverlayAcceptButton>
       </OverlayContent>)}
+      <InfoPanel>
+        <Title>
+          Farming Info
+        </Title>
+        <Underline/>
+        <Amount>
+          {Object.keys(aprs).map((key) => {
+            return (
+              <InlineAmount>
+                <Label>
+                  {key} APR
+                </Label>
+                <Value>
+                  {aprs[key]}
+                </Value>
+              </InlineAmount>
+            )
+          })}
+        </Amount>
+        <Amount>
+          <Label>
+            Left for redemption
+          </Label>
+          <Value>
+            {dmgLeft} DMG
+          </Value>
+        </Amount>
+        <Title>
+          Your Wallet
+        </Title>
+        <Underline/>
+        <Amount>
+          <Label>
+            Earning a net APY of
+          </Label>
+          <Value>
+            {walletApr}
+          </Value>
+        </Amount>
+      </InfoPanel>
       <Wrapper disabled={!isDisclaimerAccepted}>
         {/* CURRENCY A */}
         <CurrencyInputPanel
@@ -816,7 +1143,8 @@ export default function FarmPanel({ params }) {
           tokenList={underlyingTokens}
         />
         {/* END CURRENCY B */}
-        <OversizedPanel hideBottom>
+        <OversizedPanel style={{ boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)` }}
+                        hideTop hideBottom>
           <SummaryPanel>
             <ExchangeRateWrapper>
               <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
@@ -831,12 +1159,12 @@ export default function FarmPanel({ params }) {
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
-                {t('yourPoolShare')} ({currencyABalance && currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
+                {t('yourPoolShare')} ({currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
               </ExchangeRate>
-              <span>{
-                currencyAShare.eq(ethers.constants.Zero) ? '-' :
-                  `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`
-              }</span>
+              <CurrencySwitcher onClick={() => setIsCurrencyADisplayed(!isCurrencyADisplayed)}>
+                {isCurrencyADisplayed && (currencyAShare.eq(ethers.constants.Zero) ? '-' : `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`)}
+                {!isCurrencyADisplayed && (currencyBShare.eq(ethers.constants.Zero) ? '-' : `${amountFormatter(currencyBShare, currencyBDecimals, 4)} ${currencyBSymbol}`)}
+              </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
@@ -845,6 +1173,12 @@ export default function FarmPanel({ params }) {
               <span>{
                 !userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`
               }</span>
+            </ExchangeRateWrapper>
+            <ExchangeRateWrapper>
+              <ExchangeRate>
+                {t('withdrawalFee')}
+              </ExchangeRate>
+              <span>{feesByToken}</span>
             </ExchangeRateWrapper>
           </SummaryPanel>
         </OversizedPanel>
@@ -881,12 +1215,12 @@ export default function FarmPanel({ params }) {
           <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
             {isFarmingApproved ? t('farm') : t('approveFarming')}
           </Button>
-          <Button disabled={!isEndValid || !isFarmingApproved} onClick={endYieldFarming}>
+          <Button disabled={!isEndValid || !isFarmingApproved} onClick={() => setIsDisplayConfirmWithdraw(true)}>
             {isFarmingActive ? t('endFarming') : t('withdraw')}
           </Button>
         </Flex>
       </Wrapper>
-    </div>
+    </FarmingWrapper>
   )
 
 }
