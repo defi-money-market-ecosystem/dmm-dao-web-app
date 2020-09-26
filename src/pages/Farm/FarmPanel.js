@@ -172,14 +172,6 @@ const Value = styled.div`
   margin-top: 4px;
 `
 
-const Unit = styled.div`
-  font-size: 14px;
-  font-weight: 200;
-  color: black;
-  display: inline;
-  opacity: 0.7;
-`
-
 const Wrapper = styled.div`
   width: calc(60% - 12.5px);
   margin-top: 32px;
@@ -349,7 +341,7 @@ function farmStateReducer(state, chainId, action, currencyA) {
         newCurrencyA = isSpecialToken ? undefined : YIELD_FARMING_TOKENS_MAP[chainId][currency][CURRENCY_A]
       }
       let newCurrencyB
-      if(field === INDEPENDENT_CURRENCY_B) {
+      if (field === INDEPENDENT_CURRENCY_B) {
         newCurrencyB = currency
       } else {
         const isSpecialToken = anyTokenPairings.indexOf(state[CURRENCY_B]) !== -1
@@ -366,7 +358,7 @@ function farmStateReducer(state, chainId, action, currencyA) {
         return {
           ...state,
           currencyA: !!newCurrencyA ? newCurrencyA : state[CURRENCY_A],
-          currencyB: !!newCurrencyB ? newCurrencyB : state[CURRENCY_B],
+          currencyB: !!newCurrencyB ? newCurrencyB : state[CURRENCY_B]
         }
       }
     }
@@ -655,12 +647,12 @@ export default function FarmPanel({ params }) {
   }, [exchangeContract, exchangeAddress])
   useEffect(() => {
     fetchFeesByToken()
-    library.on('block', fetchPoolTokens)
+    library.on('block', fetchFeesByToken)
 
     return () => {
-      library.removeListener('block', fetchPoolTokens)
+      library.removeListener('block', fetchFeesByToken)
     }
-  }, [fetchPoolTokens, library])
+  }, [fetchFeesByToken, library])
 
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
@@ -713,7 +705,7 @@ export default function FarmPanel({ params }) {
       .then(data => ethers.BigNumber.from(data.data))
       .catch(() => '...')
 
-    if(amountLeftWei === '...') {
+    if (amountLeftWei === '...') {
       setDmgLeft('...')
     } else {
       const amountLeftDecimal = amountFormatter(amountLeftWei, 18, 2, true, true)
@@ -992,6 +984,10 @@ export default function FarmPanel({ params }) {
   }
 
   const [isCurrencyADisplayed, setIsCurrencyADisplayed] = useState(true)
+  const fees = feesByToken === '-' ? 0 : parseFloat(feesByToken.substring(0, feesByToken.length - 1)) / 100.0
+  const feesWei = ethers.utils.parseEther(fees.toString())
+  const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
+  const feeAmountFormatted = amountFormatter(feeAmountWei, currencyBDecimals, 6, false, false)
 
   return (
     <FarmingWrapper>
@@ -1003,8 +999,8 @@ export default function FarmPanel({ params }) {
           </CardTitle>
           <Underline/>
           <CardText>
-            You are withdrawing your active farm, which incurs a 0.50% fee on the amount of {currencyBSymbol} you
-            deposited.
+            You are withdrawing your active farm, which incurs a {feesByToken} fee on the amount
+            of {currencyBSymbol} you deposited. The expected fee is about {feeAmountFormatted} {currencyBSymbol}.
           </CardText>
           <ConfirmButtonsWrapper>
             <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>
