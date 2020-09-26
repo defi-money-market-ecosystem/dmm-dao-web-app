@@ -101,6 +101,7 @@ const InfoPanel = styled.div`
   margin-top: 32px;
   padding: 0 40px 30px;
   height: fit-content;
+  opacity: ${props => props.disabled ? '0.35' : '1'}
   
   @media (max-width: 900px) {
     width: calc(100% - 80px);
@@ -175,7 +176,7 @@ const Value = styled.div`
 const Wrapper = styled.div`
   width: calc(60% - 12.5px);
   margin-top: 32px;
-  opacity: ${props => props.disabled ? '0.4' : '1'}
+  opacity: ${props => props.disabled ? '0.35' : '1'}
   
   @media (max-width: 900px) {
     width: 100%;
@@ -219,7 +220,8 @@ const OverlayContent = styled.div`
     color: black;
     position: fixed;
     z-index: 999;
-    margin-left: -60px;
+    margin-left: -330px;
+    left: 50%;
     
     @media (max-width: 700px) {
       max-width: calc(90vw - 80px);
@@ -1048,7 +1050,7 @@ export default function FarmPanel({ params }) {
           </Button>
         </OverlayAcceptButton>
       </OverlayContent>)}
-      <InfoPanel>
+      <InfoPanel disabled={!isDisclaimerAccepted}>
         <Title>
           Farming Info
         </Title>
