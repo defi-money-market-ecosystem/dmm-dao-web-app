@@ -12,6 +12,7 @@
   "sendAnyway": "Send Anyway",
   "pool": "Pool",
   "farm": "Farm",
+  "addToFarm": "Add to Farm",
   "withdraw": "Withdraw",
   "endFarming": "End Farming",
   "farmNotActive": "Farming is not active",

@@ -31,6 +31,7 @@ import { useAddressBalance } from '../../contexts/Balances'
 import styled from 'styled-components'
 import { ReactComponent as Plus } from '../../assets/images/plus-blue.svg'
 import {
+  useDmgPrice,
   useIsYieldFarmingActive,
   YIELD_FARMING_PROXY_ADDRESS,
   YIELD_FARMING_ROUTER_ADDRESS
@@ -657,20 +658,7 @@ export default function FarmPanel({ params }) {
     }
   }, [fetchFeesByToken, library])
 
-  const [dmgPriceUsdWei, setDmgPriceUsdWei] = useState(undefined)
-  const fetchDmgPriceWei = useCallback(() => {
-    return fetch(`${DMM_API_URL}/v1/dmg/price/wei`)
-      .then(response => response.json())
-      .then(data => setDmgPriceUsdWei(data.data))
-  })
-  useEffect(() => {
-    fetchDmgPriceWei()
-    library.on('block', fetchDmgPriceWei)
-
-    return () => {
-      library.removeListener('block', fetchDmgPriceWei)
-    }
-  }, [fetchDmgPriceWei, library])
+  const dmgPriceUsdWei = useDmgPrice()
 
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
@@ -1008,6 +996,10 @@ export default function FarmPanel({ params }) {
   const feesWei = ethers.utils.parseEther(fees.toString())
   const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
   const feeAmountFormatted = amountFormatter(feeAmountWei, currencyBDecimals, 6, false, false)
+  const [isAlreadyFarming, setIsAlreadyFarming] = useState(false)
+  useEffect(() => {
+    setIsAlreadyFarming(!!currencyADepositValue && currencyADepositValue.gt(ethers.constants.Zero))
+  }, [account, currencyADepositValue])
 
   let dmgRewardValueUsd = '0.00'
   if (isUsingDmgPriceUsd && !!dmgPriceUsdWei) {
@@ -1243,7 +1235,7 @@ export default function FarmPanel({ params }) {
         />
         <Flex>
           <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
-            {isFarmingApproved ? t('farm') : t('approveFarming')}
+            {isFarmingApproved ? (isAlreadyFarming ? t('addToFarm') : t('farm')) : t('approveFarming')}
           </Button>
           <Button disabled={!isEndValid || !isFarmingApproved} onClick={() => setIsDisplayConfirmWithdraw(true)}>
             {isFarmingActive ? t('endFarming') : t('withdraw')}

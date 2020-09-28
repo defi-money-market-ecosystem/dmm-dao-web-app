@@ -31,3 +31,25 @@ export function useIsYieldFarmingActive() {
 
   return isFarmingActive
 }
+
+export function useDmgPrice() {
+  const [dmgPriceUsdWei, setDmgPriceUsdWei] = useState(undefined)
+
+  const { library } = useWeb3React()
+
+  const fetchDmgPriceWei = useCallback(() => {
+    return fetch(`${DMM_API_URL}/v1/dmg/price/wei`)
+      .then(response => response.json())
+      .then(data => setDmgPriceUsdWei(data.data))
+  }, [])
+  useEffect(() => {
+    fetchDmgPriceWei()
+    library.on('block', fetchDmgPriceWei)
+
+    return () => {
+      library.removeListener('block', fetchDmgPriceWei)
+    }
+  }, [fetchDmgPriceWei, library])
+
+  return dmgPriceUsdWei
+}
