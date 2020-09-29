@@ -107,8 +107,6 @@ export default function ProposalItem(props) {
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
 
-  console.log('proposal ', proposal)
-
   let initialVoteStatus
   if (!props.walletAddress) {
     initialVoteStatus = ''

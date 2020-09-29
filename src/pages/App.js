@@ -12,6 +12,7 @@ import { getAllQueryParams } from '../utils'
 import Send from './Send'
 import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
+import ProfilePage from './Vote/ProfilePage'
 import { isAddress } from '../utils/index'
 
 const Swap = lazy(() => import('./Swap'))
@@ -118,6 +119,7 @@ class App extends React.Component {
                         <Route exact strict path="/burn" component={() => <Send params={params} />} />
                         <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
+                        <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
                         <Redirect to="/swap"/>
                       </Switch>
                     </Suspense>
