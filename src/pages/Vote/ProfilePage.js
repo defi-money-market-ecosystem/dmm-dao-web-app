@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Link, Redirect, useParams, useHistory } from 'react-router-dom'
-import { useWeb3React } from '../../hooks'
-import { amountFormatter, isAddress } from '../../utils'
+import { useDmgContract, useWeb3React } from '../../hooks'
+import { amountFormatter, isAddress, calculateGasMargin } from '../../utils'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { Spinner } from '../../theme'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
@@ -11,12 +11,18 @@ import { AccountDetails } from '../../models/AccountDetails'
 import BN from 'bn.js'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import { primaryColor } from '../../theme/index'
+import { usePendingDelegation, useTransactionAdder } from '../../contexts/Transactions'
 import ProposalItem from './ProposalItem'
 import DMMLogo from '../../assets/images/dmm-logo.svg'
 import LeftArrow from '../../assets/svg/keyboard_arrow_left-black-18dp.svg'
 import RightArrow from '../../assets/svg/keyboard_arrow_right-black-18dp.svg'
 import EdiText from 'react-editext'
 import Close from '../../assets/svg/close-black-18dp.svg'
+import DelegateDialogue from './DelegateDialogue'
+import { ethers } from 'ethers'
+import Web3 from 'web3'
+import { BigNumber } from 'ethers-utils'
+import * as Sentry from '@sentry/browser'
 
 const Main = styled.div`
   width: 60vw;
@@ -51,6 +57,12 @@ const backLink = {
   marginLeft: '10px'
 }
 
+const etherLink = {
+  textDecoration: 'none',
+  cursor: 'pointer',
+  fontWeight: '700',
+}
+
 const Wrapper = styled.div`
 	margin-top: 20px;
 	margin-left: 10px;
@@ -62,6 +74,11 @@ const pfp = {
   height: '60px',
   objectFit: 'cover',
   borderRadius: '50%'
+}
+
+const defaultPfp = {
+  color: '#327ccb',
+  fontSize: '60px',
 }
 
 const Name = styled.div`
@@ -78,10 +95,11 @@ const AddressBottom = styled.div`
 `
 
 const OnlyAddress = styled.div`
-  font-size: 23px;
+  font-size: 18px;
   color: black;
   font-weight: 600;
-  margin-top: 15px;
+  margin-top: 20px;
+  margin-left: -10px;
 `
 
 const Info = styled.div`
@@ -165,14 +183,24 @@ const Transaction = styled.div`
   font-weight: 600;
   width: calc(100% - 60px);
   color: #b0bdc5;
+ 
+
   ${({ active }) => active && `
     color: black;
+    cursor: pointer;
+    :hover {
+      background-color: 0.7;
+    }
   `}
 `
 
 const TransactionField = styled.div`
-  width: 33%;
+  width: 30%;
   display: inline-block;
+
+   ${({ long }) => long && `
+    width: 70%;
+  `}
 `
 
 const View = styled.div`
@@ -238,20 +266,13 @@ const Underline = styled.div`
 const Edit = styled.div`
   font-size: 15px;
   font-weight: 700;
-  float: right; 
-  margin-right: 10px;
-  margin-top: 24px;
-  margin-bottom: 16px;
-  text-align: center;
-  border-radius: 5px;
   height: 18px;
-  padding: 5px 10px;
   color: black;
   cursor: pointer;
   border: 2px solid #0a2aa5a;
  
   ${({ edit }) => edit ? `
-    display: inline-block;
+    display: block;
   ` : `
     display: none;
   `}
@@ -301,6 +322,52 @@ const Exit = styled.div`
   font-size: 20px;
 `
 
+const Rank = styled.div`
+  float: right;
+  display: inline;
+  height: 70px;
+  width: 50px;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  background-color: #327ccb;
+  color: abb9c1;
+  margin-top: -15px;
+  margin-right: 10px;
+`
+
+const RankNum = styled.div`
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+  margin-top: 15px;
+`
+
+const DelegateButton = styled.div`
+  font-size: 10px;
+  border-radius: 3px;
+  font-weight: 700;
+  background-color: #327ccb;
+  color: white;
+  margin-top: 10px;
+  padding: 5px;
+  cursor: pointer;
+  display: none;
+  text-align: center;
+  width: calc(100% - 10px);
+
+  ${({ active }) => active && `
+    display: block;
+  `}
+`
+
+const dt = styled.div`
+  margin: 0;
+`
+
 function isValidWalletAddress(walletAddress) {
   return isAddress(walletAddress)
 }
@@ -310,7 +377,7 @@ const baseUrl = 'https://api.defimoneymarket.com'
 async function getProposals(walletAddress) {
   return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
     .then(response => response.json())
-    .then(response => response.data.vote_history.map(proposal => new ProposalSummary(proposal)))
+    .then(response => response.data ? response.data.vote_history.map(proposal => new ProposalSummary(proposal)) : [])
     .then(proposals => {
       if (walletAddress) {
         return Promise.all(
@@ -328,9 +395,9 @@ async function getProposals(walletAddress) {
 
 
 async function getAccountInfo(walletAddress) {
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)// 0x0F9Dd46B0E1F77ceC0f66C20B9a1F56Cb34A4556
     .then(response => response.json())
-    .then(response => !!response.data ? new AccountDetails(response.data) : null)
+    .then(response => !!response.data ? response.data : null)
 }
 
 const displayPages = 7
@@ -339,15 +406,15 @@ const displayPages = 7
 const holdings = [
   {
     title: 'DMG Balance',
-    valueBN: new BN('0')
+    valueBN: ethers.constants.Zero
   },
   {
     title: 'Votes',
-    valueBN: new BN('0')
+    valueBN: ethers.constants.Zero
   },
   {
     title: 'Delegating To',
-    delegating: 'Undelegated'
+    delegating: null
   }
 ]
 
@@ -372,19 +439,25 @@ export default function ProfilePage() {
   const [accountInfo, setAccountInfo] = useState({})
   const [name, setName] = useState(null)
   const [picture, setPicture] = useState(null)
-  const { account: walletAddress } = useWeb3React()
+  const [rank, setRank] = useState('N/A')
+  const [loadedTransactions, setTransactions] = useState([])
+  const [delgateView, setDelegateView] = useState(false)
+  const [delgateHash, setDelegateHash] = useState(null)
+  const [isActivating, setIsActivating] = useState(false)
+
+  const { account: walletAddress, library } = useWeb3React()
   const address = useParams().wallet_address
   let history = useHistory()
   const balance = useAddressBalance(address, DMG_ADDRESS)
-  
-  const [showEdit, changeShowEdit] = useState(false)
+  const edit = address === walletAddress   
 
-  const shorten = (a) => a ? `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`: 'Undelegated'
+  const [showEdit, changeShowEdit] = useState(false)
+  const shorten = (a) => isAddress(a) ? `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`: a
   
+  const delegate = accountInfo?.vote_info?.delegate_address || true
   holdings[0].valueBN = balance
-  console.log(balance)
-  holdings[1].valueBN = accountInfo?.voteInfo?.votesBN
-  holdings[2].delegating = shorten(accountInfo?.voteInfo?.delegateAddress)
+  holdings[1].valueBN = accountInfo ? accountInfo.vote_info?.votes_padded : 'N/A'
+  holdings[2].delegating =  delegate === address ? 'Self' : delegate
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
   const mp = page * proposalsPerPage - proposalsPerPage
@@ -397,14 +470,12 @@ export default function ProfilePage() {
   }
 
   const emptyTransaction = {
-    action: '-',
-    age: '-',
-    result: '-'
+    vote_delta: '-',
+    block_number: '-',
   }
-  const transactionTitles = Object.keys(emptyTransaction).map(key => key.charAt(0).toUpperCase() + key.slice(1))
 
-  const transactionsAmount = 3;
-  const loadedTransactions = []
+  const transactionTitles = ['Action', 'Block Number']
+  const transactionsAmount = 3
   let transactions = []
   let lt = loadedTransactions.length
   if(lt < transactionsAmount) {
@@ -424,13 +495,13 @@ export default function ProfilePage() {
 
       getAccountInfo(address).then(accountInfo => {
         if (accountInfo) {
+          console.log(accountInfo)
           setAccountInfo(accountInfo)
           setName(accountInfo?.name)
           setPicture(accountInfo?.profilePictureUrl)
-
-        } else {
-          setAccountInfo('BAD')
-        }
+          setTransactions(accountInfo?.transactions)
+          setRank(accountInfo?.rank)
+        } 
       })
 
       Promise.all([proposalPromise]).then(() => {
@@ -444,18 +515,59 @@ export default function ProfilePage() {
     }, 15000)
 
     return () => clearInterval(subscriptionId)
-  })
+  }, [walletAddress])
 
-  if (!isValidWalletAddress(address) || accountInfo === 'BAD'){
+  const dmgContract = useDmgContract()
+  const isPendingDelegateTransaction = usePendingDelegation()
+  const web3 = new Web3(library.provider)
+  const addTransaction = useTransactionAdder()
+
+  useEffect(() => {
+    const subscriptionId = setTimeout(() => {
+      setIsActivating(isPendingDelegateTransaction)
+    }, 10000)
+
+    return () => clearInterval(subscriptionId)
+  }, [isPendingDelegateTransaction])
+
+  if (!isValidWalletAddress(address)){
     return <Redirect to={{ pathname: '/governance/proposals/' }}/>
   }
-
-  const edit = address === address //walletAddress
 
   let prevPath = null
   const locationState = history.location.state
   if (locationState) {
     prevPath = locationState.prevPath
+  }
+
+  const activateWallet = async () => {
+    const GAS_MARGIN = ethers.BigNumber.from(1000)
+    setIsActivating(true)
+
+    const estimatedGas = await dmgContract.estimateGas
+      .delegate(walletAddress)
+      .catch(error => {
+        console.error(`Error getting gas estimation for delegating with address ${walletAddress}: `, error)
+        return ethers.BigNumber.from('500000')
+      })
+
+    dmgContract
+      .delegate(walletAddress, {
+        gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
+      })
+      .then(response => {
+        setLoading(false)
+        addTransaction(response, { delegate: DMG_ADDRESS })
+      })
+      .catch(error => {
+        setLoading(false)
+        if (error?.code !== 4001) {
+          console.error(`Could not delegate due to error: `, error)
+          Sentry.captureException(error)
+        } else {
+          console.log('Could not delegate because the transaction was cancelled')
+        }
+      })
   }
 
   return (
@@ -466,7 +578,12 @@ export default function ProfilePage() {
       <div>
         <Wrapper>
           <Image>
-            <img src={DMMLogo} style={pfp} alt={"pfp"}/>
+            {!!picture ? 
+              <img src={picture} style={pfp} alt={"pfp"}/>:
+              <span style={defaultPfp} class="material-icons">
+                account_circle
+              </span>
+            }   
           </Image>
           <Info>
             {name ? 
@@ -483,13 +600,19 @@ export default function ProfilePage() {
               </OnlyAddress> 
             }
           </Info>
+          <Edit
+            onClick={() => changeShowEdit(true)}
+            edit={edit}
+          >
+            Edit
+          </Edit>
         </Wrapper>
-        <Edit
-          onClick={() => changeShowEdit(true)}
-          edit={edit}
-        >
-          Edit
-        </Edit>
+        <Rank>
+          RANK
+          <RankNum>
+            {rank}
+          </RankNum>
+        </Rank>
       </div>
       <div>
         <Card width={35}>
@@ -503,7 +626,20 @@ export default function ProfilePage() {
                 {title}
               </DMGTitle>
               <Value active={true}>
-                {!valueBN ? delegating : amountFormatter(valueBN, 18, 2)}
+                { isActivating ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) :  'N/A'}
+                <DelegateButton active={delegating} onClick={() => setDelegateView(true)}>
+                  { edit ? 
+                    (
+                      isActivating ?
+                      <dt>Delegate to Self</dt>:
+                      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>
+                    ):
+                    <div>
+                      <dt>Delegate to</dt>
+                      <dt>{(name || shorten(address))}</dt>
+                    </div>
+                  }
+                </DelegateButton>
               </Value>
             </Balance>
           ))}
@@ -516,15 +652,16 @@ export default function ProfilePage() {
           <div>
           <Transactions>
             <Transaction>
-              {transactionTitles.map(title => (
-                <TransactionField>{title}</TransactionField>
+              {transactionTitles.map((title, i) => (
+                <TransactionField long={!i} >{title}</TransactionField>
               ))}
             </Transaction>
-            {transactions.slice(0,transactionsAmount).map(({action, age, result}) => (
-              <Transaction active={action !== "-"}>
-                <TransactionField>{action}</TransactionField>
-                <TransactionField>{age}</TransactionField>
-                <TransactionField>{result}</TransactionField>
+            {transactions.slice(0,transactionsAmount).map(({vote_delta, block_number, transaction_hash}) => (
+              <Transaction active={!!transaction_hash} onClick={() => window.open(`https://etherscan.io/tx/${transaction_hash}`)}>
+                <TransactionField long>
+                  {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                </TransactionField>
+                <TransactionField>{block_number}</TransactionField>
               </Transaction>
             ))}
           </Transactions>
@@ -574,8 +711,7 @@ export default function ProfilePage() {
       </div>
       {showEdit ?
         <BackDrop>
-        <Card>
-          
+        <Card width={40}>
           <Exit onClick={() => changeShowEdit(false)}>
             <img src={Close} alt={'X'}/>
           </Exit>
@@ -583,6 +719,16 @@ export default function ProfilePage() {
       </BackDrop>
         : null
       }
-    </Main>
+      {delgateView ?
+        <DelegateDialogue
+          address={address}
+          isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
+          votesBN={accountInfo?.voteInfo?.votesBN}
+          onDelegateCasted={(hash) => {
+            setDelegateHash(hash)
+          }}/>
+        : null
+      }    
+      </Main>
   )
 }
