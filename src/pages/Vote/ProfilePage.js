@@ -351,8 +351,9 @@ const DelegateButton = styled.div`
   border-radius: 3px;
   font-weight: 700;
   background-color: #327ccb;
+  max-width: 100px;
   color: white;
-  margin-top: 10px;
+  margin: 10px auto 0;
   padding: 5px;
   cursor: pointer;
   display: none;
@@ -540,6 +541,12 @@ export default function ProfilePage() {
     prevPath = locationState.prevPath
   }
 
+  const handleClick = (e) => {
+    if (e) {}
+    setDelegateView(false)  
+  }
+
+  //fix editing logic
   const activateWallet = async () => {
     const GAS_MARGIN = ethers.BigNumber.from(1000)
     setIsActivating(true)
@@ -570,6 +577,10 @@ export default function ProfilePage() {
       })
   }
 
+  const openEtherscan = (hash) => {
+    if(!!hash) window.open(`https://etherscan.io/tx/${hash}`)
+  }
+
   return (
     <Main>
       <Link to={prevPath ? prevPath : '/governance/proposals'} style={backLink}>
@@ -596,16 +607,19 @@ export default function ProfilePage() {
                 </AddressBottom> 
               </div>:
               <OnlyAddress>
-                {address}
+                {window.innerWidth > 725 ? address : shorten(address)}
               </OnlyAddress> 
             }
           </Info>
+        {/*
+          //Editing currently disabled
           <Edit
             onClick={() => changeShowEdit(true)}
             edit={edit}
           >
             Edit
           </Edit>
+        */}
         </Wrapper>
         <Rank>
           RANK
@@ -626,20 +640,20 @@ export default function ProfilePage() {
                 {title}
               </DMGTitle>
               <Value active={true}>
-                { isActivating ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) :  'N/A'}
-                <DelegateButton active={delegating} onClick={() => setDelegateView(true)}>
-                  { edit ? 
-                    (
-                      isActivating ?
-                      <dt>Delegate to Self</dt>:
-                      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>
-                    ):
-                    <div>
-                      <dt>Delegate to</dt>
-                      <dt>{(name || shorten(address))}</dt>
-                    </div>
-                  }
-                </DelegateButton>
+                { isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) :  'N/A'}
+                  <DelegateButton active={delegating} onClick={() => setDelegateView(true)}>
+                    { edit ? 
+                      (
+                        isActivating ?
+                        <dt>Delegate to Self</dt>:
+                        <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>
+                      ):
+                      <div>
+                        <dt>Delegate to</dt>
+                        <dt>{(name || shorten(address))}</dt>
+                      </div>
+                    }
+                  </DelegateButton>
               </Value>
             </Balance>
           ))}
@@ -657,7 +671,7 @@ export default function ProfilePage() {
               ))}
             </Transaction>
             {transactions.slice(0,transactionsAmount).map(({vote_delta, block_number, transaction_hash}) => (
-              <Transaction active={!!transaction_hash} onClick={() => window.open(`https://etherscan.io/tx/${transaction_hash}`)}>
+              <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                 <TransactionField long>
                   {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
                 </TransactionField>
@@ -722,8 +736,9 @@ export default function ProfilePage() {
       {delgateView ?
         <DelegateDialogue
           address={address}
+          self={edit}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-          votesBN={accountInfo?.voteInfo?.votesBN}
+          onChange={e => handleClick(e)}
           onDelegateCasted={(hash) => {
             setDelegateHash(hash)
           }}/>

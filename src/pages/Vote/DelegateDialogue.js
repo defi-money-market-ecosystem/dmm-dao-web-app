@@ -55,7 +55,7 @@ const Title = styled.div`
 `
 
 const Proposal = styled.div`
-  font-size: 16px;
+  font-size: 13px;
   text-align: left;
 `
 
@@ -113,7 +113,7 @@ const Button = styled.div`
   margin: 10px;
   cursor: pointer;
   height: 28px;
-  width: 56px;
+  width: 64px;
   padding: 6px 12px;
   line-height: 28px;
   transition: opacity 0.2s ease-in-out;
@@ -143,82 +143,22 @@ const Underline = styled.div`
 `
 
 //export default function Cast({ proposal, time, vote, onChange }) {
-export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDelegating, onChange }) {
+export default function DelegateDialogue({ address, self, isDelegating, onChange }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false) //loading hook
 
-  const governorContract = useGovernorContract()
-  const addTransaction = useTransactionAdder()
-  const proposalId = proposal.proposalId
-  const isPendingCast = usePendingCastedVotes()
-
-  const castVote = async (isForProposal) => {
-    const GAS_MARGIN = ethers.BigNumber.from(1000)
-    setLoading(true)
-    setError(null)
-
-    const estimatedGas = await governorContract.estimateGas
-      .castVote(proposalId, isForProposal)
-      .catch(error => {
-        console.error(`Error getting gas estimation for casting vote with ID ${proposalId}: `, error)
-        return ethers.BigNumber.from('500000')
-      })
-
-    governorContract
-      .castVote(proposalId, isForProposal, {
-        gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
-      })
-      .then(response => {
-        setLoading(false)
-        addTransaction(response, { vote: GOVERNOR_ALPHA_ADDRESS })
-      })
-      .catch(error => {
-        setLoading(false)
-        if (error?.code !== 4001) {
-          console.error(`Could not cast vote due to error: `, error)
-          Sentry.captureException(error)
-        } else {
-          console.log('Could not cast vote because the transaction was cancelled')
-        }
-      })
-  }
-
-  let bodyJsx
-  if (isPendingCast) {
-    bodyJsx = (
-      <>
-        <TextualBody>
-          You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the
-          confirmation to finish.
-        </TextualBody>
-        <CircularProgress style={{ color: primaryColor }}/>
-      </>
-    )
-  } else if (!votesBN || (votesBN.eq(ethers.BigNumber.from('0')) && !isDelegating)) {
-    bodyJsx = (
-      <>
-        <TextualBody>
-          Before voting for the first time, you must activate your wallet. To activate your wallet, go to the &nbsp;
-          <a href={'/governance/proposals'}>home page</a> of the voting dashboard and press the 'Activate Wallet'
-          button.
-        </TextualBody>
-      </>
-    )
-  } else {
-    bodyJsx = (
+  const bodyJsx = (
       <>
         {<SpinnerWrapper>
           {loading ? <CircularProgress style={{ color: primaryColor }}/> :
-            <span>
-              Cast your vote using the options below. Keep in mind, all votes are final and&nbsp;
-              <strong>cannot</strong> be undone.</span>}
+           <div/>}
         </SpinnerWrapper>}
         <Buttons>
-          <Button color={'#09b53d'} onClick={() => castVote(true)}>
-            For
+          <Button color={'#09b53d'} onClick={() => onChange(true)}>
+            Confirm
           </Button>
-          <Button color={'#d4001e'} onClick={() => castVote(false)}>
-            Against
+          <Button color={'#d4001e'} onClick={() => onChange(false)}>
+            Decline
           </Button>
         </Buttons>
         <ErrorMessage>
@@ -226,21 +166,18 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
         </ErrorMessage>
       </>
     )
-  }
+  
 
   return (
     <BackDrop>
       <Card>
         <Title>
-          Cast your vote
+          Delegate to
         </Title>
         <Underline/>
         <Proposal>
-          {proposal.title}
+          {`${address}${self ? ' (Self)' : ''}`}
         </Proposal>
-        <Time>
-          {timestamp}
-        </Time>
         {bodyJsx}
         <Exit onClick={() => onChange(false)}>
           <img src={Close} alt={'X'}/>
