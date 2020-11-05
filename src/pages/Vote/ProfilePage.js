@@ -496,7 +496,6 @@ export default function ProfilePage() {
 
       getAccountInfo(address).then(accountInfo => {
         if (accountInfo) {
-          console.log(accountInfo)
           setAccountInfo(accountInfo)
           setName(accountInfo?.name)
           setPicture(accountInfo?.profilePictureUrl)
