@@ -4,19 +4,15 @@ import { Link, Redirect, useParams, useHistory } from 'react-router-dom'
 import { useDmgContract, useWeb3React } from '../../hooks'
 import { amountFormatter, isAddress, calculateGasMargin } from '../../utils'
 import { ProposalSummary } from '../../models/ProposalSummary'
-import { Spinner } from '../../theme'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
 import { useAddressBalance } from '../../contexts/Balances'
-import { AccountDetails } from '../../models/AccountDetails'
-import BN from 'bn.js'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import { primaryColor } from '../../theme/index'
 import { usePendingDelegation, useTransactionAdder } from '../../contexts/Transactions'
 import ProposalItem from './ProposalItem'
-import DMMLogo from '../../assets/images/dmm-logo.svg'
 import LeftArrow from '../../assets/svg/keyboard_arrow_left-black-18dp.svg'
 import RightArrow from '../../assets/svg/keyboard_arrow_right-black-18dp.svg'
-import EdiText from 'react-editext'
+import EdiText from 'react-editext' //for  edit
 import Close from '../../assets/svg/close-black-18dp.svg'
 import DelegateDialogue from './DelegateDialogue'
 import { ethers } from 'ethers'
@@ -55,12 +51,6 @@ const backLink = {
   fontWeight: '700',
   fontSize: '15px',
   marginLeft: '10px'
-}
-
-const etherLink = {
-  textDecoration: 'none',
-  cursor: 'pointer',
-  fontWeight: '700',
 }
 
 const Wrapper = styled.div`
@@ -443,7 +433,6 @@ export default function ProfilePage() {
   const [rank, setRank] = useState('N/A')
   const [loadedTransactions, setTransactions] = useState([])
   const [delgateView, setDelegateView] = useState(false)
-  const [delgateHash, setDelegateHash] = useState(null)
   const [isActivating, setIsActivating] = useState(false)
 
   const { account: walletAddress, library } = useWeb3React()
@@ -541,7 +530,7 @@ export default function ProfilePage() {
   }
 
   const handleClick = (e) => {
-    if (e) {}
+    // if (e) {}
     setDelegateView(false)  
   }
 
@@ -737,10 +726,7 @@ export default function ProfilePage() {
           address={address}
           self={edit}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-          onChange={e => handleClick(e)}
-          onDelegateCasted={(hash) => {
-            setDelegateHash(hash)
-          }}/>
+          onChange={e => handleClick(e)}/>
         : null
       }    
       </Main>
