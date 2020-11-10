@@ -120,6 +120,28 @@ const Card = styled.div`
   }
 `
 
+const Popup = styled.div`
+  background-color: #FFFFFF;
+  position: relative;
+  left: 50%;
+  top: 50%;
+  max-width: 320px;
+  width: 350px;
+  transform: translate(-50%, -50%);
+  border-radius: 5px;
+  opacity: 1;
+  z-index: 5;
+  padding: 25px 40px 5px;
+  text-align: center;
+  font-weight: 600;
+  color: black;
+  max-width: calc(80vw - 30px);
+  
+  @media (max-width: 700px) {
+    box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+  }
+`
+
 const Title = styled.div`  
   font-size: 28px;
   font-weight: 300;
@@ -162,6 +184,12 @@ const Value = styled.div`
 
 const Transactions = styled.div`
   width: 100%;
+  height: auto;
+
+  ${({ small }) => small && `
+    display: table;
+     margin-bottom: 15px;
+  `}
 `
 
 const Transaction = styled.div`
@@ -173,7 +201,7 @@ const Transaction = styled.div`
   font-weight: 600;
   width: calc(100% - 60px);
   color: #b0bdc5;
- 
+  text-align: left;
 
   ${({ active }) => active && `
     color: black;
@@ -181,6 +209,13 @@ const Transaction = styled.div`
     :hover {
       background-color: 0.7;
     }
+  `}
+
+  ${({ small }) => small && `
+    padding: 10px 15px;
+    border-bottom: 1px solid #e2e2e2;
+    font-size: 12px;
+    width: calc(100% - 30px);
   `}
 `
 
@@ -200,9 +235,9 @@ const View = styled.div`
  	font-weight: 700;
  	color: #b0bdc5;
  	transition: opacity 0.2s ease-in-out;
+  cursor: pointer;
 
  	${({ active }) => active && `
-    cursor: pointer;
     color: black;
   `}
   
@@ -279,28 +314,6 @@ const BackDrop = styled.div`
   
   @media (max-width: 700px) {
     background: none;
-  }
-`
-
-const EditCard = styled.div`
-  background-color: #FFFFFF;
-  position: relative;
-  left: 50%;
-  top: 50%;
-  max-width: 320px;
-  width: 350px;
-  transform: translate(-50%, -50%);
-  border-radius: 5px;
-  opacity: 1;
-  z-index: 5;
-  padding: 25px 40px 5px;
-  text-align: center;
-  font-weight: 600;
-  color: black;
-  max-width: calc(80vw - 30px);
-  
-  @media (max-width: 700px) {
-    box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   }
 `
 
@@ -434,6 +447,7 @@ export default function ProfilePage() {
   const [loadedTransactions, setTransactions] = useState([])
   const [delgateView, setDelegateView] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
+  const [viewMore, changeViewMore] = useState(false)
 
   const { account: walletAddress, library } = useWeb3React()
   const address = useParams().wallet_address
@@ -472,10 +486,6 @@ export default function ProfilePage() {
     const empty = new Array(transactionsAmount-lt)
     transactions = [...loadedTransactions, ...empty.fill(emptyTransaction)]
   } else transactions = [...loadedTransactions]
-
-  const viewMore = (transactions) => {
-    console.log('viewing more...')
-  }
 
   useEffect(() => {
     const perform = () => {
@@ -669,7 +679,7 @@ export default function ProfilePage() {
           </Transactions>
           </div>
           {transactions.length > transactionsAmount ? (
-            <View onClick={() => viewMore(transactions)}>
+            <View onClick={() => changeViewMore(true)}>
               {'View More'}
             </View>
           ) : (<span/>)}
@@ -711,14 +721,39 @@ export default function ProfilePage() {
           </Pages>
         </Card>
       </div>
+      {viewMore ?
+        <BackDrop>
+          <Popup>
+            <Transactions small>
+              <Transaction small>
+                {transactionTitles.map((title, i) => (
+                  <TransactionField long={!i} >{title}</TransactionField>
+                ))}
+              </Transaction>
+              {transactions.map(({vote_delta, block_number, transaction_hash}) => (
+                <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
+                  <TransactionField long>
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                  </TransactionField>
+                  <TransactionField>{block_number}</TransactionField>
+                </Transaction>
+              ))}
+            </Transactions>
+            <Exit onClick={() => changeViewMore(false)}>
+              <img src={Close} alt={'X'}/>
+            </Exit>
+          </Popup>
+        </BackDrop>
+        : null
+      }
       {showEdit ?
         <BackDrop>
-        <Card width={40}>
-          <Exit onClick={() => changeShowEdit(false)}>
-            <img src={Close} alt={'X'}/>
-          </Exit>
-        </Card>
-      </BackDrop>
+          <Popup>
+            <Exit onClick={() => changeShowEdit(false)}>
+              <img src={Close} alt={'X'}/>
+            </Exit>
+          </Popup>
+        </BackDrop>
         : null
       }
       {delgateView ?
