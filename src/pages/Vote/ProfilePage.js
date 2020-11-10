@@ -229,13 +229,10 @@ const TransactionField = styled.div`
 `
 
 const View = styled.div`
-	padding: 20px 30px;
 	text-align: center;
-  font-size: 13px;
- 	font-weight: 700;
- 	color: #b0bdc5;
  	transition: opacity 0.2s ease-in-out;
   cursor: pointer;
+  float: center
 
  	${({ active }) => active && `
     color: black;
@@ -244,6 +241,14 @@ const View = styled.div`
   :hover {
     opacity: 0.7;
   }
+`
+
+const ViewText = styled.div`
+   font-size: 13px;
+   font-weight: 700;
+   margin: 10px auto;
+   color: #b0bdc5;
+   display: inline-block;
 `
 
 const Pages = styled.div`
@@ -680,7 +685,9 @@ export default function ProfilePage() {
           </div>
           {transactions.length > transactionsAmount ? (
             <View onClick={() => changeViewMore(true)}>
-              {'View More'}
+              <ViewText>
+                {'View More'}
+              </ViewText>
             </View>
           ) : (<span/>)}
         </Card>
