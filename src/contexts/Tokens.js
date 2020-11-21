@@ -61,7 +61,7 @@ export const INITIAL_TOKENS_CONTEXT = {
       [DECIMALS]: 18,
       [EXCHANGE_ADDRESS]: '0x0000000000000000000000000000000000000000',
       [ADDRESS]: DAI_ADDRESS,
-      [MIN_ORDER]: new BigNumber('100000000000000000000')
+      [MIN_ORDER]: new BigNumber('200000000000000000000')
     },
     [USDC_ADDRESS]: {
       [NAME]: 'USD//C',
@@ -69,7 +69,7 @@ export const INITIAL_TOKENS_CONTEXT = {
       [DECIMALS]: 6,
       [EXCHANGE_ADDRESS]: '0x0000000000000000000000000000000000000000',
       [ADDRESS]: USDC_ADDRESS,
-      [MIN_ORDER]: new BigNumber('100000000')
+      [MIN_ORDER]: new BigNumber('200000000')
     },
     [WETH_ADDRESS]: {
       [NAME]: 'Wrapped Ether',
@@ -164,12 +164,12 @@ export const MARKETS = {
 
 export const YIELD_FARMING_TOKENS = {
   1: [
-    // [DMG_ADDRESS]: {
-    //   [CURRENCY_A]: DMG_ADDRESS,
-    //   [CURRENCY_B]: ETH_ADDRESS,
-    //   [EXCHANGE_ADDRESS]: '0x8175362afbeee32afb22d05adc0bbd08de32f5ae',
-    //   [IS_M_TOKEN]: false
-    // },
+    {
+      [CURRENCY_A]: DMG_ADDRESS,
+      [CURRENCY_B]: ETH_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x8175362afbeee32afb22d05adc0bbd08de32f5ae',
+      [IS_M_TOKEN]: false
+    },
     {
       [CURRENCY_A]: M_DAI_ADDRESS,
       [CURRENCY_B]: DAI_ADDRESS,
@@ -217,7 +217,7 @@ export const YIELD_FARMING_TOKENS = {
       [CURRENCY_B]: LINK_ADDRESS,
       [EXCHANGE_ADDRESS]: '0xb0931b326c083a0e57cc5a71ffb8df5e6016b6ad',
       [IS_M_TOKEN]: true
-    }
+    },
   ]
 }
 
@@ -235,10 +235,22 @@ export const YIELD_FARMING_TOKENS_MAP = {
       [EXCHANGE_ADDRESS]: '0x8da81afea7986698772a611bf37501236d443528',
       [IS_M_TOKEN]: true
     },
+    [DMG_ADDRESS]: {
+      [CURRENCY_A]: DMG_ADDRESS,
+      [CURRENCY_B]: ETH_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0x8da81afea7986698772a611bf37501236d443528',
+      [IS_M_TOKEN]: true
+    },
     [ETH_ADDRESS]: {
       [CURRENCY_A]: M_ETH_ADDRESS,
       [CURRENCY_B]: ETH_ADDRESS,
       [EXCHANGE_ADDRESS]: '0xa896f041a2b18e58e7fbc513cd371de1348596de',
+      [IS_M_TOKEN]: true
+    },
+    [LINK_ADDRESS]: {
+      [CURRENCY_A]: M_USDC_ADDRESS,
+      [CURRENCY_B]: LINK_ADDRESS,
+      [EXCHANGE_ADDRESS]: '0xf0b5f01b2ab0d5e77487ed4f8e71a3791f9f45fe',
       [IS_M_TOKEN]: true
     },
     [USDC_ADDRESS]: {
