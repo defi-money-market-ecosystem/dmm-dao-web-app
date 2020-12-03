@@ -12,6 +12,7 @@ import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
 import { isAddress } from '../utils/index'
 import Farm from './Farm/index'
+import NFT from './NFT/index'
 
 const Swap = lazy(() => import('./Swap'))
 
@@ -19,8 +20,8 @@ const AppWrapper = styled.div`
   display: flex;
   flex-flow: column;
   align-items: flex-start;
-  max-height: 100vh;
-  height: 100%;
+  /*max-height: 100vh;
+  height: 100%;*/
   background: linear-gradient(360deg, #327ccb, #4f94de 5%, #8bbbef 15%, #bdddff 25%, #deeeff 40%);
 `
 
@@ -56,8 +57,7 @@ const BodyWrapper = styled.div`
 `
 
 const Body = styled.div`
-  max-width: 540px;
-  width: 90%;
+  width: 100%;
   margin-top: 16px;
   display: flex;
   flex-direction: column;
@@ -83,52 +83,53 @@ class App extends React.Component {
     return (
       <>
         <Suspense fallback={null}>
-          <AppWrapper>
-            <HeaderWrapper>
-              <Header hideInfo hideBuy/>
-            </HeaderWrapper>
-            <BodyWrapper>
-              <Body>
-                <Web3ReactManager>
-                  <BrowserRouter>
-                    <NavigationTabs/>
-                    { /*this Suspense is for route code-splitting*/}
-                    <Suspense fallback={null}>
-                      <Switch>
-                        <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
-                        <Route exact strict path="/governance/proposals/:proposal_id"
-                               component={() => <ProposalDetailsPage/>}/>
-                        <Route exact strict path="/farm" component={() => <Farm params={params}/>}/>
-                        <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
-                        <Route
-                          exact
-                          strict
-                          path="/swap/:tokenAddress?"
-                          render={({ match, location }) => {
-                            if (isAddress(match.params.tokenAddress)) {
-                              return (
-                                <Swap
-                                  location={location}
-                                  initialCurrency={isAddress(match.params.tokenAddress)}
-                                  params={params}
-                                />
-                              )
-                            } else {
-                              return <Redirect to={{ pathname: '/swap' }}/>
-                            }
-                          }}
-                        />
-                        <Redirect to="/governance/proposals"/>
-                      </Switch>
-                    </Suspense>
-                  </BrowserRouter>
-                </Web3ReactManager>
-              </Body>
-            </BodyWrapper>
-            <FooterWrapper>
-              <Footer/>
-            </FooterWrapper>
-          </AppWrapper>
+          <BrowserRouter>
+            <AppWrapper>
+              <HeaderWrapper>
+                <Header hideInfo hideBuy/>
+              </HeaderWrapper>
+              <BodyWrapper>
+                <Body>
+                  <Web3ReactManager>
+                      <NavigationTabs/>
+                      { /*this Suspense is for route code-splitting*/}
+                      <Suspense fallback={null}>
+                        <Switch>
+                          <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
+                          <Route exact strict path="/governance/proposals/:proposal_id"
+                                 component={() => <ProposalDetailsPage/>}/>
+                          <Route exact strict path="/farm" component={() => <Farm params={params}/>}/>
+                          <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
+                          <Route
+                            exact
+                            strict
+                            path="/swap/:tokenAddress?"
+                            render={({ match, location }) => {
+                              if (isAddress(match.params.tokenAddress)) {
+                                return (
+                                  <Swap
+                                    location={location}
+                                    initialCurrency={isAddress(match.params.tokenAddress)}
+                                    params={params}
+                                  />
+                                )
+                              } else {
+                                return <Redirect to={{ pathname: '/swap' }}/>
+                              }
+                            }}
+                          />
+                          <Route exact strict path="/nft" component={() => <NFT params={params}/>}/>
+                          <Redirect to="/governance/proposals"/>
+                        </Switch>
+                      </Suspense>
+                  </Web3ReactManager>
+                </Body>
+              </BodyWrapper>
+              <FooterWrapper>
+                <Footer/>
+              </FooterWrapper>
+            </AppWrapper>
+          </BrowserRouter>
         </Suspense>
       </>
     )

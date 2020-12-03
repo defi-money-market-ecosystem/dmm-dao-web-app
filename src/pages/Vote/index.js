@@ -19,9 +19,9 @@ import { AccountDetails } from '../../models/AccountDetails'
 import { primaryColor } from '../../theme/index'
 
 const Main = styled.div`
-  height: calc(100vh - 160px);
+  height: calc(100vh - 204px);
   width: 80vw;
-  position: absolute;
+  /*position: absolute;*/
   top: 156px;
   left: 0;
   right: 0;

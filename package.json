@@ -45,6 +45,7 @@
     "react-dom": "^16.8.6",
     "react-feather": "^1.1.6",
     "react-ga": "^2.5.7",
+    "react-google-charts": "^3.0.15",
     "react-i18next": "^10.7.0",
     "react-markdown": "^4.3.1",
     "react-redux": "^7.2.1",
