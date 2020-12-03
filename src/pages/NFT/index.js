@@ -10,7 +10,7 @@ import { ethers } from 'ethers'
 import { Button } from '../../theme'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-import Chart from "react-google-charts";
+import Chart from 'react-google-charts'
 import { calculateGasMargin, getProviderOrSigner } from '../../utils'
 import { safeAccess, isAddress, getTokenAllowance, amountFormatter } from '../../utils'
 import { useAddressBalance } from '../../contexts/Balances'
@@ -22,7 +22,7 @@ import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '..
 //import Button from '@material-ui/core/Button'
 import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 
-const GAS_MARGIN = ethers.BigNumber.from(1000);
+const GAS_MARGIN = ethers.BigNumber.from(1000)
 
 
 const BackDrop = styled.div`
@@ -354,95 +354,107 @@ const ConnectWalletButton = styled.div`
 const getNFTData = (setConstructedCountryData, setConstructedMapData) => {
   fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
     .then(response => response.json())
-    .then(response => response["data"])
+    .then(response => response['data'])
     .then(countries => {
-      let constructedCountryData = [];
+      let constructedCountryData = []
 
       for (let country in countries) {
-        const country_name = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["country_name"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["country_name"];
-        const available_affiliates = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"].length;
-        const available_principals = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"].length;
-        const total_available = (available_affiliates || 0) + (available_principals || 0);
-        const price_usd = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_usd"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_usd"];
-        const price_dmg = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_dmg"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_dmg"];
-        const affiliate_token_id = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["token_id"];
-        const principal_token_id = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["token_id"];
+        console.log('country ', countries, country)
+        if (!countries[country]['AFFILIATE']) {
+          countries[country]['AFFILIATE'] = []
+        }
+        if (!countries[country]['PRINCIPAL']) {
+          countries[country]['PRINCIPAL'] = []
+        }
 
-        constructedCountryData.push({
-          country: country_name,
-          availableAffiliates: available_affiliates,
-          availablePrincipals: available_principals,
-          totalAvailable: total_available,
-          priceUSD: price_usd,
-          priceDMG: price_dmg,
-          affiliateTokenID: affiliate_token_id,
-          principalTokenID: principal_token_id
-        });
-      }
+        if (countries[country]['AFFILIATE'].length > 0 || countries[country]['PRINCIPAL'].length > 0) {
+          const country_name = countries[country]['AFFILIATE'] ? countries[country]['AFFILIATE'] && countries[country]['AFFILIATE'][0]['country_name'] : countries[country]['PRINCIPAL'] && countries[country]['PRINCIPAL'][0]['country_name']
+          const available_affiliates = countries[country]['AFFILIATE'] && countries[country]['AFFILIATE'].length
+          const available_principals = countries[country]['PRINCIPAL'] && countries[country]['PRINCIPAL'].length
+          const total_available = (available_affiliates || 0) + (available_principals || 0)
+          const price_usd = countries[country]['AFFILIATE'] ? countries[country]['AFFILIATE'] && countries[country]['AFFILIATE'][0]['price_usd'] : countries[country]['PRINCIPAL'] && countries[country]['PRINCIPAL'][0]['price_usd']
+          const price_dmg = countries[country]['AFFILIATE'] ? countries[country]['AFFILIATE'] && countries[country]['AFFILIATE'][0]['price_dmg'] : countries[country]['PRINCIPAL'] && countries[country]['PRINCIPAL'][0]['price_dmg']
+          const affiliate_token_id = countries[country]['AFFILIATE'].length && countries[country]['AFFILIATE'][0]['token_id']
+          const principal_token_id = countries[country]['PRINCIPAL'].length && countries[country]['PRINCIPAL'][0]['token_id']
 
-      setConstructedCountryData(constructedCountryData);
-
-      let mapData = [['Country', 'Available NFTs']];
-
-      if (constructedCountryData) {
-        for (let country in constructedCountryData) {
-          mapData.push([constructedCountryData[country].country, constructedCountryData[country].totalAvailable]);
+          constructedCountryData.push({
+            country: country_name,
+            availableAffiliates: available_affiliates,
+            availablePrincipals: available_principals,
+            totalAvailable: total_available,
+            priceUSD: price_usd,
+            priceDMG: price_dmg,
+            affiliateTokenID: affiliate_token_id,
+            principalTokenID: principal_token_id
+          })
         }
       }
 
-      setConstructedMapData(mapData);
+      setConstructedCountryData(constructedCountryData)
+
+      let mapData = [['Country', 'Available NFTs']]
+
+      if (constructedCountryData) {
+        for (let country in constructedCountryData) {
+          mapData.push([constructedCountryData[country].country, constructedCountryData[country].totalAvailable])
+        }
+      }
+
+      setConstructedMapData(mapData)
 
     })
-};
+}
 
-const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF';
+const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF'
 
 export default function NFT({ params }) {
   const { t } = useTranslation()
-  const oneWei = ethers.BigNumber.from('1000000000000000000');
+  const oneWei = ethers.BigNumber.from('1000000000000000000')
 
-  const { library, account, chainId } = useWeb3React();
+  const { library, account, chainId } = useWeb3React()
 
   //const [isDisplayConfirmWithdraw, setIsDisplayConfirmWithdraw] = useState(false)
-  const [selectedType, setSelectedType] = useState('Affiliate');
-  const [dropdownExpanded, setDropdownExpanded] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [constructedCountryData, setConstructedCountryData] = useState(null);
-  const [constructedMapData, setConstructedMapData] = useState(null);
+  const [selectedType, setSelectedType] = useState('Affiliate')
+  const [dropdownExpanded, setDropdownExpanded] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState(null)
+  const [constructedCountryData, setConstructedCountryData] = useState(null)
+  const [constructedMapData, setConstructedMapData] = useState(null)
 
-  const tokenContract = useTokenContract(DMG_ADDRESS);
+  const tokenContract = useTokenContract(DMG_ADDRESS)
 
-  const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
+  const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS)
   const isDmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
 
   // Make sure the wallet has sufficient balance
-  const userTokenBalance = useAddressBalance(account, DMG_ADDRESS);
+  const userTokenBalance = useAddressBalance(account, DMG_ADDRESS)
 
-  const addTransaction = useTransactionAdder();
+  const addTransaction = useTransactionAdder()
 
-  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData);
+  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData)
 
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([])
   useInterval(() => {
     fetch('http://api.defimoneymarket.com/v1/asset-introducers/primary-market')
       .then(response => response.json())
       .then(response => {
-        const result = Object.keys(response.data).map((countryCode) => {
-          return {
-            country: response.data[countryCode]["AFFILIATE"][0]['country_name'],
-            available: response.data[countryCode]["AFFILIATE"].length,
-            price: response.data[countryCode]["AFFILIATE"][0]['price_dmg'],
-            tokenId: response.data[countryCode]["AFFILIATE"][0]['token_id']
-          }
-        });
-        setData(result);
+        const result = Object.keys(response.data)
+          .filter((countryCode) => response.data[countryCode]['AFFILIATE'].length > 0)
+          .map((countryCode) => {
+            return {
+              country: response.data[countryCode]['AFFILIATE'][0]['country_name'],
+              available: response.data[countryCode]['AFFILIATE'].length,
+              price: response.data[countryCode]['AFFILIATE'][0]['price_dmg'],
+              tokenId: response.data[countryCode]['AFFILIATE'][0]['token_id']
+            }
+          })
+        setData(result)
       })
-  }, 15000, true);
+  }, 15000, true)
 
-  const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
+  const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI)
 
   const purchaseNft = async (tokenId) => {
-    console.log('tokenId ', tokenId);
+    console.log('tokenId ', tokenId)
     let estimatedGas
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
@@ -459,7 +471,7 @@ export default function NFT({ params }) {
           wallet_address: account,
           company_name: 'DMMF',
           company_description: null,
-          company_website_url: null,
+          company_website_url: null
         }
         const options = {
           method: 'POST',
@@ -469,11 +481,11 @@ export default function NFT({ params }) {
         fetch('https://api.defimoneymarket.com/v1/asset-introducers/purchase', options)
           .then(response => response.json())
           .then(response => {
-            console.log('Found response ', response);
+            console.log('Found response ', response)
           })
           .catch(error => {
-            console.error('Could not submit due to error ', error);
-          });
+            console.error('Could not submit due to error ', error)
+          })
 
       })
       .catch(error => {
@@ -495,7 +507,7 @@ export default function NFT({ params }) {
         <PageTitle>
           Become an Asset Introducer
         </PageTitle>
-        <Underline/>
+        <Underline />
       </TitleSection>
       <SelectCountrySection>
         <CountrySelect>
@@ -524,7 +536,7 @@ export default function NFT({ params }) {
             )}
           </CountryDropdown>
           <CountryInformation>
-            { selectedCountry && <div>
+            {selectedCountry && <div>
               <InformationItem>
                 <InformationTitle>
                   Country:
@@ -560,7 +572,7 @@ export default function NFT({ params }) {
             </div>}
           </CountryInformation>
           <ExploreLink>
-            <a href="https://explorer.defimoneymarket.com/affiliates">Explore current affiliates</a>
+            <a href="https://explorer.defimoneymarket.com/asset-introducers">Explore current asset introducers</a>
           </ExploreLink>
         </CountrySelect>
         <Map>
@@ -596,7 +608,9 @@ export default function NFT({ params }) {
             <TypeBody>
               Affiliates are the base level asset introducer in the DMM Ecosystem. They are able to charge and set
               their own origination fees as well as receive a slight percentage on the derived income payment
-              production. For more information, click <a href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8" target="_blank">here</a>.
+              production. For more information, click <a
+              href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8"
+              target="_blank">here</a>.
             </TypeBody>
           </Type>
           <Type
@@ -689,8 +703,9 @@ export default function NFT({ params }) {
           <PurchaseButton>
             {
               account ? (
-               isDmgAllowanceSet ? (
-                  <Button onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
+                isDmgAllowanceSet ? (
+                  <Button
+                    onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
                     Purchase
                   </Button>
                 ) : (
@@ -730,7 +745,7 @@ export default function NFT({ params }) {
                 )
               ) : (
                 <ConnectWalletButton>
-                  <Web3Status/>
+                  <Web3Status />
                 </ConnectWalletButton>
               )
             }
