@@ -10,7 +10,7 @@ import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 import Chart from "react-google-charts";
 import { calculateGasMargin, getProviderOrSigner } from '../../utils'
-import { safeAccess, isAddress, getTokenAllowance } from '../../utils'
+import { safeAccess, isAddress, getTokenAllowance, amountFormatter } from '../../utils'
 import { useAddressBalance } from '../../contexts/Balances'
 import * as Sentry from '@sentry/browser/dist/index'
 import { WETH_ADDRESS } from '../../contexts/Tokens'
@@ -144,7 +144,7 @@ const InformationTitle = styled.div`
 
 const InformationData = styled.div`
   display: inline;
-  font-weight: 300;
+  font-weight: 400;
 `
 
 const ExploreLink = styled.div`
@@ -340,6 +340,51 @@ const ConnectWalletButton = styled.div`
   }
 `
 
+const getNFTData = (setConstructedCountryData, setConstructedMapData) => {
+  fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
+    .then(response => response.json())
+    .then(response => response["data"])
+    .then(countries => {
+      let constructedCountryData = [];
+
+      for (let country in countries) {
+        const country_name = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["country_name"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["country_name"];
+        const available_affiliates = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"].length;
+        const available_principals = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"].length;
+        const total_available = (available_affiliates || 0) + (available_principals || 0);
+        const price_usd = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_usd"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_usd"];
+        const price_dmg = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_dmg"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_dmg"];
+        const affiliate_token_id = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["token_id"];
+        const principal_token_id = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["token_id"];
+
+        constructedCountryData.push({
+          country: country_name,
+          availableAffiliates: available_affiliates,
+          availablePrincipals: available_principals,
+          totalAvailable: total_available,
+          priceUSD: price_usd,
+          priceDMG: price_dmg,
+          affiliateTokenID: affiliate_token_id,
+          principalTokenID: principal_token_id
+
+        });
+      }
+
+      setConstructedCountryData(constructedCountryData);
+
+      let mapData = [['Country', 'Available NFTs']];
+
+      if (constructedCountryData) {
+        for (let country in constructedCountryData) {
+          mapData.push([constructedCountryData[country].country, constructedCountryData[country].totalAvailable]);
+        }
+      }
+
+      setConstructedMapData(mapData);
+
+    })
+};
+
 export default function NFT({ params }) {
   const { t } = useTranslation()
   const oneWei = ethers.BigNumber.from('1000000000000000000');
@@ -350,6 +395,8 @@ export default function NFT({ params }) {
   const [selectedType, setSelectedType] = useState('Affiliate');
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(null);
+  const [constructedCountryData, setConstructedCountryData] = useState(null);
+  const [constructedMapData, setConstructedMapData] = useState(null);
 
   const DMGTokenAddress = '0xEd91879919B71bB6905f23af0A68d231EcF87b14';
 
@@ -370,38 +417,7 @@ export default function NFT({ params }) {
 
   const addTransaction = useTransactionAdder();
 
-  const fakeData = [
-    {
-      country: 'Brazil',
-      available: 2,
-      price: 280000
-    },
-    {
-      country: 'Mexico',
-      available: 1,
-      price: 190000
-    },
-    {
-      country: 'Egypt',
-      available: 2,
-      price: 120000
-    },
-    {
-      country: 'Russia',
-      available: 1,
-      price: 340000
-    },
-    {
-      country: 'Japan',
-      available: 1,
-      price: 580000
-    },
-    {
-      country: 'Australia',
-      available: 1,
-      price: 300000
-    }
-  ];
+  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData);
 
   return (
     <NFTWrapper>
@@ -431,7 +447,7 @@ export default function NFT({ params }) {
             <CountryDropdownRow>
               {selectedCountry ? (selectedCountry.country) : 'Select...'}
             </CountryDropdownRow>
-            {fakeData.map(country =>
+            {constructedCountryData && constructedCountryData.map(country =>
               (!selectedCountry || country.country !== selectedCountry.country) &&
               <CountryDropdownRow
                 onClick={() => setSelectedCountry(country)}
@@ -441,30 +457,40 @@ export default function NFT({ params }) {
             )}
           </CountryDropdown>
           <CountryInformation>
-            <InformationItem>
-              <InformationTitle>
-                Country:
-              </InformationTitle>
-              <InformationData>
-                Brazil
-              </InformationData>
-            </InformationItem>
-            <InformationItem>
-              <InformationTitle>
-                Remaining:
-              </InformationTitle>
-              <InformationData>
-                1 NFT
-              </InformationData>
-            </InformationItem>
-            <InformationItem>
-              <InformationTitle>
-                NFT Price:
-              </InformationTitle>
-              <InformationData>
-                580,000 DMG
-              </InformationData>
-            </InformationItem>
+            { selectedCountry && <div>
+              <InformationItem>
+                <InformationTitle>
+                  Country:
+                </InformationTitle>
+                <InformationData>
+                  {selectedCountry.country}
+                </InformationData>
+              </InformationItem>
+              <InformationItem>
+                <InformationTitle>
+                  Affiliates Remaining:
+                </InformationTitle>
+                <InformationData>
+                  {selectedCountry.availableAffiliates || 0} NFT{selectedCountry.availableAffiliates && parseInt(selectedCountry.availableAffiliates) !== 1 && 's'}
+                </InformationData>
+              </InformationItem>
+              <InformationItem>
+                <InformationTitle>
+                  Principals Remaining:
+                </InformationTitle>
+                <InformationData>
+                  {selectedCountry.availablePrincipals || 0} NFT{selectedCountry.availablePrincipals && parseInt(selectedCountry.availablePrincipals) !== 1 && 's'}
+                </InformationData>
+              </InformationItem>
+              <InformationItem>
+                <InformationTitle>
+                  NFT Price:
+                </InformationTitle>
+                <InformationData>
+                  {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
+                </InformationData>
+              </InformationItem>
+            </div>}
           </CountryInformation>
           <ExploreLink>
             <a href="https://explorer.defimoneymarket.com/affiliates">Explore current affiliates</a>
@@ -476,15 +502,7 @@ export default function NFT({ params }) {
             height={'420px'}
             fill={'none'}
             chartType="GeoChart"
-            data={[
-              ['Country', 'Available NFTs'],
-              ['Germany', 2],
-              ['United States', 2],
-              ['Brazil', 1],
-              ['Canada', 2],
-              ['France', 1],
-              ['RU', 1],
-            ]}
+            data={constructedMapData}
             options={{
               colorAxis: { colors: ['#6d9ed2', '#327CCB'] },
               legend: 'none'
@@ -502,19 +520,22 @@ export default function NFT({ params }) {
         </SectionTitle>
         <TypeSelection>
           <Type
-            className={selectedType === 'Affiliate' ? 'active': ''}
-            onClick={ () => setSelectedType('Affiliate') }
+            className={selectedType === 'Affiliate' ? 'active' : ''}
+            onClick={() => setSelectedType('Affiliate')}
           >
             <TypeTitle>
               Affiliate
             </TypeTitle>
             <TypeBody>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute sed do eiusmod tempor incididunt ut
+              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et
+              dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex
+              ea commodo consequat. Duis aute sed do eiusmod tempor incididunt ut
             </TypeBody>
           </Type>
           <Type
-            className={`disabled ${selectedType === 'Principal' ? 'active': ''}`}
-            onClick={ () => {}/*setSelectedType('Principal')*/ }
+            className={`disabled ${selectedType === 'Principal' ? 'active' : ''}`}
+            onClick={() => {
+            }/*setSelectedType('Principal')*/}
           >
             <TypeTitle>
               Principal
@@ -567,7 +588,7 @@ export default function NFT({ params }) {
           </CompanyWebsite>
         </CompanyFields>
       </CompanyInfoSection>
-      <CompletePurchaseSection>
+      {selectedCountry && <CompletePurchaseSection>
         <CompanyTitle>
           <SectionTitle>
             Complete Purchase
@@ -579,7 +600,7 @@ export default function NFT({ params }) {
               Country:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              Brazil
+              {selectedCountry.country}
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseInfoField>
@@ -587,7 +608,7 @@ export default function NFT({ params }) {
               Type:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              Affiliate
+              {selectedType}
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseInfoField>
@@ -595,13 +616,13 @@ export default function NFT({ params }) {
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              580,000 DMG
+              {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
             {
               account ? (
-               tokenAllowanceSet ? (
+                tokenAllowanceSet ? (
                   <Button>
                     Purchase
                   </Button>
@@ -648,7 +669,7 @@ export default function NFT({ params }) {
             }
           </PurchaseButton>
         </CompanyFields>
-      </CompletePurchaseSection>
+      </CompletePurchaseSection>}
     </NFTWrapper>
   )
 
