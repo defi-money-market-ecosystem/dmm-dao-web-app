@@ -164,7 +164,7 @@ const ActivateWallet = styled.div`
 
 const AssetIntroducer = styled.a`
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
   display: inline;
   cursor: pointer
   color: #000;
