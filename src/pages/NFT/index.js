@@ -361,7 +361,6 @@ export default function NFT({ params }) {
   const tokenContract = useTokenContract(DMG_ADDRESS);
 
   const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
-  console.log('allowance ', !!allowance && allowance.toString());
   const isDmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
 
   // Make sure the wallet has sufficient balance
@@ -408,8 +407,8 @@ export default function NFT({ params }) {
         const body = {
           wallet_address: account,
           company_name: 'DMMF',
-          copmany_description: null,
-          copmany_website_url: null,
+          company_description: null,
+          company_website_url: null,
         }
         const options = {
           method: 'POST',
@@ -524,7 +523,7 @@ export default function NFT({ params }) {
             }}
             // Note: you will need to get a mapsApiKey for your project.
             // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
-            mapsApiKey="YOUR_KEY_HERE"
+            mapsApiKey='AIzaSyBIumXPkzCsPSRgXqMyOWEnmpo4sgkq5-k'
             rootProps={{ 'data-testid': '1' }}
           />
         </Map>
