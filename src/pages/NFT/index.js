@@ -199,6 +199,12 @@ const Type = styled.div`
   margin: 15px;
   transition: all 0.2s ease-in-out;
   
+  a {
+    text-decoration: none;
+    font-weight: 700;
+    color: inherit;
+  }
+  
   :hover {
     box-shadow: rgba(0,0,0,0.5) 1px 1px 8px -4px, rgba(0,0,0,0.5) 1px 1px 4px -4px; 
   }
