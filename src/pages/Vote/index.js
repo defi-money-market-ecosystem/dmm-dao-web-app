@@ -78,7 +78,7 @@ const VotingWallet = styled.div`
   width: calc(35% - 20px);
   border-radius: 5px;
   margin: 10px;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
   box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   color: black;
   display: inline-block;
@@ -156,6 +156,19 @@ const ActivateWallet = styled.div`
   cursor: pointer
   color: #000;
   float: right;
+
+  ${({ hidden }) => hidden && `
+    display: none;    
+  `}
+`
+
+const AssetIntroducer = styled.a`
+  font-size: 18px;
+  font-weight: 700;
+  display: inline;
+  cursor: pointer
+  color: #000;
+  text-decoration: none
 
   ${({ hidden }) => hidden && `
     display: none;    
@@ -244,11 +257,6 @@ const balances = [
     title: 'DMG Balance',
     valueBN: new BN('0')
   },
-  {
-    // title: 'DMG Earned',
-    title: '',
-    valueBN: null
-  }
 ]
 
 function shouldDisplayPage(p, selected, l) {
@@ -462,6 +470,9 @@ export default function Vote() {
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
             </Balance>
           ))}
+          <Balance>
+            <AssetIntroducer href={'/nft'}>Become an Asset Introducer</AssetIntroducer>
+          </Balance>
         </VotingWallet>
         <GovernanceProposals>
           <Title>

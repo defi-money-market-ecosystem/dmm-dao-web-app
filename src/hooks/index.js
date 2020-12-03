@@ -4,6 +4,7 @@ import copy from 'copy-to-clipboard'
 import { isMobile } from 'react-device-detect'
 
 import { NetworkContextName } from '../constants'
+import ASSET_INTRODUCER_BUYER_ROUTER_ABI from '../constants/abis/asset_introducer_buyer_router'
 import DMG_ABI from '../constants/abis/dmg'
 import ERC20_ABI from '../constants/abis/erc20'
 import WETH_ABI from '../constants/abis/weth'
@@ -195,6 +196,20 @@ export function useContract(address, ABI, withSignerIfPossible = true) {
       return null
     }
   }, [address, ABI, library, withSignerIfPossible, account])
+}
+
+// returns null on errors
+export function useAssetIntroducerBuyer(buyerAddress, withSignerIfPossible = true) {
+  const { library, account } = useWeb3React()
+
+  return useMemo(() => {
+    try {
+      const abi = ASSET_INTRODUCER_BUYER_ROUTER_ABI
+      return getContract(buyerAddress, abi, library, withSignerIfPossible ? account : undefined)
+    } catch {
+      return null
+    }
+  }, [buyerAddress, library, withSignerIfPossible, account])
 }
 
 // returns null on errors

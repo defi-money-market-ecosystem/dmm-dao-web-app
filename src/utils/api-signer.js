@@ -44,7 +44,8 @@ export const getIpAddress = () => {
 export const getDefaultApiKeyHeaders = () => {
   const { signature, timestamp } = createApiKeySignature()
   return {
-    'X-Dmm-Api-Signature': signature,
+    // 'X-Dmm-Api-Signature': signature,
+    'X-Dmm-Api-Signature': process.env.REACT_APP_ADMIN_API_KEY,
     'X-Dmm-Api-Timestamp': timestamp,
     'Content-Type': 'application/json'
   }
