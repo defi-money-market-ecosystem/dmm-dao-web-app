@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react'
 import {
+  useContract,
+  useInterval,
   useTokenContract,
   useWeb3React
 } from '../../hooks'
@@ -13,9 +15,12 @@ import { calculateGasMargin, getProviderOrSigner } from '../../utils'
 import { safeAccess, isAddress, getTokenAllowance } from '../../utils'
 import { useAddressBalance } from '../../contexts/Balances'
 import * as Sentry from '@sentry/browser/dist/index'
-import { WETH_ADDRESS } from '../../contexts/Tokens'
+import { DMG_ADDRESS, WETH_ADDRESS } from '../../contexts/Tokens'
 import { useTransactionAdder } from '../../contexts/Transactions'
+import { useAddressAllowance } from '../../contexts/Allowances'
+import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '../../utils/api-signer'
 //import Button from '@material-ui/core/Button'
+import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 
 const GAS_MARGIN = ethers.BigNumber.from(1000);
 
@@ -340,6 +345,8 @@ const ConnectWalletButton = styled.div`
   }
 `
 
+const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF';
+
 export default function NFT({ params }) {
   const { t } = useTranslation()
   const oneWei = ethers.BigNumber.from('1000000000000000000');
@@ -351,57 +358,83 @@ export default function NFT({ params }) {
   const [dropdownExpanded, setDropdownExpanded] = useState(false);
   const [selectedCountry, setSelectedCountry] = useState(null);
 
-  const DMGTokenAddress = '0xEd91879919B71bB6905f23af0A68d231EcF87b14';
+  const tokenContract = useTokenContract(DMG_ADDRESS);
 
-  const spenderAddress = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF';
-
-  let tokenAllowanceSet;
-
-  const tokenContract = useTokenContract(spenderAddress);
-
-  if (account) {
-    getTokenAllowance(account, DMGTokenAddress, spenderAddress, library).then(result => {
-      tokenAllowanceSet = !result.eq(ethers.BigNumber.from(0));
-    });
-  }
+  const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
+  console.log('allowance ', !!allowance && allowance.toString());
+  const isDmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
 
   // Make sure the wallet has sufficient balance
-  const userTokenBalance = useAddressBalance(account, DMGTokenAddress);
+  const userTokenBalance = useAddressBalance(account, DMG_ADDRESS);
 
   const addTransaction = useTransactionAdder();
 
-  const fakeData = [
-    {
-      country: 'Brazil',
-      available: 2,
-      price: 280000
-    },
-    {
-      country: 'Mexico',
-      available: 1,
-      price: 190000
-    },
-    {
-      country: 'Egypt',
-      available: 2,
-      price: 120000
-    },
-    {
-      country: 'Russia',
-      available: 1,
-      price: 340000
-    },
-    {
-      country: 'Japan',
-      available: 1,
-      price: 580000
-    },
-    {
-      country: 'Australia',
-      available: 1,
-      price: 300000
+  const [data, setData] = useState([]);
+  useInterval(() => {
+    fetch('http://api.defimoneymarket.com/v1/asset-introducers/primary-market')
+      .then(response => response.json())
+      .then(response => {
+        const result = Object.keys(response.data).map((countryCode) => {
+          return {
+            country: response.data[countryCode]["AFFILIATE"][0]['country_name'],
+            available: response.data[countryCode]["AFFILIATE"].length,
+            price: response.data[countryCode]["AFFILIATE"][0]['price_dmg'],
+            tokenId: response.data[countryCode]["AFFILIATE"][0]['token_id']
+          }
+        });
+        setData(result);
+      })
+  }, 15000, true);
+
+  const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
+
+  // TODO adam pass this through
+  const purchaseNft = async (tokenId) => {
+    if(!tokenId) {
+      tokenId = data[0].tokenId
     }
-  ];
+    let estimatedGas
+    estimatedGas = await buyerRouter.estimateGas
+      .buyAssetIntroducerSlot(tokenId)
+      .catch(error => {
+        console.error('Error setting max token approval ', error)
+        return ethers.BigNumber.from('1000000')
+      })
+    buyerRouter
+      .buyAssetIntroducerSlot(tokenId, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
+      .then(response => {
+        addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
+
+        const body = {
+          wallet_address: account,
+          company_name: 'DMMF',
+          copmany_description: null,
+          copmany_website_url: null,
+        }
+        const options = {
+          method: 'POST',
+          headers: getDefaultApiKeyHeaders(),
+          body: JSON.stringify(body)
+        }
+        fetch('https://api.defimoneymarket.com/v1/asset-introducers/purchase', options)
+          .then(response => response.json())
+          .then(response => {
+            console.log('Found response ', response);
+          })
+          .catch(error => {
+            console.error('Could not submit due to error ', error);
+          });
+
+      })
+      .catch(error => {
+        if (error?.code !== 4001) {
+          console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+          Sentry.captureException(error)
+        } else {
+          console.log('Could not approve tokens because the txn was cancelled')
+        }
+      })
+  }
 
   return (
     <NFTWrapper>
@@ -431,12 +464,12 @@ export default function NFT({ params }) {
             <CountryDropdownRow>
               {selectedCountry ? (selectedCountry.country) : 'Select...'}
             </CountryDropdownRow>
-            {fakeData.map(country =>
-              (!selectedCountry || country.country !== selectedCountry.country) &&
+            {data.map(countryObject =>
+              (!selectedCountry || countryObject.country !== selectedCountry.country) &&
               <CountryDropdownRow
-                onClick={() => setSelectedCountry(country)}
+                onClick={() => setSelectedCountry(countryObject)}
               >
-                {country.country}
+                {countryObject.country}
               </CountryDropdownRow>
             )}
           </CountryDropdown>
@@ -509,7 +542,9 @@ export default function NFT({ params }) {
               Affiliate
             </TypeTitle>
             <TypeBody>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute sed do eiusmod tempor incididunt ut
+              Affiliates are the base level asset introducer in the DMM Ecosystem. They are able to charge and set
+              their own origination fees as well as receive a slight percentage on the derived income payment
+              production. For more information, click <a href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8" target="_blank">here</a>.
             </TypeBody>
           </Type>
           <Type
@@ -520,7 +555,7 @@ export default function NFT({ params }) {
               Principal
             </TypeTitle>
             <TypeBody>
-              Curently unavailable
+              Currently unavailable
             </TypeBody>
           </Type>
         </TypeSelection>
@@ -601,8 +636,8 @@ export default function NFT({ params }) {
           <PurchaseButton>
             {
               account ? (
-               tokenAllowanceSet ? (
-                  <Button>
+               isDmgAllowanceSet ? (
+                  <Button onClick={() => purchaseNft()}>
                     Purchase
                   </Button>
                 ) : (
@@ -611,25 +646,25 @@ export default function NFT({ params }) {
                       let estimatedGas
                       let useUserBalance = false
                       estimatedGas = await tokenContract.estimateGas
-                        .approve(account, ethers.constants.MaxUint256)
+                        .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
                         .catch(error => {
                           console.error('Error setting max token approval ', error)
                         })
                       if (!estimatedGas) {
                         // general fallback for tokens who restrict approval amounts
-                        estimatedGas = await tokenContract.estimateGas.approve(account, userTokenBalance)
+                        estimatedGas = await tokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, userTokenBalance)
                         useUserBalance = true
                       }
                       tokenContract
-                        .approve(account, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
+                        .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
                           gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
                         })
                         .then(response => {
-                          addTransaction(response, { approval: spenderAddress })
+                          addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
                         })
                         .catch(error => {
                           if (error?.code !== 4001) {
-                            console.error(`Could not approve ${spenderAddress} due to error: `, error)
+                            console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
                             Sentry.captureException(error)
                           } else {
                             console.log('Could not approve tokens because the txn was cancelled')
@@ -637,7 +672,7 @@ export default function NFT({ params }) {
                         })
                     }}
                   >
-                    Unlock
+                    Unlock DMG
                   </Button>
                 )
               ) : (
