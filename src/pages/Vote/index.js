@@ -471,7 +471,7 @@ export default function Vote() {
             </Balance>
           ))}
           <Balance>
-            <AssetIntroducer onClick={history.push('/asset-introducers/purchase')}>
+            <AssetIntroducer onClick={() => history.push('/asset-introducers/purchase')}>
               Become an Asset Introducer
             </AssetIntroducer>
           </Balance>

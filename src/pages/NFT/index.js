@@ -377,7 +377,6 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData) => {
           priceDMG: price_dmg,
           affiliateTokenID: affiliate_token_id,
           principalTokenID: principal_token_id
-
         });
       }
 
@@ -442,11 +441,8 @@ export default function NFT({ params }) {
 
   const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
 
-  // TODO adam pass this through
   const purchaseNft = async (tokenId) => {
-    if(!tokenId) {
-      tokenId = data[0].tokenId
-    }
+    console.log('tokenId ', tokenId);
     let estimatedGas
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
@@ -558,7 +554,7 @@ export default function NFT({ params }) {
                   NFT Price:
                 </InformationTitle>
                 <InformationData>
-                  {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
+                  {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2, true, true)} DMG
                 </InformationData>
               </InformationItem>
             </div>}
@@ -687,7 +683,7 @@ export default function NFT({ params }) {
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
+              {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2, false, true)} DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
