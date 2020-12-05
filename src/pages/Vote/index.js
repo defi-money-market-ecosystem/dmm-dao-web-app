@@ -88,13 +88,11 @@ const VotingWallet = styled.div`
     width: calc(100% - 20px);
   }
 `
+
 const GovernanceProposals = styled.div`
-  background-color: #FFFFFF;
   width: calc(65% - 20px);;
   margin: 10px;
-  border-radius: 5px;
   margin-bottom: 1rem;
-  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   color: black;
   display: inline-block;
   vertical-align: top;
@@ -103,6 +101,13 @@ const GovernanceProposals = styled.div`
     width: calc(100% - 20px);
     margin-bottom: 100px;
   }
+`
+
+const GovernanceInner = styled.div`
+  background-color: #FFFFFF;
+  margin-bottom: 80px;
+  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+  border-radius: 5px;
 `
 
 const Title = styled.div`
@@ -475,42 +480,44 @@ export default function Vote() {
           </Balance>
         </VotingWallet>
         <GovernanceProposals>
-          <Title>
-            Governance Proposals
-          </Title>
-          <Underline/>
-          {loading ?
-            (<div style={{ textAlign: 'center' }}>
-              <CircularProgress style={{ color: primaryColor }}/>
-            </div>)
-            :
-            (<Proposals>
-              {proposalPage.map((proposal) => (
-                <ProposalItem key={`proposal-${proposal.proposalId}-${walletAddress}`}
-                              proposal={proposal}
-                              isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-                              votesBN={accountInfo?.voteInfo?.votesBN}
-                              voteStatus={proposal.voteStatus}
-                              setVoteStatus={(voteStatus) => {
-                                proposal.voteStatus = voteStatus
-                              }}
-                              walletAddress={walletAddress}/>
-              ))}
-            </Proposals>)
-          }
-          <Pages>
-            <Page onClick={() => checkChange(page - 1)} off={page === 1}>
-              <img src={LeftArrow} alt={'Left Arrow'}/>
-            </Page>
-            {pages.filter(i => shouldDisplayPage(i, page, l)).map((p, index) => (
-              <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
-                {p}
+          <GovernanceInner>
+            <Title>
+              Governance Proposals
+            </Title>
+            <Underline/>
+            {loading ?
+              (<div style={{ textAlign: 'center' }}>
+                <CircularProgress style={{ color: primaryColor }}/>
+              </div>)
+              :
+              (<Proposals>
+                {proposalPage.map((proposal) => (
+                  <ProposalItem key={`proposal-${proposal.proposalId}-${walletAddress}`}
+                                proposal={proposal}
+                                isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
+                                votesBN={accountInfo?.voteInfo?.votesBN}
+                                voteStatus={proposal.voteStatus}
+                                setVoteStatus={(voteStatus) => {
+                                  proposal.voteStatus = voteStatus
+                                }}
+                                walletAddress={walletAddress}/>
+                ))}
+              </Proposals>)
+            }
+            <Pages>
+              <Page onClick={() => checkChange(page - 1)} off={page === 1}>
+                <img src={LeftArrow} alt={'Left Arrow'}/>
               </Page>
-            ))}
-            <Page onClick={() => checkChange(page + 1)} off={page === l || loading}>
-              <img src={RightArrow} alt={'Right Arrow'}/>
-            </Page>
-          </Pages>
+              {pages.filter(i => shouldDisplayPage(i, page, l)).map((p, index) => (
+                <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
+                  {p}
+                </Page>
+              ))}
+              <Page onClick={() => checkChange(page + 1)} off={page === l || loading}>
+                <img src={RightArrow} alt={'Right Arrow'}/>
+              </Page>
+            </Pages>
+          </GovernanceInner>
         </GovernanceProposals>
       </Voting>
       <Sticky active={sticky}>

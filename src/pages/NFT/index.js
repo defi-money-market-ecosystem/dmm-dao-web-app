@@ -63,6 +63,11 @@ const PageTitle = styled.div`
   font-size: 74px;
   line-height: 80px;
   margin-left: -5px;
+  
+  @media (max-width: 822px) {
+    font-size: 9vw;
+    line-height: 12vw;
+  }
 `
 
 const Underline = styled.div`
@@ -77,6 +82,13 @@ const SelectCountrySection = styled.div`
   padding: 0 5%;
   margin-top: 100px;
   margin-bottom: 100px;
+  
+  @media (max-width: 850px) {
+    display: flex;
+    justify-content: space-between;
+    flex-direction: column-reverse;
+    margin-top: 0;
+  }
 `
 
 const CountrySelect = styled.div`
@@ -84,6 +96,10 @@ const CountrySelect = styled.div`
   display: inline-block;
   vertical-align: top;
   position: relative;
+  
+  @media (max-width: 850px) {
+    width: 100%;
+  }
 `
 
 const SectionTitle = styled.div`
@@ -170,6 +186,10 @@ const Map = styled.div`
   div > div > div > div > div > svg > g > rect {
     fill: none;
   }
+  
+  @media (max-width: 850px) {
+    width: 100%;
+  }
 `
 
 const SelectTypeSection = styled.div`
@@ -177,6 +197,10 @@ const SelectTypeSection = styled.div`
   width: 90%;
   padding: 0 5%;
   margin-bottom: 100px;
+  
+  @media (max-width: 600px) {
+    margin-bottom: 40px;
+  }
 `
 
 const TypeSelection = styled.div`
@@ -187,7 +211,7 @@ const TypeSelection = styled.div`
 const Type = styled.div`
   width: 350px;
   height: 200px;
-  max-width: 90vw;
+  max-width: 67vw;
   border-radius: 5px;
   cursor: pointer
   background: white;
@@ -198,6 +222,10 @@ const Type = styled.div`
   vertical-align: top;
   margin: 15px;
   transition: all 0.2s ease-in-out;
+  
+  @media (max-width: 600px) {
+    height: 220px;
+  }
   
   a {
     text-decoration: none;
@@ -245,6 +273,11 @@ const CompanyTitle = styled.div`
   display: inline-block;
   vertical-align: top;
   padding: 80px 0;
+  
+  @media (max-width: 600px) {
+    width: 100%;
+    padding-bottom: 30px;
+  }
 `
 
 const SectionSubtitle = styled.div`
@@ -257,7 +290,11 @@ const CompanyFields = styled.div`
   width: 50%;
   display: inline-block;
   vertical-align: top;
-  margin-top: 2 0px;
+  margin-top: 20px;
+  
+  @media (max-width: 600px) {
+    width: 100%;
+  }
 `
 
 const CompanyName = styled.div`
@@ -358,27 +395,29 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData) => {
     .then(countries => {
       let constructedCountryData = [];
 
-      for (let country in countries) {
-        const country_name = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["country_name"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["country_name"];
-        const available_affiliates = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"].length;
-        const available_principals = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"].length;
-        const total_available = (available_affiliates || 0) + (available_principals || 0);
-        const price_usd = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_usd"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_usd"];
-        const price_dmg = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_dmg"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_dmg"];
-        const affiliate_token_id = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["token_id"];
-        const principal_token_id = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["token_id"];
+      if (countries && countries[0] && (countries[countries[0]]["AFFILIATE"] || countries[countries[0]]["PRINCIPAL"])) {
+        for (let country in countries) {
+          const country_name = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["country_name"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["country_name"];
+          const available_affiliates = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"].length;
+          const available_principals = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"].length;
+          const total_available = (available_affiliates || 0) + (available_principals || 0);
+          const price_usd = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_usd"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_usd"];
+          const price_dmg = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_dmg"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_dmg"];
+          const affiliate_token_id = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["token_id"];
+          const principal_token_id = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["token_id"];
 
-        constructedCountryData.push({
-          country: country_name,
-          availableAffiliates: available_affiliates,
-          availablePrincipals: available_principals,
-          totalAvailable: total_available,
-          priceUSD: price_usd,
-          priceDMG: price_dmg,
-          affiliateTokenID: affiliate_token_id,
-          principalTokenID: principal_token_id
+          constructedCountryData.push({
+            country: country_name,
+            availableAffiliates: available_affiliates,
+            availablePrincipals: available_principals,
+            totalAvailable: total_available,
+            priceUSD: price_usd,
+            priceDMG: price_dmg,
+            affiliateTokenID: affiliate_token_id,
+            principalTokenID: principal_token_id
 
-        });
+          });
+        }
       }
 
       setConstructedCountryData(constructedCountryData);
@@ -429,11 +468,16 @@ export default function NFT({ params }) {
       .then(response => response.json())
       .then(response => {
         const result = Object.keys(response.data).map((countryCode) => {
-          return {
-            country: response.data[countryCode]["AFFILIATE"][0]['country_name'],
-            available: response.data[countryCode]["AFFILIATE"].length,
-            price: response.data[countryCode]["AFFILIATE"][0]['price_dmg'],
-            tokenId: response.data[countryCode]["AFFILIATE"][0]['token_id']
+          if (response.data && response.data[countryCode] && response.data[countryCode]["AFFILIATE"] && response.data[countryCode]["AFFILIATE"][0]) {
+            return {
+              country: response.data[countryCode]["AFFILIATE"][0]['country_name'],
+              available: response.data[countryCode]["AFFILIATE"].length,
+              price: response.data[countryCode]["AFFILIATE"][0]['price_dmg'],
+              tokenId: response.data[countryCode]["AFFILIATE"][0]['token_id']
+            }
+          }
+          else {
+            return {};
           }
         });
         setData(result);
@@ -518,14 +562,24 @@ export default function NFT({ params }) {
             <CountryDropdownRow>
               {selectedCountry ? (selectedCountry.country) : 'Select...'}
             </CountryDropdownRow>
-            {constructedCountryData && constructedCountryData.map(country =>
-              (!selectedCountry || country.country !== selectedCountry.country) &&
-              <CountryDropdownRow
-                onClick={() => setSelectedCountry(country)}
-              >
-                {country.country}
+            {constructedCountryData && constructedCountryData.length === 0 ? (
+              <CountryDropdownRow>
+                No countries available
               </CountryDropdownRow>
+            ) : (
+              constructedCountryData && constructedCountryData.map(country =>
+                (!selectedCountry || country.country !== selectedCountry.country) &&
+                <CountryDropdownRow
+                  onClick={() => setSelectedCountry(country)}
+                >
+                  {country.country}
+                </CountryDropdownRow>
+              )
             )}
+            {/*
+
+
+            )*/}
           </CountryDropdown>
           <CountryInformation>
             { selectedCountry && <div>
