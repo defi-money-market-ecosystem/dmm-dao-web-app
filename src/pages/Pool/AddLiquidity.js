@@ -16,7 +16,7 @@ import { useWeb3React, useExchangeContract } from '../../hooks'
 import { brokenTokens, broken777Tokens } from '../../constants'
 import { amountFormatter, calculateGasMargin } from '../../utils'
 import { useTransactionAdder } from '../../contexts/Transactions'
-import { useTokenDetails, INITIAL_TOKENS_CONTEXT } from '../../contexts/Tokens'
+import { useTokenDetails, SWAP_TOKENS_CONTEXT } from '../../contexts/Tokens'
 import { useAddressBalance, useExchangeReserves } from '../../contexts/Balances'
 import { useAddressAllowance } from '../../contexts/Allowances'
 
@@ -602,7 +602,7 @@ export default function AddLiquidity({ params }) {
     (inputError === null || outputError === null) && !zeroDecimalError && !showUnlock && !brokenTokenWarning
 
   const newOutputDetected =
-    outputCurrency !== 'ETH' && outputCurrency && !INITIAL_TOKENS_CONTEXT[chainId].hasOwnProperty(outputCurrency)
+    outputCurrency !== 'ETH' && outputCurrency && !SWAP_TOKENS_CONTEXT[chainId].hasOwnProperty(outputCurrency)
 
   const [showOutputWarning, setShowOutputWarning] = useState(false)
 

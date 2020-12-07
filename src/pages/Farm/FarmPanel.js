@@ -957,8 +957,15 @@ export default function FarmPanel({ params }) {
   const [isUsingDmgPriceUsd, setIsUsingDmgPriceUsd] = useState(false)
   const fees = feesByToken === '-' ? 0 : parseFloat(feesByToken.substring(0, feesByToken.length - 1)) / 100.0
   const feesWei = ethers.utils.parseEther(fees.toString())
-  const feeAmountWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(ethers.BigNumber.from('1000000000000000000')) : ethers.constants.Zero
-  const feeAmountFormatted = amountFormatter(feeAmountWei, currencyBDecimals, 6, false, false)
+
+  const currencyAFactor = ethers.BigNumber.from('10').pow(currencyADecimals)
+  const feeAmountAWei = !!currencyADepositValue ? currencyADepositValue.mul(feesWei).div(currencyAFactor) : ethers.constants.Zero
+  const feeAmountAFormatted = amountFormatter(feeAmountAWei, currencyBDecimals, 6, false, false)
+
+  const currencyBFactor = ethers.BigNumber.from('10').pow(currencyBDecimals)
+  const feeAmountBWei = !!currencyBDepositValue ? currencyBDepositValue.mul(feesWei).div(currencyBFactor) : ethers.constants.Zero
+  const feeAmountBFormatted = amountFormatter(feeAmountBWei, currencyBDecimals, 6, false, false)
+
   const [isAlreadyFarming, setIsAlreadyFarming] = useState(false)
   useEffect(() => {
     setIsAlreadyFarming(!!currencyADepositValue && currencyADepositValue.gt(ethers.constants.Zero))
@@ -981,7 +988,8 @@ export default function FarmPanel({ params }) {
           <Underline />
           <CardText>
             You are withdrawing your active farm, which incurs a {feesByToken} fee on the amount
-            of {currencyBSymbol} you deposited. The expected fee is about {feeAmountFormatted} {currencyBSymbol}.
+            of {currencyASymbol} and {currencyBSymbol} you deposited. The expected fee is about
+            {feeAmountAFormatted} {currencyASymbol} and {feeAmountBFormatted} {currencyBSymbol}.
           </CardText>
           <ConfirmButtonsWrapper>
             <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>

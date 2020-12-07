@@ -588,7 +588,7 @@ export default function NFT({ params }) {
             }}
             // Note: you will need to get a mapsApiKey for your project.
             // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
-            mapsApiKey='AIzaSyBIumXPkzCsPSRgXqMyOWEnmpo4sgkq5-k'
+            mapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}
             rootProps={{ 'data-testid': '1' }}
           />
         </Map>
@@ -610,7 +610,7 @@ export default function NFT({ params }) {
               their own origination fees as well as receive a slight percentage on the derived income payment
               production. For more information, click <a
               href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8"
-              target="_blank">here</a>.
+              target='_blank' rel='noopener noreferrer'>here</a>.
             </TypeBody>
           </Type>
           <Type
