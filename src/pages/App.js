@@ -118,7 +118,7 @@ class App extends React.Component {
                               }
                             }}
                           />
-                          <Route exact strict path="/nft" component={() => <NFT params={params}/>}/>
+                          <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params}/>}/>
                           <Redirect to="/governance/proposals"/>
                         </Switch>
                       </Suspense>

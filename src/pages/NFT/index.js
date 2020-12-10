@@ -10,7 +10,7 @@ import { ethers } from 'ethers'
 import { Button } from '../../theme'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
-import Chart from "react-google-charts";
+import Chart from 'react-google-charts'
 import { calculateGasMargin, getProviderOrSigner } from '../../utils'
 import { safeAccess, isAddress, getTokenAllowance, amountFormatter } from '../../utils'
 import { useAddressBalance } from '../../contexts/Balances'
@@ -22,7 +22,7 @@ import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '..
 //import Button from '@material-ui/core/Button'
 import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 
-const GAS_MARGIN = ethers.BigNumber.from(1000);
+const GAS_MARGIN = ethers.BigNumber.from(1000)
 
 
 const BackDrop = styled.div`
@@ -123,9 +123,11 @@ const CountryDropdown = styled.div`
   padding: 0 12px;
   margin-bottom: 20px;
   position: absolute;
+  z-index: 100;
   
   &.expanded {
     height: auto;
+    z-index: 200;
   }
 `
 
@@ -356,23 +358,105 @@ const CompletePurchaseSection = styled.div`
   padding: 0 5%;
 `
 
+const LockupInfoField = styled.div`
+  width: fit-content;
+  display: inline-block;
+  width: 100%;
+  margin-bottom: 5px;
+  margin-top: 10px;
+`
+
+const LockupInfoFieldTitle = styled.div`
+  font-weight: 600;
+  margin-right: 8px;
+  font-size: 14px;
+  line-height: 22px;
+`
+
+const LockupInfoFieldValue = styled.div`
+  font-weight: 100;
+  line-height: 24px;
+  font-size: 20px;
+`
+
 const PurchaseInfoField = styled.div`
-  margin-bottom: 20px;
+  width: fit-content;
+  display: inline-block;
+  margin-bottom: 15px;
+  
+  :first-of-type {
+    margin-right: 20px;
+  }
 `
 
 const PurchaseInfoFieldTitle = styled.div`
-  display: inline;
-  font-size: 24px;
+  font-size: 18px;
   line-height: 30px;
-  font-weight: 100;
+  font-weight: 600;
   margin-right: 8px;
 `
 
 const PurchaseInfoFieldValue = styled.div`
-  display: inline;
-  font-weight: 400;
-  font-size: 24px;
+  font-weight: 100;
+  font-size: 28px;
   line-height: 30px;
+`
+
+const StakeCheckboxWrapper = styled.div`
+  width: 100%;
+  margin-bottom: 12px;
+`
+
+const StakeCheckbox = styled.div`
+  width: 12px;
+  height: 12px;
+  margin-top: 5px;
+  background-color: white;
+  /*border: 1px solid #327CCB;*/
+  display: inline-block;
+  margin-right: 5px;
+  border-radius: 3px;
+  cursor: pointer;
+  
+  :hover {
+    border: 1px solid #327CCB;
+    height: 10px;
+    width: 10px;
+  }
+  
+  &.selected {
+    background-color: #70a2d6;
+    border: 1px solid white;
+    height: 10px;
+    width: 10px;
+    
+    :hover {
+      
+    }
+  }
+`
+
+const StakeTitle = styled.div`
+  display: inline-block;
+  vertical-align: top;
+  font-size: 16px;
+  font-weight: 100;
+`
+
+const StakingInfoSection = styled.div`
+  width: 95%;
+  margin-bottom: 12px;
+  margin-left: 5%;
+`
+
+const StakingInfoTitle = styled.div`
+  
+`
+
+const StakingSelectSection = styled.div`
+  width: 100%;
+  margin-bottom: 50px;
+  position: relative;
 `
 
 const PurchaseButton = styled.div`
@@ -388,39 +472,71 @@ const ConnectWalletButton = styled.div`
   }
 `
 
-const getNFTData = (setConstructedCountryData, setConstructedMapData) => {
-  fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
+const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod) => {
+  //fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
+  fetch(`https://dmm.ngrok.io/v1/asset-introducers/primary-market`)
     .then(response => response.json())
-    .then(response => response["data"])
+    .then(response => response['data'])
     .then(countries => {
       let constructedCountryData = [];
 
-      if (countries && countries[0] && (countries[countries[0]]["AFFILIATE"] || countries[countries[0]]["PRINCIPAL"])) {
-        for (let country in countries) {
-          const country_name = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["country_name"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["country_name"];
-          const available_affiliates = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"].length;
-          const available_principals = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"].length;
+      for (let country in countries) {
+        if (countries[country]['introducer_type']) {
+
+          const country_name = countries[country]['country_name'];
+          const available_affiliates = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['token_ids'].length : 0;
+          const available_principals = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['token_ids'].length : 0;
           const total_available = (available_affiliates || 0) + (available_principals || 0);
-          const price_usd = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_usd"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_usd"];
-          const price_dmg = countries[country]["AFFILIATE"] ? countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["price_dmg"] : countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["price_dmg"];
-          const affiliate_token_id = countries[country]["AFFILIATE"] && countries[country]["AFFILIATE"][0]["token_id"];
-          const principal_token_id = countries[country]["PRINCIPAL"] && countries[country]["PRINCIPAL"][0]["token_id"];
+          const price_affiliate_usd = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_usd'] : null;
+          const price_affiliate_dmg = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_dmg'] : null;
+          const price_principal_usd = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_usd'] : null;
+          const price_principal_dmg = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_dmg'] : null;
+          const affiliate_token_id = countries[country]['introducer_type']['AFFILIATE'] && countries[country]['introducer_type']['AFFILIATE']['token_ids'][0];
+          const principal_token_id = countries[country]['introducer_type']['PRINCIPAL'] && countries[country]['introducer_type']['PRINCIPAL']['token_ids'][0];
+          const affiliate_staking_data = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['staking_prices'] : {};
+          const principal_staking_data = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['staking_prices'] : {};
 
           constructedCountryData.push({
             country: country_name,
             availableAffiliates: available_affiliates,
             availablePrincipals: available_principals,
             totalAvailable: total_available,
-            priceUSD: price_usd,
-            priceDMG: price_dmg,
+            priceAffiliateUSD: price_affiliate_usd,
+            priceAffiliateDMG: price_affiliate_dmg,
+            pricePrincipalUSD: price_principal_usd,
+            pricePrincipalDMG: price_principal_dmg,
             affiliateTokenID: affiliate_token_id,
-            principalTokenID: principal_token_id
-
-          });
+            principalTokenID: principal_token_id,
+            stakingDataAffiliate: affiliate_staking_data,
+            stakingDataPrincipal: principal_staking_data,
+          })
         }
       }
 
       setConstructedCountryData(constructedCountryData);
+
+      // --- Staking ---
+      let stakingPeriods = []; // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
+
+      if (constructedCountryData && constructedCountryData[0]) {
+        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+        for (let period in stakingData) {
+          stakingPeriods.push(stakingData[period]['staking_period']);
+        }
+      }
+
+      setSelectedStakingPeriod(stakingPeriods[0] ? stakingPeriods[0] : '');
+
+      let stakingTokens = [];
+
+      if (constructedCountryData && constructedCountryData[0]) {
+        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+        for (let token in stakingData[stakingPeriods[0]['period']]['staking_amounts']) {
+          stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol']);
+        }
+      }
+
+      setSelectedStakingToken(stakingTokens[0] || '');
 
       let mapData = [['Country', 'Available NFTs']];
 
@@ -449,44 +565,74 @@ export default function NFT({ params }) {
   const [selectedCountry, setSelectedCountry] = useState(null);
   const [constructedCountryData, setConstructedCountryData] = useState(null);
   const [constructedMapData, setConstructedMapData] = useState(null);
+  const [stakingSelected,setStakingSelected] = useState(false);
+  const [mTokenDropdownExpanded, setmTokenDropdownExpanded] = useState(false);
+  const [periodDropdownExpanded, setPeriodDropdownExpanded] = useState(false);
 
   const tokenContract = useTokenContract(DMG_ADDRESS);
 
   const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
-  const isDmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
+  const dmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'));
 
   // Make sure the wallet has sufficient balance
   const userTokenBalance = useAddressBalance(account, DMG_ADDRESS);
 
   const addTransaction = useTransactionAdder();
 
-  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData);
+  const [selectedStakingToken, setSelectedStakingToken] = useState('');
+  const [selectedStakingPeriod, setSelectedStakingPeriod] = useState({});
+
+  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod);
+
+  let stakingPeriods = []; // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
+
+  if (constructedCountryData && constructedCountryData[0]) {
+    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+    for (let period in stakingData) {
+      stakingPeriods.push(stakingData[period]['staking_period']);
+    }
+  }
+
+  let stakingTokens = [];
+
+  if (constructedCountryData && constructedCountryData[0]) {
+    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+    for (let token in stakingData[stakingPeriods[0]['period']]['staking_amounts']) {
+      stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol']);
+    }
+  }
+
+  const lockupAmount = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei']);
+  const stakingPurchaseSize = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['price_dmg'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['price_dmg']);
+  const stakingTokenAddress = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address']);
+  const stakingTokenDecimals = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals']);
+
+  const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS); // TODO - INSERT CORRECT CONTRACT ADDRESS TO CHECK ALLOWANCE
+  const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'));
+  const stakingTokenContract = useTokenContract(stakingTokenAddress); // TODO replace with token address
+  const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress);
 
   const [data, setData] = useState([]);
   useInterval(() => {
     fetch('http://api.defimoneymarket.com/v1/asset-introducers/primary-market')
       .then(response => response.json())
       .then(response => {
-        const result = Object.keys(response.data).map((countryCode) => {
-          if (response.data && response.data[countryCode] && response.data[countryCode]["AFFILIATE"] && response.data[countryCode]["AFFILIATE"][0]) {
+        const result = Object.keys(response.data)
+          .filter((countryCode) => response.data[countryCode]['AFFILIATE'].length > 0)
+          .map((countryCode) => {
             return {
-              country: response.data[countryCode]["AFFILIATE"][0]['country_name'],
-              available: response.data[countryCode]["AFFILIATE"].length,
-              price: response.data[countryCode]["AFFILIATE"][0]['price_dmg'],
-              tokenId: response.data[countryCode]["AFFILIATE"][0]['token_id']
+              country: response.data[countryCode]['AFFILIATE'][0]['country_name'],
+              available: response.data[countryCode]['AFFILIATE'].length,
+              price: response.data[countryCode]['AFFILIATE'][0]['price_dmg'],
+              tokenId: response.data[countryCode]['AFFILIATE'][0]['token_id']
             }
-          }
-          else {
-            return {};
-          }
-        });
-        setData(result);
+          })
+        setData(result)
       })
   }, 15000, true);
 
   const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
 
-  // TODO adam pass this through
   const purchaseNft = async (tokenId) => {
     if(!tokenId) {
       tokenId = data[0].tokenId
@@ -576,10 +722,6 @@ export default function NFT({ params }) {
                 </CountryDropdownRow>
               )
             )}
-            {/*
-
-
-            )*/}
           </CountryDropdown>
           <CountryInformation>
             { selectedCountry && <div>
@@ -596,29 +738,41 @@ export default function NFT({ params }) {
                   Affiliates Remaining:
                 </InformationTitle>
                 <InformationData>
-                  {selectedCountry.availableAffiliates || 0} NFT{selectedCountry.availableAffiliates && parseInt(selectedCountry.availableAffiliates) !== 1 && 's'}
+                  {selectedCountry.availableAffiliates || 0} NFT{selectedCountry && selectedCountry.availableAffiliates !== 1 ? 's' : ''}
                 </InformationData>
               </InformationItem>
+              { selectedCountry.availableAffiliates > 0 &&
+                <InformationItem>
+                  <InformationTitle>
+                    Affiliate NFT Price:
+                  </InformationTitle>
+                  <InformationData>
+                    {amountFormatter(ethers.BigNumber.from(selectedCountry.priceAffiliateDMG), 18, 2, true, true)} DMG
+                  </InformationData>
+                </InformationItem>
+              }
               <InformationItem>
                 <InformationTitle>
                   Principals Remaining:
                 </InformationTitle>
                 <InformationData>
-                  {selectedCountry.availablePrincipals || 0} NFT{selectedCountry.availablePrincipals && parseInt(selectedCountry.availablePrincipals) !== 1 && 's'}
+                  {selectedCountry.availablePrincipals || 0} NFT{selectedCountry && selectedCountry.availablePrincipals !== 1 ? 's' : ''}
                 </InformationData>
               </InformationItem>
-              <InformationItem>
-                <InformationTitle>
-                  NFT Price:
-                </InformationTitle>
-                <InformationData>
-                  {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
-                </InformationData>
-              </InformationItem>
+              { selectedCountry.availablePrincipals > 0 &&
+                <InformationItem>
+                  <InformationTitle>
+                    Principal NFT Price:
+                  </InformationTitle>
+                  <InformationData>
+                    {amountFormatter(ethers.BigNumber.from(selectedCountry.pricePrincipalDMG), 18, 2, true, true)} DMG
+                  </InformationData>
+                </InformationItem>
+              }
             </div>}
           </CountryInformation>
           <ExploreLink>
-            <a href="https://explorer.defimoneymarket.com/affiliates">Explore current affiliates</a>
+            <a href="https://explorer.defimoneymarket.com/asset-introducers">Explore current asset introducers</a>
           </ExploreLink>
         </CountrySelect>
         <Map>
@@ -645,7 +799,7 @@ export default function NFT({ params }) {
         </SectionTitle>
         <TypeSelection>
           <Type
-            className={selectedType === 'Affiliate' ? 'active' : ''}
+            className={selectedCountry && selectedCountry.availableAffiliates > 0 ? (selectedType === 'Affiliate' ? 'active' : '') : 'disabled'}
             onClick={() => setSelectedType('Affiliate')}
           >
             <TypeTitle>
@@ -654,7 +808,9 @@ export default function NFT({ params }) {
             <TypeBody>
               Affiliates are the base level asset introducer in the DMM Ecosystem. They are able to charge and set
               their own origination fees as well as receive a slight percentage on the derived income payment
-              production. For more information, click <a href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8" target="_blank">here</a>.
+              production. For more information, click <a
+              href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8"
+              target="_blank">here</a>.
             </TypeBody>
           </Type>
           <Type
@@ -725,7 +881,7 @@ export default function NFT({ params }) {
               Country:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {selectedCountry.country}
+              {selectedCountry && selectedCountry.country}
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseInfoField>
@@ -736,56 +892,197 @@ export default function NFT({ params }) {
               {selectedType}
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
+          <StakeCheckboxWrapper>
+            <StakeCheckbox
+              className={stakingSelected ? 'selected' : ''}
+              onClick={() => setStakingSelected(!stakingSelected)}
+            />
+            <StakeTitle>
+              Stake mTokens for discounted purchase
+            </StakeTitle>
+          </StakeCheckboxWrapper>
+          {stakingSelected &&
+          <StakingInfoSection>
+            <StakingSelectSection>
+              <StakingInfoTitle>
+                Select mToken to lock up:
+              </StakingInfoTitle>
+              <CountryDropdown
+                className={mTokenDropdownExpanded ? 'expanded' : ''}
+                onClick={() => setmTokenDropdownExpanded(!mTokenDropdownExpanded)}
+              >
+                <CountryDropdownIcon
+                  className={mTokenDropdownExpanded ? 'flipped' : ''}
+                >
+                  ▼
+                </CountryDropdownIcon>
+                {selectedStakingToken ? (
+                  <CountryDropdownRow>
+                    {selectedStakingToken}
+                  </CountryDropdownRow>
+                ) : (
+                  <CountryDropdownRow>
+                    Select...
+                  </CountryDropdownRow>
+                )}
+                {stakingTokens.map(token =>
+                  token !== selectedStakingToken &&
+                    <CountryDropdownRow
+                      onClick={() => setSelectedStakingToken(token)}
+                    >
+                      {token}
+                    </CountryDropdownRow>
+                )}
+              </CountryDropdown>
+            </StakingSelectSection>
+            <StakingSelectSection>
+              <StakingInfoTitle>
+                Select lockup period:
+              </StakingInfoTitle>
+              <CountryDropdown
+                className={periodDropdownExpanded ? 'expanded' : ''}
+                onClick={() => setPeriodDropdownExpanded(!periodDropdownExpanded)}
+              >
+                <CountryDropdownIcon
+                  className={periodDropdownExpanded ? 'flipped' : ''}
+                >
+                  ▼
+                </CountryDropdownIcon>
+                {selectedStakingPeriod ? (
+                  <CountryDropdownRow>
+                    {selectedStakingPeriod['duration_months']} months
+                  </CountryDropdownRow>
+                ) : (
+                  <CountryDropdownRow>
+                    Select...
+                  </CountryDropdownRow>
+                )}
+                {stakingPeriods.map(period =>
+                  period !== selectedStakingPeriod &&
+                  <CountryDropdownRow
+                    onClick={() => setSelectedStakingPeriod(period)}
+                  >
+                    {period['duration_months']} months
+                  </CountryDropdownRow>
+                )}
+              </CountryDropdown>
+            </StakingSelectSection>
+          </StakingInfoSection>
+          }
+          {stakingSelected &&
+          <LockupInfoField>
+            <LockupInfoFieldTitle>
+              Lockup Size:
+            </LockupInfoFieldTitle>
+            <LockupInfoFieldValue>
+              {amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true)} {selectedStakingToken}
+            </LockupInfoFieldValue>
+          </LockupInfoField>
+          }
           <PurchaseInfoField>
             <PurchaseInfoFieldTitle>
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {amountFormatter(ethers.BigNumber.from(selectedCountry.priceDMG), 18, 2)} DMG
+              {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true)} DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
             {
               account ? (
-               isDmgAllowanceSet ? (
-                  <Button onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
-                    Purchase
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={async () => {
-                      let estimatedGas
-                      let useUserBalance = false
-                      estimatedGas = await tokenContract.estimateGas
-                        .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
-                        .catch(error => {
-                          console.error('Error setting max token approval ', error)
-                        })
-                      if (!estimatedGas) {
-                        // general fallback for tokens who restrict approval amounts
-                        estimatedGas = await tokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, userTokenBalance)
-                        useUserBalance = true
-                      }
-                      tokenContract
-                        .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
-                          gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
-                        })
-                        .then(response => {
-                          addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
-                        })
-                        .catch(error => {
-                          if (error?.code !== 4001) {
-                            console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
-                            Sentry.captureException(error)
-                          } else {
-                            console.log('Could not approve tokens because the txn was cancelled')
+                !stakingSelected || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
+                  userTokenBalance.gte(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG))) ? (
+                    !stakingSelected || stakingTokenAllowanceSet ? (
+                      dmgAllowanceSet ? (
+                        <Button
+                          onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
+                          Purchase
+                        </Button>
+                      ) : (
+                        <Button
+                          onClick={async () => {
+                            let estimatedGas
+                            let useUserBalance = false
+                            estimatedGas = await tokenContract.estimateGas
+                              .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
+                              .catch(error => {
+                                console.error('Error setting max token approval ', error)
+                              })
+                            if (!estimatedGas) {
+                              // general fallback for tokens who restrict approval amounts
+                              estimatedGas = await tokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, userTokenBalance)
+                              useUserBalance = true
+                            }
+                            tokenContract
+                              .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
+                                gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
+                              })
+                              .then(response => {
+                                addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
+                              })
+                              .catch(error => {
+                                if (error?.code !== 4001) {
+                                  console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+                                  Sentry.captureException(error)
+                                } else {
+                                  console.log('Could not approve tokens because the txn was cancelled')
+                                }
+                              })
+                          }}
+                        >
+                          Unlock DMG
+                        </Button>
+                      )
+                    ) : (
+                      <Button
+                        onClick={async () => {
+                          let estimatedGas
+                          let useUserBalance = false
+                          //TODO - replace tokenContract with tokenTokenContract
+                          estimatedGas = await stakingTokenContract.estimateGas
+                            .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
+                            .catch(error => {
+                              console.error('Error setting max token approval ', error)
+                            })
+                          if (!estimatedGas) {
+                            // general fallback for tokens who restrict approval amounts
+                            estimatedGas = await stakingTokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, stakingTokenBalance)
+                            useUserBalance = true
                           }
-                        })
-                    }}
-                  >
-                    Unlock DMG
-                  </Button>
-                )
+                          stakingTokenContract
+                            .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? stakingTokenBalance : ethers.constants.MaxUint256, {
+                              gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
+                            })
+                            .then(response => {
+                              addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
+                            })
+                            .catch(error => {
+                              if (error?.code !== 4001) {
+                                console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+                                Sentry.captureException(error)
+                              } else {
+                                console.log('Could not approve tokens because the txn was cancelled')
+                              }
+                            })
+                        }}
+                      >
+                        Unlock {selectedStakingToken}
+                      </Button>
+                    )
+                  ) : (
+                    <Button
+                      disabled
+                    >
+                      Insufficient DMG
+                    </Button>
+                  )
+                ) : (
+                <Button
+                  disabled
+                >
+                  Insufficient {selectedStakingToken}
+                </Button>
+              )
               ) : (
                 <ConnectWalletButton>
                   <Web3Status/>

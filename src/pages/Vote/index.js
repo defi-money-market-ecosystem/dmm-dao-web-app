@@ -476,7 +476,9 @@ export default function Vote() {
             </Balance>
           ))}
           <Balance>
-            <AssetIntroducer href={'/nft'}>Become an Asset Introducer</AssetIntroducer>
+            <AssetIntroducer onClick={() => history.push('/asset-introducers/purchase')}>
+              Become an Asset Introducer
+            </AssetIntroducer>
           </Balance>
         </VotingWallet>
         <GovernanceProposals>
