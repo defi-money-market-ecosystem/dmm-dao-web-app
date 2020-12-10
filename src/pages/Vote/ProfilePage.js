@@ -170,6 +170,14 @@ const DMGTitle = styled.div`
   `}
 `
 
+const NFTSection = styled.div`
+
+`
+
+const Light = styled.span`
+  color: #b7c3cc;
+`
+
 const Value = styled.div`
   margin-top: 10px;
   font-size: 18px;
@@ -403,6 +411,11 @@ async function getProposals(walletAddress) {
     })
 }
 
+async function getNFTs(walletAddress) {
+  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+    .then(response => response.json())
+    .then(response => response.data.asset_introducer_nfts);
+}
 
 async function getAccountInfo(walletAddress) {
   return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)// 0x0F9Dd46B0E1F77ceC0f66C20B9a1F56Cb34A4556
@@ -442,6 +455,10 @@ function display(p, selected, l) {
   return [...left, selected, ...right].includes(p) //combines the selected value and two arrays to check if the value falls in here
 }
 
+const capitalizeFirstLetter = string => {
+  return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 export default function ProfilePage() {
   const [loading, setLoading] = useState(true)
   const [page, changePage] = useState(1)
@@ -454,6 +471,7 @@ export default function ProfilePage() {
   const [delgateView, setDelegateView] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
   const [viewMore, changeViewMore] = useState(false)
+  const [nfts, setNfts] = useState([]);
 
   const { account: walletAddress, library } = useWeb3React()
   const address = useParams().wallet_address
@@ -497,6 +515,10 @@ export default function ProfilePage() {
     const perform = () => {
       const proposalPromise = getProposals(address).then(data => {
         setProposals(data)
+      })
+
+      const nftsPromise = getNFTs(address).then(data => {
+        setNfts(data)
       })
 
       getAccountInfo(address).then(accountInfo => {
@@ -661,6 +683,19 @@ export default function ProfilePage() {
               </Value>
             </Balance>
           ))}
+          { nfts && nfts.length > 0 &&
+            <Balance key={`balance-NFT`}>
+              <DMGTitle active={false}>
+                NFTs
+              </DMGTitle>
+              {nfts.map(nft =>
+                <NFTSection>
+                  {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
+                </NFTSection>
+              )}
+
+            </Balance>
+          }
         </Card>
         <Card width={65}>
           <Title>
