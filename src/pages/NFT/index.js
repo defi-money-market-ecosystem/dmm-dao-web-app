@@ -473,8 +473,7 @@ const ConnectWalletButton = styled.div`
 `
 
 const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod) => {
-  //fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
-  fetch(`https://dmm.ngrok.io/v1/asset-introducers/primary-market`)
+  fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
     .then(response => response.json())
     .then(response => response['data'])
     .then(countries => {
@@ -609,34 +608,12 @@ export default function NFT({ params }) {
 
   const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS); // TODO - INSERT CORRECT CONTRACT ADDRESS TO CHECK ALLOWANCE
   const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'));
-  const stakingTokenContract = useTokenContract(stakingTokenAddress); // TODO replace with token address
+  const stakingTokenContract = useTokenContract(stakingTokenAddress);
   const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress);
-
-  const [data, setData] = useState([]);
-  useInterval(() => {
-    fetch('http://api.defimoneymarket.com/v1/asset-introducers/primary-market')
-      .then(response => response.json())
-      .then(response => {
-        const result = Object.keys(response.data)
-          .filter((countryCode) => response.data[countryCode]['AFFILIATE'].length > 0)
-          .map((countryCode) => {
-            return {
-              country: response.data[countryCode]['AFFILIATE'][0]['country_name'],
-              available: response.data[countryCode]['AFFILIATE'].length,
-              price: response.data[countryCode]['AFFILIATE'][0]['price_dmg'],
-              tokenId: response.data[countryCode]['AFFILIATE'][0]['token_id']
-            }
-          })
-        setData(result)
-      })
-  }, 15000, true);
 
   const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
 
   const purchaseNft = async (tokenId) => {
-    if(!tokenId) {
-      tokenId = data[0].tokenId
-    }
     let estimatedGas
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
@@ -786,8 +763,6 @@ export default function NFT({ params }) {
               colorAxis: { colors: ['#6d9ed2', '#327CCB'] },
               legend: 'none'
             }}
-            // Note: you will need to get a mapsApiKey for your project.
-            // See: https://developers.google.com/chart/interactive/docs/basic_load_libs#load-settings
             mapsApiKey='AIzaSyBIumXPkzCsPSRgXqMyOWEnmpo4sgkq5-k'
             rootProps={{ 'data-testid': '1' }}
           />
@@ -799,7 +774,7 @@ export default function NFT({ params }) {
         </SectionTitle>
         <TypeSelection>
           <Type
-            className={selectedCountry && selectedCountry.availableAffiliates > 0 ? (selectedType === 'Affiliate' ? 'active' : '') : 'disabled'}
+            className={!selectedCountry || selectedCountry.availableAffiliates > 0 ? (selectedType === 'Affiliate' ? 'active' : '') : 'disabled'}
             onClick={() => setSelectedType('Affiliate')}
           >
             <TypeTitle>
@@ -990,7 +965,7 @@ export default function NFT({ params }) {
           <PurchaseButton>
             {
               account ? (
-                !stakingSelected || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
+                !stakingSelected || !stakingTokenBalance || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
                   userTokenBalance.gte(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG))) ? (
                     !stakingSelected || stakingTokenAllowanceSet ? (
                       dmgAllowanceSet ? (
