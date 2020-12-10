@@ -130,7 +130,7 @@ const Popup = styled.div`
   transform: translate(-50%, -50%);
   border-radius: 5px;
   opacity: 1;
-  z-index: 5;
+  z-index: 500;
   padding: 25px 40px 5px;
   text-align: center;
   font-weight: 600;

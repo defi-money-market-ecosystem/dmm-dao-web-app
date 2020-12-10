@@ -2,18 +2,21 @@ import { ethers } from 'ethers'
 
 import FACTORY_ABI from '../constants/abis/factory'
 import EXCHANGE_ABI from '../constants/abis/exchange'
+
 import ERC20_ABI from '../constants/abis/erc20'
+import DMG_YIELD_FARMING_PROXY_ABI from '../constants/abis/yield_farming_proxy'
 import ERC20_BYTES32_ABI from '../constants/abis/erc20_bytes32'
 import { FACTORY_ADDRESSES, SUPPORTED_THEMES } from '../constants'
 import { formatFixed } from '@uniswap/sdk'
 
 import UncheckedJsonRpcSigner from './eth-signer'
-import { DMG_ADDRESS, ETH_ADDRESS } from '../contexts/Tokens'
-
-import { BigNumber } from 'ethers-utils'
+import { DMG_ADDRESS, ETH_ADDRESS, WETH_ADDRESS } from '../contexts/Tokens'
+import { YIELD_FARMING_PROXY_ADDRESS } from '../contexts/YieldFarming'
 
 export const MIN_DECIMALS = 6
 export const MIN_DECIMALS_EXCHANGE_RATE = 8
+
+export const DMM_API_URL = 'https://api.defimoneymarket.com'
 
 export const ERROR_CODES = ['TOKEN_NAME', 'TOKEN_SYMBOL', 'TOKEN_DECIMALS'].reduce(
   (accumulator, currentValue, currentIndex) => {
@@ -270,11 +273,37 @@ export function formatToUsd(price) {
 
 // get the token balance of an address
 export async function getTokenBalance(tokenAddress, address, library) {
+  tokenAddress = tokenAddress === ETH_ADDRESS ? WETH_ADDRESS : tokenAddress
   if (!isAddress(tokenAddress) || !isAddress(address)) {
     throw Error(`Invalid 'tokenAddress' or 'address' parameter '${tokenAddress}' or '${address}'.`)
   }
 
   return getContract(tokenAddress, ERC20_ABI, library).balanceOf(address)
+}
+
+export async function getYieldFarmingBalance(tokenAddress, address, library) {
+  tokenAddress = tokenAddress === ETH_ADDRESS ? WETH_ADDRESS : tokenAddress
+  if (!isAddress(tokenAddress) || !isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter '${tokenAddress}' or '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).balanceOf(address, tokenAddress)
+}
+
+export async function getDmgRewardBalance(address, library) {
+  if (!isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).getRewardBalanceByOwner(address)
+}
+
+export async function getDmgRewardBalanceByToken(tokenAddress, address, library) {
+  if (!isAddress(tokenAddress) || !isAddress(address)) {
+    throw Error(`Invalid 'tokenAddress' or 'address' parameter  '${tokenAddress}' '${address}'.`)
+  }
+
+  return getContract(YIELD_FARMING_PROXY_ADDRESS, DMG_YIELD_FARMING_PROXY_ABI, library).getRewardBalanceByOwnerAndToken(address, tokenAddress)
 }
 
 // get the token allowance
@@ -290,7 +319,7 @@ export async function getTokenAllowance(address, tokenAddress, spenderAddress, l
 }
 
 // amount must be a BigNumber, {base,display}Decimals must be Numbers
-export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN_DECIMALS, useLessThan = true) {
+export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN_DECIMALS, useLessThan = true, format = false) {
   if (baseDecimals > 18 || displayDecimals > 18 || displayDecimals > baseDecimals) {
     throw Error(`Invalid combination of baseDecimals '${baseDecimals}' and displayDecimals '${displayDecimals}.`)
   }
@@ -326,22 +355,32 @@ export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN
       }
       // if there is a decimal portion
       else {
-        const [wholeComponent, decimalComponent] = stringAmount.split('.')
-        const roundedDecimalComponent = ethers.BigNumber
-          .from(decimalComponent.padEnd(baseDecimals, '0'))
-          .toString()
-          .padStart(baseDecimals, '0')
-          .substring(0, displayDecimals)
+        if (format) {
+          return parseFloat(stringAmount).toLocaleString('en-US', {
+            useGrouping: true,
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+          })
+        } else {
+          const [wholeComponent, decimalComponent] = stringAmount.split('.')
+          const roundedDecimalComponent = ethers.BigNumber
+            .from(decimalComponent.padEnd(baseDecimals, '0'))
+            .toString()
+            .padStart(baseDecimals, '0')
+            .substring(0, displayDecimals)
 
-        // decimals are too small to show
-        if (roundedDecimalComponent === '0'.repeat(displayDecimals)) {
-          return wholeComponent
-        }
-        // decimals are not too small to show
-        else {
-          return `${wholeComponent}.${roundedDecimalComponent.toString().replace(/0*$/, '')}`
+          // decimals are too small to show
+          if (roundedDecimalComponent === '0'.repeat(displayDecimals)) {
+            return wholeComponent
+          }
+          // decimals are not too small to show
+          else {
+            return `${wholeComponent}.${roundedDecimalComponent.toString().replace(/0*$/, '')}`
+          }
         }
       }
     }
   }
 }
+
+export const shorten = (a) => `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`

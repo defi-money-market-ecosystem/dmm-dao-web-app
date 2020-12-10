@@ -3,6 +3,8 @@ import styled from 'styled-components'
 import { isAddress } from '../../utils'
 
 import { ReactComponent as EthereumLogo } from '../../assets/images/ethereum-logo.svg'
+import DmmUsdtLogo  from '../../assets/images/mUSDT.png'
+import { M_USDT_ADDRESS } from '../../contexts/Tokens'
 
 const TOKEN_ICON_API = address =>
   `https://raw.githubusercontent.com/trustwallet/assets/master/blockchains/ethereum/assets/${isAddress(
@@ -30,14 +32,25 @@ const StyledEthereumLogo = styled(EthereumLogo)`
   height: ${({ size }) => size};
 `
 
+const StyledDmmUsdtLogo = styled.div`
+  width: ${({ size }) => size};
+  height: ${({ size }) => size};
+`
+
 export default function TokenLogo({ address, size = '1rem', ...rest }) {
   const [error, setError] = useState(false)
 
   let path = ''
   if (address === 'ETH') {
-    return <StyledEthereumLogo size={size} />
+    return <StyledEthereumLogo size={size}/>
   } else if (!error && !BAD_IMAGES[address]) {
     path = TOKEN_ICON_API(address.toLowerCase())
+  } else if (address.toLowerCase() === M_USDT_ADDRESS.toLowerCase()) {
+    return (
+      <StyledDmmUsdtLogo size={size}>
+        <Image style={{width: size, height: size}} alt={'mUSDT Logo'} src={DmmUsdtLogo}/>
+      </StyledDmmUsdtLogo>
+    )
   } else {
     return (
       <Emoji {...rest} size={size}>

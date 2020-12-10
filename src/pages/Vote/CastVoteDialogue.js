@@ -9,6 +9,7 @@ import { usePendingCastedVotes, useTransactionAdder } from '../../contexts/Trans
 import { GOVERNOR_ALPHA_ADDRESS } from '../../contexts/GovernorAlpha'
 import { primaryColor } from '../../theme'
 import CircularProgress from '@material-ui/core/CircularProgress'
+import { AccountProposalVoteInfo } from '../../models/AccountProposalVoteInfo'
 
 const BackDrop = styled.div`
   width: 100vw;
@@ -80,13 +81,31 @@ const Buttons = styled.div`
 
 const SpinnerWrapper = styled.div`
 	height: 64px;
-	padding-bottom: 14px;
 	font-weight: 430;
   font-size: 15px;
   text-align: left;
-  padding-top: 10px;
+  padding-top: 12px;
+	padding-bottom: 12px;
 	
 	@media (max-width: 540px) {
+    height: 96px;	
+	}
+	
+	@media (max-width: 320px) {
+    height: 120px;	
+	}
+`
+
+const CenteredSpinnerWrapper = styled.div`
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 64px;
+  padding-top: 12px;
+	padding-bottom: 12px;
+  
+  @media (max-width: 540px) {
     height: 96px;	
 	}
 	
@@ -143,7 +162,7 @@ const Underline = styled.div`
 `
 
 //export default function Cast({ proposal, time, vote, onChange }) {
-export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDelegating, onChange }) {
+export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDelegating, onClose }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false) //loading hook
 
@@ -151,6 +170,11 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
   const addTransaction = useTransactionAdder()
   const proposalId = proposal.proposalId
   const isPendingCast = usePendingCastedVotes()
+
+  const isVoteCasted = AccountProposalVoteInfo.isVoteCasted(proposal?.account?.proposalVoteInfo?.voteStatus)
+  if (isVoteCasted) {
+    onClose()
+  }
 
   const castVote = async (isForProposal) => {
     const GAS_MARGIN = ethers.BigNumber.from(1000)
@@ -186,33 +210,39 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
   let bodyJsx
   if (isPendingCast) {
     bodyJsx = (
-      <>
+      <div>
         <TextualBody>
           You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the
           confirmation to finish.
         </TextualBody>
         <CircularProgress style={{ color: primaryColor }}/>
-      </>
+      </div>
     )
   } else if (!votesBN || (votesBN.eq(ethers.BigNumber.from('0')) && !isDelegating)) {
     bodyJsx = (
-      <>
+      <div>
         <TextualBody>
           Before voting for the first time, you must activate your wallet. To activate your wallet, go to the &nbsp;
           <a href={'/governance/proposals'}>home page</a> of the voting dashboard and press the 'Activate Wallet'
           button.
         </TextualBody>
-      </>
+      </div>
     )
   } else {
     bodyJsx = (
-      <>
-        {<SpinnerWrapper>
-          {loading ? <CircularProgress style={{ color: primaryColor }}/> :
+      <div>
+        {loading ?
+          <CenteredSpinnerWrapper>
+            <CircularProgress style={{ color: primaryColor }}/>
+          </CenteredSpinnerWrapper>
+          :
+          <SpinnerWrapper>
             <span>
               Cast your vote using the options below. Keep in mind, all votes are final and&nbsp;
-              <strong>cannot</strong> be undone.</span>}
-        </SpinnerWrapper>}
+              <strong>cannot</strong> be modified.
+            </span>
+          </SpinnerWrapper>
+        }
         <Buttons>
           <Button color={'#09b53d'} onClick={() => castVote(true)}>
             For
@@ -224,7 +254,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
         <ErrorMessage>
           {error}
         </ErrorMessage>
-      </>
+      </div>
     )
   }
 
@@ -242,7 +272,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
           {timestamp}
         </Time>
         {bodyJsx}
-        <Exit onClick={() => onChange(false)}>
+        <Exit onClick={() => onClose()}>
           <img src={Close} alt={'X'}/>
         </Exit>
       </Card>

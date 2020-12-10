@@ -1,14 +1,17 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useWeb3React as useWeb3ReactCore } from '@web3-react/core'
 import copy from 'copy-to-clipboard'
 import { isMobile } from 'react-device-detect'
 
 import { NetworkContextName } from '../constants'
+import ASSET_INTRODUCER_BUYER_ROUTER_ABI from '../constants/abis/asset_introducer_buyer_router'
 import DMG_ABI from '../constants/abis/dmg'
 import ERC20_ABI from '../constants/abis/erc20'
 import WETH_ABI from '../constants/abis/weth'
 import GOVERNOR_ALPHA_ABI from '../constants/abis/governor_alpha'
-import { getContract, getFactoryContract, getExchangeContract, isAddress } from '../utils'
+import YIELD_FARMING_PROXY from '../constants/abis/yield_farming_proxy'
+import YIELD_FARMING_ROUTER from '../constants/abis/yield_farming_router'
+import { getContract, getExchangeContract, getFactoryContract, isAddress } from '../utils'
 import { injected } from '../connectors'
 import { DMG_ADDRESS, WETH_ADDRESS } from '../contexts/Tokens'
 import { GOVERNOR_ALPHA_ADDRESS } from '../contexts/GovernorAlpha'
@@ -66,19 +69,22 @@ export function useInactiveListener(suppress = false) {
     if (ethereum && ethereum.on && !active && !error && !suppress) {
       const handleChainChanged = () => {
         // eat errors
-        activate(injected, undefined, true).catch(() => {})
+        activate(injected, undefined, true).catch(() => {
+        })
       }
 
       const handleAccountsChanged = accounts => {
         if (accounts.length > 0) {
           // eat errors
-          activate(injected, undefined, true).catch(() => {})
+          activate(injected, undefined, true).catch(() => {
+          })
         }
       }
 
       const handleNetworkChanged = () => {
         // eat errors
-        activate(injected, undefined, true).catch(() => {})
+        activate(injected, undefined, true).catch(() => {
+        })
       }
 
       ethereum.on('chainChanged', handleChainChanged)
@@ -94,7 +100,8 @@ export function useInactiveListener(suppress = false) {
       }
     }
 
-    return () => {}
+    return () => {
+    }
   }, [active, error, suppress, activate])
 }
 
@@ -192,6 +199,20 @@ export function useContract(address, ABI, withSignerIfPossible = true) {
 }
 
 // returns null on errors
+export function useAssetIntroducerBuyer(buyerAddress, withSignerIfPossible = true) {
+  const { library, account } = useWeb3React()
+
+  return useMemo(() => {
+    try {
+      const abi = ASSET_INTRODUCER_BUYER_ROUTER_ABI
+      return getContract(buyerAddress, abi, library, withSignerIfPossible ? account : undefined)
+    } catch {
+      return null
+    }
+  }, [buyerAddress, library, withSignerIfPossible, account])
+}
+
+// returns null on errors
 export function useTokenContract(tokenAddress, withSignerIfPossible = true) {
   const { library, account } = useWeb3React()
 
@@ -258,6 +279,30 @@ export function useExchangeContract(exchangeAddress, withSignerIfPossible = true
   }, [exchangeAddress, library, withSignerIfPossible, account])
 }
 
+export function useYieldFarmingRouterContract(yieldFarmingRouterAddress, withSignerIfPossible = true) {
+  const { library, account } = useWeb3React()
+
+  return useMemo(() => {
+    try {
+      return getContract(yieldFarmingRouterAddress, YIELD_FARMING_ROUTER, library, withSignerIfPossible ? account : undefined)
+    } catch {
+      return null
+    }
+  }, [yieldFarmingRouterAddress, library, withSignerIfPossible, account])
+}
+
+export function useYieldFarmingProxyContract(yieldFarmingProxyAddress, withSignerIfPossible = true) {
+  const { library, account } = useWeb3React()
+
+  return useMemo(() => {
+    try {
+      return getContract(yieldFarmingProxyAddress, YIELD_FARMING_PROXY, library, withSignerIfPossible ? account : undefined)
+    } catch {
+      return null
+    }
+  }, [yieldFarmingProxyAddress, library, withSignerIfPossible, account])
+}
+
 export function useCopyClipboard(timeout = 500) {
   const [isCopied, setIsCopied] = useState(false)
 
@@ -296,8 +341,10 @@ export function usePrevious(value) {
   return ref.current
 }
 
-export function useInterval(callback, delay) {
+export function useInterval(callback, tickDuration, executeImmediately, extraDeps) {
+  const savedValue = useRef()
   const savedCallback = useRef()
+  const savedExecuteImmediately = useRef(executeImmediately)
 
   // Remember the latest callback.
   useEffect(() => {
@@ -307,12 +354,19 @@ export function useInterval(callback, delay) {
   // Set up the interval.
   useEffect(() => {
     function tick() {
-      savedCallback.current()
+      savedValue.current = savedCallback.current()
     }
 
-    if (delay !== null) {
-      let id = setInterval(tick, delay)
+    if (executeImmediately) {
+      tick()
+      savedExecuteImmediately.current = false
+    }
+
+    if (tickDuration !== null) {
+      let id = setInterval(tick, tickDuration)
       return () => clearInterval(id)
     }
-  }, [delay])
+  }, [tickDuration, executeImmediately, ...(!!extraDeps ? extraDeps : [])])
+
+  return savedValue.current
 }

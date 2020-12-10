@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ProposalItem from './ProposalItem'
-import styled, { keyframes } from 'styled-components'
+import styled from 'styled-components'
 import { useHistory } from 'react-router-dom'
 import LeftArrow from '../../assets/svg/keyboard_arrow_left-black-18dp.svg'
 import RightArrow from '../../assets/svg/keyboard_arrow_right-black-18dp.svg'
@@ -10,7 +10,7 @@ import { useAddressBalance } from '../../contexts/Balances'
 import BN from 'bn.js'
 import Web3 from 'web3'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
-import { amountFormatter, calculateGasMargin } from '../../utils'
+import { amountFormatter, calculateGasMargin, DMM_API_URL } from '../../utils'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/browser'
 import { usePendingDelegation, useTransactionAdder } from '../../contexts/Transactions'
@@ -19,9 +19,9 @@ import { AccountDetails } from '../../models/AccountDetails'
 import { primaryColor } from '../../theme/index'
 
 const Main = styled.div`
-  height: calc(100vh - 160px);
+  height: calc(100vh - 204px);
   width: 80vw;
-  position: absolute;
+  /*position: absolute;*/
   top: 156px;
   left: 0;
   right: 0;
@@ -78,7 +78,7 @@ const VotingWallet = styled.div`
   width: calc(35% - 20px);
   border-radius: 5px;
   margin: 10px;
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
   box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   color: black;
   display: inline-block;
@@ -88,13 +88,11 @@ const VotingWallet = styled.div`
     width: calc(100% - 20px);
   }
 `
+
 const GovernanceProposals = styled.div`
-  background-color: #FFFFFF;
   width: calc(65% - 20px);;
   margin: 10px;
-  border-radius: 5px;
   margin-bottom: 1rem;
-  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   color: black;
   display: inline-block;
   vertical-align: top;
@@ -103,6 +101,13 @@ const GovernanceProposals = styled.div`
     width: calc(100% - 20px);
     margin-bottom: 100px;
   }
+`
+
+const GovernanceInner = styled.div`
+  background-color: #FFFFFF;
+  margin-bottom: 80px;
+  box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
+  border-radius: 5px;
 `
 
 const Title = styled.div`
@@ -119,21 +124,6 @@ const Title = styled.div`
 
 const Proposals = styled.div`
   height: calc(100% - 62px);
-`
-
-const spin = keyframes`
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-`
-
-const Loader = styled.div`
-  border: 8px solid #f3f3f3; /* Light grey */
-  border-top: 8px solid #3498db; /* Blue */
-  border-radius: 50%;
-  width: 60px;
-  height: 60px;
-  animation: ${spin} 2s linear infinite;
-  margin: 50px auto;
 `
 
 const Balance = styled.div`
@@ -164,21 +154,6 @@ const Value = styled.div`
 
 `
 
-const Withdraw = styled.div`
-  font-size: 18px;
-  font-weight: 700;
-  color: black;
-  display: inline;
-  cursor: not-allowed;
-  color: #b7c3cc;
-  float: right;
-
-  ${({ active }) => active && `
-      color: #2fdaa5;
-      cursor: pointer
-  `}
-`
-
 const ActivateWallet = styled.div`
   font-size: 18px;
   font-weight: 700;
@@ -186,6 +161,19 @@ const ActivateWallet = styled.div`
   cursor: pointer
   color: #000;
   float: right;
+
+  ${({ hidden }) => hidden && `
+    display: none;    
+  `}
+`
+
+const AssetIntroducer = styled.a`
+  font-size: 18px;
+  font-weight: 500;
+  display: inline;
+  cursor: pointer
+  color: #000;
+  text-decoration: none
 
   ${({ hidden }) => hidden && `
     display: none;    
@@ -274,40 +262,42 @@ const balances = [
     title: 'DMG Balance',
     valueBN: new BN('0')
   },
-  {
-    title: 'DMG Earned',
-    valueBN: null
-  }
 ]
 
-function withdrawEarnedDmg(web3, walletAddress) {
-  console.log('walletAddress ', walletAddress, web3)
-}
-
-function display(p, selected, l) {
-  if (l <= displayPages) return true //displays all pages if it is less than the diplayed amount
+function shouldDisplayPage(p, selected, l) {
+  if (l <= displayPages) {
+    // Displays all pages if it is less than the displayed amount
+    return true
+  }
 
   const half = (displayPages - 1) / 2
 
-  if (p <= displayPages && selected <= half) return true //displays displayed amount pages even if is does not have half on the left
-  if (p > l - displayPages && selected > l - half) return true //displays displayed amount pages even if is does not have half on the right
+  if (p <= displayPages && selected <= half) {
+    // Displays displayed amount pages even if is does not have half on the left
+    return true
+  }
+  if (p > l - displayPages && selected > l - half) {
+    // Displays displayed amount pages even if is does not have half on the right
+    return true
+  }
 
-  const fill = [...Array(half).keys()].map(i => i + 1) //gets a half array
-  const left = fill.map(i => selected - i) //uses the half array to find values to left of selected
-  const right = fill.map(i => selected + i) //uses the half array to find values to right of selected
-  return [...left, selected, ...right].includes(p) //combines the selected value and two arrays to check if the value falls in here
+  const fill = [...Array(half).keys()].map(i => i + 1)
+  const left = fill.map(i => selected - i) // Uses the half array to find values to left of selected
+  const right = fill.map(i => selected + i) // Uses the half array to find values to right of selected
+
+  // Combines the selected value and two arrays to check if the value falls in here
+  return [...left, selected, ...right].includes(p)
 }
 
 async function getProposals(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/proposals`)
+  return fetch(`${DMM_API_URL}/v1/governance/proposals`)
     .then(response => response.json())
     .then(response => response.data.map(proposal => new ProposalSummary(proposal)))
     .then(proposals => {
       if (walletAddress) {
         return Promise.all(
           proposals.map(proposal => {
-            return fetch(`${baseUrl}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
+            return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
               .then(response => response.json())
               .then(response => proposal.withAccount(response.data))
           })
@@ -319,10 +309,13 @@ async function getProposals(walletAddress) {
 }
 
 async function getAccountInfo(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
-    .then(response => response.json())
-    .then(response => !!response.data ? new AccountDetails(response.data) : null)
+  if (walletAddress) {
+    return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
+      .then(response => response.json())
+      .then(response => !!response.data ? new AccountDetails(response.data) : null)
+  } else {
+    return Promise.resolve(null)
+  }
 }
 
 export default function Vote() {
@@ -335,11 +328,10 @@ export default function Vote() {
   let history = useHistory()
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
-  // const proposalsPerPage = window.innerWidth > 900 ? (window.innerHeight - 350) / 130 : (window.innerHeight - 620) / 130 || 1
 
   const mp = page * proposalsPerPage - proposalsPerPage
   const proposalPage = proposals.slice(mp, mp + proposalsPerPage)
-  const pages = [...Array(Math.ceil(proposals.length / proposalsPerPage)).keys()].map(i => i + 1) //creates pages off of proposals
+  const pages = [...Array(Math.ceil(proposals.length / proposalsPerPage)).keys()].map(i => i + 1) // Creates pages off of proposals
   const l = pages.length
 
   const checkChange = (i) => {
@@ -375,10 +367,8 @@ export default function Vote() {
       })
     }
 
-    perform()
-    const subscriptionId = setInterval(() => {
-      perform()
-    }, 5000)
+    perform() // Do the first action
+    const subscriptionId = setInterval(() => perform(), 5000)
 
     return () => clearInterval(subscriptionId)
   }, [walletAddress])
@@ -400,7 +390,7 @@ export default function Vote() {
   useEffect(() => {
     const subscriptionId = setTimeout(() => {
       setIsActivating(isPendingDelegateTransaction)
-    }, 10000)
+    }, 1000)
 
     return () => clearInterval(subscriptionId)
   }, [isPendingDelegateTransaction])
@@ -441,19 +431,18 @@ export default function Vote() {
     }
     return (
       index === 0 ? (
-          isActivating ? (<div style={{ float: 'right', bottom: '15px', position: 'relative' }}>
+          isActivating ?
+            (<div style={{ float: 'right', bottom: '15px', position: 'relative' }}>
               <CircularProgress style={{ color: primaryColor }}/>
-            </div>) :
-            (<ActivateWallet hidden={isDelegating || voteCountBN.gt(new BN('0'))}
+            </div>)
+            :
+            (<ActivateWallet hidden={!walletAddress || isDelegating || voteCountBN.gt(new BN('0'))}
                              onClick={() => activateWallet(web3, walletAddress)}>
               Activate Wallet
             </ActivateWallet>)
         ) :
         (
-          <Withdraw active={!!valueBN && valueBN.gt(new BN('0'))}
-                    onClick={() => withdrawEarnedDmg(web3, walletAddress)}>
-            Withdraw
-          </Withdraw>
+          <div/>
         )
     )
   }
@@ -465,7 +454,7 @@ export default function Vote() {
           Votes
         </VoteTitle>
         <Amount>
-          {!!accountInfo?.voteInfo?.votesBN ? amountFormatter(accountInfo?.voteInfo?.votesBN, 18, 2) : '0.00'}
+          {!!accountInfo?.voteInfo?.votesBN ? amountFormatter(accountInfo?.voteInfo?.votesBN, 18, 2, true, true) : '0.00'}
         </Amount>
       </Votes>
       <Voting>
@@ -480,45 +469,57 @@ export default function Vote() {
                 {title}
               </DMGTitle>
               <Value active={index === 0}>
-                {!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2)}
+                {/*{!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2, true, true)}*/}
+                {!valueBN ? '' : amountFormatter(valueBN, 18, 2, true, true)}
               </Value>
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
             </Balance>
           ))}
+          <Balance>
+            <AssetIntroducer onClick={() => history.push('/asset-introducers/purchase')}>
+              Become an Asset Introducer
+            </AssetIntroducer>
+          </Balance>
         </VotingWallet>
         <GovernanceProposals>
-          <Title>
-            Governance Proposals
-          </Title>
-          <Underline/>
-          {loading ?
-            (<div style={{ textAlign: 'center' }}>
-              <CircularProgress style={{ color: primaryColor }}/>
-            </div>)
-            :
-            (<Proposals>
-              {proposalPage.map((proposal) => (
-                <ProposalItem key={`proposal-${proposal.proposalId}`}
-                              proposal={proposal}
-                              isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-                              votesBN={accountInfo?.voteInfo?.votesBN}
-                              walletAddress={walletAddress}/>
-              ))}
-            </Proposals>)
-          }
-          <Pages>
-            <Page onClick={() => checkChange(page - 1)} off={page === 1}>
-              <img src={LeftArrow} alt={'Left Arrow'}/>
-            </Page>
-            {pages.filter(i => display(i, page, l)).map((p, index) => (
-              <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
-                {p}
+          <GovernanceInner>
+            <Title>
+              Governance Proposals
+            </Title>
+            <Underline/>
+            {loading ?
+              (<div style={{ textAlign: 'center' }}>
+                <CircularProgress style={{ color: primaryColor }}/>
+              </div>)
+              :
+              (<Proposals>
+                {proposalPage.map((proposal) => (
+                  <ProposalItem key={`proposal-${proposal.proposalId}-${walletAddress}`}
+                                proposal={proposal}
+                                isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
+                                votesBN={accountInfo?.voteInfo?.votesBN}
+                                voteStatus={proposal.voteStatus}
+                                setVoteStatus={(voteStatus) => {
+                                  proposal.voteStatus = voteStatus
+                                }}
+                                walletAddress={walletAddress}/>
+                ))}
+              </Proposals>)
+            }
+            <Pages>
+              <Page onClick={() => checkChange(page - 1)} off={page === 1}>
+                <img src={LeftArrow} alt={'Left Arrow'}/>
               </Page>
-            ))}
-            <Page onClick={() => checkChange(page + 1)} off={page === l || loading}>
-              <img src={RightArrow} alt={'Right Arrow'}/>
-            </Page>
-          </Pages>
+              {pages.filter(i => shouldDisplayPage(i, page, l)).map((p, index) => (
+                <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
+                  {p}
+                </Page>
+              ))}
+              <Page onClick={() => checkChange(page + 1)} off={page === l || loading}>
+                <img src={RightArrow} alt={'Right Arrow'}/>
+              </Page>
+            </Pages>
+          </GovernanceInner>
         </GovernanceProposals>
       </Voting>
       <Sticky active={sticky}>

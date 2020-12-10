@@ -168,9 +168,9 @@
         text-align: right;
     }
 
-    .connectWalletButton button {
+    /*.connectWalletButton button {
         margin-top: -10px !important;
-    }
+    }*/
 }
 
 @media (max-width: 550px) {

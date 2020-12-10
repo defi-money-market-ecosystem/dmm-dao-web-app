@@ -4,6 +4,7 @@ import CastVoteDialogue from './CastVoteDialogue'
 import { Link } from 'react-router-dom'
 import { AccountProposalVoteInfo } from '../../models/AccountProposalVoteInfo'
 import { ProposalSummary } from '../../models/ProposalSummary'
+import { useBlockNumber } from '../../contexts/Application'
 
 const Main = styled.div`
   font-size: 18px;
@@ -65,29 +66,32 @@ const Status = styled.div`
 `
 
 const VoteButton = styled.div`
-  height: 100%;
+  height: 56px;
+  line-height: 56px;
+  width: 80px;
   display: inline-block;
   font-size: 15px;
   font-weight: 600;
-  color: #b7c3cc;
   text-align: center;
   transition: opacity 0.2s ease-in-out;
-  width: 20%;
 
   @media (max-width: 540px) {
     margin-top: 12px;
   }
 
-  ${({ cast }) => cast && `
-    color: black;
-    cursor: pointer;
+  color: black;
+  cursor: pointer;
     
-    :hover {
-      opacity: 0.7;
-    }
-  `}
+  :hover {
+    opacity: 0.7;
+  }
+  
   ${({ disabled }) => disabled && `
-    cursor: none;
+    cursor: not-allowed;
+    color: #b7c3cc;
+    :hover {
+      opacity: 1.0;
+    }
   `}
 `
 
@@ -107,22 +111,25 @@ export default function ProposalItem(props) {
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
 
-  let initialVoteStatus
-  if (!props.walletAddress) {
-    initialVoteStatus = ''
+  let voteStatus
+  if (props.voteStatus) {
+    voteStatus = props.voteStatus
+  } else if (!props.walletAddress) {
+    voteStatus = ''
   } else if (
     proposal.proposalStatus === ProposalSummary.statuses.ACTIVE &&
     (proposalVoteInfo?.voteStatus === AccountProposalVoteInfo.statuses.NO_VOTE || !proposalVoteInfo)
   ) {
-    initialVoteStatus = AccountProposalVoteInfo.statuses.VOTE
+    voteStatus = AccountProposalVoteInfo.statuses.VOTE
   } else {
-    initialVoteStatus = proposalVoteInfo?.voteStatus || AccountProposalVoteInfo.statuses.NO_VOTE
+    voteStatus = proposalVoteInfo?.voteStatus || AccountProposalVoteInfo.statuses.NO_VOTE
   }
-  const [voteStatus, setVoteStatus] = useState(initialVoteStatus)
 
   const [showCastDialogue, setShowCastDialogue] = useState(false)
 
   const isVoteButtonDisabled = voteStatus !== AccountProposalVoteInfo.statuses.VOTE
+
+  const currentBlock = useBlockNumber();
 
   return (
     <Main>
@@ -135,23 +142,25 @@ export default function ProposalItem(props) {
             {proposal.proposalStatusFormatted()}
           </Status>
           <Extra>
-            {proposal.proposalId} &#8226; {proposal.mostRecentDateText()}
+            {proposal.proposalId} &#8226; {proposal.mostRecentDateText(currentBlock)}
           </Extra>
         </Info>
       </Wrapper>
       <VoteButton onClick={() => !isVoteButtonDisabled && setShowCastDialogue(true)} disabled={isVoteButtonDisabled}>
         {AccountProposalVoteInfo.toFormattedVoteButtonString(voteStatus)}
       </VoteButton>
-      {showCastDialogue ?
-        <CastVoteDialogue
-          proposal={proposal}
-          timestamp={proposal.mostRecentDateText()}
-          isDelegating={props.isDelegating}
-          votesBN={props.votesBN}
-          onChange={(shouldShow) => setShowCastDialogue(shouldShow)}
-          vote={(v) => setVoteStatus(v)}/>
-        : <div/>
-      }
+      <div>
+        {showCastDialogue ?
+          <CastVoteDialogue
+            proposal={proposal}
+            timestamp={proposal.mostRecentDateText(currentBlock)}
+            isDelegating={props.isDelegating}
+            votesBN={props.votesBN}
+            onClose={() => setShowCastDialogue(false)}
+            vote={(v) => props.setVoteStatus(v)}/>
+          : <div/>
+        }
+      </div>
     </Main>
   )
 }

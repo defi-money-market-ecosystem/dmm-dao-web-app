@@ -1,30 +1,16 @@
-import React, {
-  createContext,
-  ReactNode,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useReducer,
-  useRef,
-  useState
-} from 'react'
-import { BigNumber } from '@uniswap/sdk'
+import React, { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
 import { ethers } from 'ethers'
 
 import { useDebounce, useWeb3React } from '../hooks'
-import { getEtherBalance, getTokenBalance, isAddress } from '../utils'
+import { getYieldFarmingBalance, isAddress } from '../utils'
 import { useBlockNumber } from './Application'
 import { useAllTokenDetails } from './Tokens'
-import { getUSDPrice } from '../utils/price'
 
-const LOCAL_STORAGE_KEY = 'BALANCES-V2'
+const LOCAL_STORAGE_KEY = 'YIELD_FARMING_BALANCES'
 const SHORT_BLOCK_TIMEOUT = 1 // in seconds, represented as a block number delta
 const LONG_BLOCK_TIMEOUT = (60 * 2) / 15 // in seconds, represented as a block number delta
 
-const EXCHANGES_BLOCK_TIMEOUT = (60 * 15) / 15 // in seconds, represented as a block number delta
-
-interface BalancesState {
+interface YieldFarmingBalancesState {
   [chainId: number]: {
     [address: string]: {
       [tokenAddress: string]: {
@@ -36,7 +22,7 @@ interface BalancesState {
   }
 }
 
-function initializeBalances(): BalancesState {
+function initializeBalances(): YieldFarmingBalancesState {
   try {
     return JSON.parse(window.localStorage.getItem(LOCAL_STORAGE_KEY) as string)
   } catch {
@@ -49,10 +35,9 @@ enum Action {
   STOP_LISTENING,
   UPDATE,
   BATCH_UPDATE_ACCOUNT,
-  BATCH_UPDATE_EXCHANGES
 }
 
-function reducer(state: BalancesState, { type, payload }: { type: Action; payload: any }) {
+function reducer(state: YieldFarmingBalancesState, { type, payload }: { type: Action; payload: any }) {
   switch (type) {
     case Action.START_LISTENING: {
       const { chainId, address, tokenAddress } = payload
@@ -129,40 +114,16 @@ function reducer(state: BalancesState, { type, payload }: { type: Action; payloa
         }
       }
     }
-    case Action.BATCH_UPDATE_EXCHANGES: {
-      const { chainId, exchangeAddresses, tokenAddresses, values, blockNumber } = payload
-
-      return {
-        ...state,
-        [chainId]: {
-          ...state?.[chainId],
-          ...exchangeAddresses.reduce((accumulator: any, exchangeAddress: string, i: number) => {
-            const tokenAddress = tokenAddresses[i]
-            const value = values[i]
-            accumulator[exchangeAddress] = {
-              ...state?.[chainId]?.[exchangeAddress],
-              ...accumulator?.[exchangeAddress],
-              [tokenAddress]: {
-                ...state?.[chainId]?.[exchangeAddress]?.[tokenAddress],
-                value,
-                blockNumber
-              }
-            }
-            return accumulator
-          }, {})
-        }
-      }
-    }
     default: {
       throw Error(`Unexpected action type in BalancesContext reducer: '${type}'.`)
     }
   }
 }
 
-const BalancesContext = createContext<[BalancesState, { [k: string]: (...args: any) => void }]>([{}, {}])
+const YieldFarmingBalance = createContext<[YieldFarmingBalancesState, { [k: string]: (...args: any) => void }]>([{}, {}])
 
-function useBalancesContext() {
-  return useContext(BalancesContext)
+function useYieldFarmingBalanceContext() {
+  return useContext(YieldFarmingBalance)
 }
 
 export default function Provider({ children }: { children: ReactNode }) {
@@ -184,29 +145,22 @@ export default function Provider({ children }: { children: ReactNode }) {
     dispatch({ type: Action.BATCH_UPDATE_ACCOUNT, payload: { chainId, address, tokenAddresses, values, blockNumber } })
   }, [])
 
-  const batchUpdateExchanges = useCallback((chainId, exchangeAddresses, tokenAddresses, values, blockNumber) => {
-    dispatch({
-      type: Action.BATCH_UPDATE_EXCHANGES,
-      payload: { chainId, exchangeAddresses, tokenAddresses, values, blockNumber }
-    })
-  }, [])
-
   return (
-    <BalancesContext.Provider
+    <YieldFarmingBalance.Provider
       value={useMemo(
-        () => [state, { startListening, stopListening, update, batchUpdateAccount, batchUpdateExchanges }],
-        [state, startListening, stopListening, update, batchUpdateAccount, batchUpdateExchanges]
+        () => [state, { startListening, stopListening, update, batchUpdateAccount }],
+        [state, startListening, stopListening, update, batchUpdateAccount]
       )}
     >
       {children}
-    </BalancesContext.Provider>
+    </YieldFarmingBalance.Provider>
   )
 }
 
 export function Updater() {
   const { chainId, account, library } = useWeb3React()
   const blockNumber = useBlockNumber()
-  const [state, { update, batchUpdateAccount, batchUpdateExchanges }] = useBalancesContext()
+  const [state, { update, batchUpdateAccount }] = useYieldFarmingBalanceContext()
 
   // debounce state a little bit to prevent useEffect craziness
   const debouncedState = useDebounce(state, 1000)
@@ -227,13 +181,10 @@ export function Updater() {
   // generic balances fetcher abstracting away difference between fetching ETH + token balances
   const fetchBalance = useCallback(
     (address: string, tokenAddress: string) =>
-      (tokenAddress === 'ETH' ? getEtherBalance(address, library) : getTokenBalance(tokenAddress, address, library))
-        .then(value => {
-          return value.toString()
-        })
-        .catch(() => {
-          return null
-        }),
+      getYieldFarmingBalance(tokenAddress, address, library)
+        .then(value => value.toString())
+        .catch(() => null),
+
     [library]
   )
 
@@ -326,92 +277,18 @@ export function Updater() {
     }
   }, [chainId, account, blockNumber, allTokens, fetchBalance, batchUpdateAccount])
 
-  // ensure that we have the eth and token balances for all exchanges
-  const allExchanges = useMemo(
-    () =>
-      Object.keys(allTokenDetails)
-        .filter(tokenAddress => tokenAddress !== 'ETH')
-        .map(tokenAddress => ({
-          tokenAddress,
-          exchangeAddress: allTokenDetails[tokenAddress].exchangeAddress
-        })),
-    [allTokenDetails]
-  )
-  useEffect(() => {
-    if (typeof chainId === 'number' && typeof blockNumber === 'number') {
-      Promise.all(
-        allExchanges
-          .filter(({ exchangeAddress, tokenAddress }) => {
-            const hasValueToken = !!stateRef.current?.[chainId]?.[exchangeAddress]?.[tokenAddress]?.value
-            const hasValueETH = !!stateRef.current?.[chainId]?.[exchangeAddress]?.['ETH']?.value
-
-            const cachedFetchedAsOfToken = fetchedAsOfCache.current?.[chainId]?.[exchangeAddress]?.[tokenAddress]
-            const cachedFetchedAsOfETH = fetchedAsOfCache.current?.[chainId]?.[exchangeAddress]?.['ETH']
-
-            const fetchedAsOfToken =
-              stateRef.current?.[chainId]?.[exchangeAddress]?.[tokenAddress]?.blockNumber ?? cachedFetchedAsOfToken
-            const fetchedAsOfETH =
-              stateRef.current?.[chainId]?.[exchangeAddress]?.['ETH']?.blockNumber ?? cachedFetchedAsOfETH
-
-            // if there's no values, and they're not being fetched, we need to fetch!
-            if (
-              (!hasValueToken || !hasValueETH) &&
-              (typeof cachedFetchedAsOfToken !== 'number' || typeof cachedFetchedAsOfETH !== 'number')
-            ) {
-              return true
-              // else, if there are values, check if they's stale
-            } else if (hasValueToken && hasValueETH) {
-              const blocksElapsedSinceLastCheckToken = blockNumber - fetchedAsOfToken
-              const blocksElapsedSinceLastCheckETH = blockNumber - fetchedAsOfETH
-
-              return fetchedAsOfToken !== fetchedAsOfETH ||
-                blocksElapsedSinceLastCheckToken >= EXCHANGES_BLOCK_TIMEOUT ||
-                blocksElapsedSinceLastCheckETH >= EXCHANGES_BLOCK_TIMEOUT
-            } else {
-              return false
-            }
-          })
-          .map(async ({ exchangeAddress, tokenAddress }) => {
-            fetchedAsOfCache.current = {
-              ...fetchedAsOfCache.current,
-              [chainId]: {
-                ...fetchedAsOfCache.current?.[chainId],
-                [exchangeAddress]: {
-                  ...fetchedAsOfCache.current?.[chainId]?.[exchangeAddress],
-                  [tokenAddress]: blockNumber,
-                  ETH: blockNumber
-                }
-              }
-            }
-            return Promise.all([
-              fetchBalance(exchangeAddress, tokenAddress),
-              fetchBalance(exchangeAddress, 'ETH')
-            ]).then(([valueToken, valueETH]) => ({ exchangeAddress, tokenAddress, valueToken, valueETH }))
-          })
-      ).then(results => {
-        batchUpdateExchanges(
-          chainId,
-          results.flatMap(result => [result.exchangeAddress, result.exchangeAddress]),
-          results.flatMap(result => [result.tokenAddress, 'ETH']),
-          results.flatMap(result => [result.valueToken, result.valueETH]),
-          blockNumber
-        )
-      })
-    }
-  }, [chainId, account, blockNumber, allExchanges, fetchBalance, batchUpdateExchanges])
-
   return null
 }
 
-export function useAllBalances() {
+export function useAllYieldFarmingBalance() {
   const { chainId } = useWeb3React()
-  const [state] = useBalancesContext()
+  const [state] = useYieldFarmingBalanceContext()
   return useMemo(() => (typeof chainId === 'number' ? state?.[chainId] ?? {} : {}), [chainId, state])
 }
 
-export function useAddressBalance(address: string, tokenAddress: string): ethers.BigNumber | undefined | null {
+export function useAddressYieldFarmingBalance(address: string, tokenAddress: string): ethers.BigNumber | undefined | null {
   const { chainId } = useWeb3React()
-  const [state, { startListening, stopListening }] = useBalancesContext()
+  const [state, { startListening, stopListening }] = useYieldFarmingBalanceContext()
 
   useEffect(() => {
     if (typeof chainId === 'number' && isAddress(address) && isAddress(tokenAddress)) {
@@ -425,95 +302,4 @@ export function useAddressBalance(address: string, tokenAddress: string): ethers
   const value = typeof chainId === 'number' ? state?.[chainId]?.[address]?.[tokenAddress]?.value : undefined
 
   return useMemo(() => (typeof value === 'string' ? ethers.BigNumber.from(value) : value), [value])
-}
-
-const buildReserveObject = (
-  chainId: number,
-  tokenAddress: string,
-  ethReserveAmount: any,
-  tokenReserveAmount: any,
-  decimals: number
-) => ({
-  token: {
-    chainId,
-    address: tokenAddress,
-    decimals
-  },
-  ethReserve: {
-    token: {
-      chainId,
-      decimals: 18
-    },
-    amount: ethReserveAmount
-  },
-  tokenReserve: {
-    token: {
-      chainId,
-      address: tokenAddress,
-      decimals
-    },
-    amount: tokenReserveAmount
-  }
-})
-const daiTokenAddress = '0x6B175474E89094C44Da98b954EedeAC495271d0F'
-const daiExchangeAddress = '0x2a1530C4C41db0B0b2bB646CB5Eb1A67b7158667'
-const usdcTokenAddress = '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
-const usdcExchangeAddress = '0x97deC872013f6B5fB443861090ad931542878126'
-const tusdTokenAddress = '0x0000000000085d4780B73119b644AE5ecd22b376'
-const tusdExchangeAddress = '0x5048b9d01097498Fd72F3F14bC9Bc74A5aAc8fA7'
-
-export function useETHPriceInUSD() {
-  const { chainId } = useWeb3React()
-
-  let daiReserveETH = useAddressBalance(daiExchangeAddress, 'ETH')
-  let daiReserveToken = useAddressBalance(daiExchangeAddress, daiTokenAddress)
-  let usdcReserveETH = useAddressBalance(usdcExchangeAddress, 'ETH')
-  let usdcReserveToken = useAddressBalance(usdcExchangeAddress, usdcTokenAddress)
-  let tusdReserveETH = useAddressBalance(tusdExchangeAddress, 'ETH')
-  let tusdReserveToken = useAddressBalance(tusdExchangeAddress, tusdTokenAddress)
-
-  const [price, setPrice] = useState<undefined | null>()
-  useEffect(() => {
-    if (
-      chainId &&
-      daiReserveETH &&
-      daiReserveToken &&
-      usdcReserveETH &&
-      usdcReserveToken &&
-      tusdReserveETH &&
-      tusdReserveToken
-    ) {
-      const daiReservesObject = buildReserveObject(
-        chainId,
-        daiTokenAddress,
-        new BigNumber(daiReserveETH.toString()),
-        new BigNumber(daiReserveToken.toString()),
-        18
-      )
-      const tusdReservesObject = buildReserveObject(
-        chainId,
-        tusdTokenAddress,
-        new BigNumber(tusdReserveETH.toString()),
-        new BigNumber(tusdReserveToken.toString()),
-        18
-      )
-      const usdcReservesObject = buildReserveObject(
-        chainId,
-        usdcTokenAddress,
-        new BigNumber(usdcReserveETH.toString()),
-        new BigNumber(usdcReserveToken.toString()),
-        6
-      )
-
-      const stablecoinReserves = [daiReservesObject, usdcReservesObject, tusdReservesObject]
-
-      try {
-        setPrice(getUSDPrice(stablecoinReserves))
-      } catch {
-        setPrice(null)
-      }
-    }
-  }, [daiReserveETH, daiReserveToken, usdcReserveETH, usdcReserveToken, tusdReserveETH, tusdReserveToken, chainId])
-
-  return price
 }

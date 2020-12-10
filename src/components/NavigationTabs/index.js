@@ -8,9 +8,9 @@ import { useBodyKeyDown } from '../../hooks'
 
 const tabOrder = [
   {
-    path: '/swap',
-    textKey: 'Swap',
-    regex: /\/swap/,
+    path: '/governance/proposals',
+    textKey: 'Vote',
+    regex: /\/governance\/proposals/,
   },
   {
     path: '/earn',
@@ -22,13 +22,12 @@ const tabOrder = [
     path: '/farm',
     textKey: 'Farm',
     regex: /\/farm/,
-    disabled: true,
   },
   {
-    path: '/governance/proposals',
-    textKey: 'Vote',
-    regex: /\/governance\/proposals/,
-  }
+    path: '/swap',
+    textKey: 'Swap',
+    regex: /\/swap/,
+  },
 ]
 
 const Tabs = styled.div`
@@ -42,7 +41,8 @@ const Tabs = styled.div`
   box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   z-index: 100;
   position: relative;
-  width: 100%
+  width: 540px;
+  max-width: 90vw;
 `
 
 const activeClassName = 'ACTIVE'

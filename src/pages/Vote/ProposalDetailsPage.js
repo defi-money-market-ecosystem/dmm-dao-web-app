@@ -4,7 +4,7 @@ import CastVoteDialogue from './CastVoteDialogue'
 import { Link, Redirect, useParams, useLocation } from 'react-router-dom'
 import { ProposalDetails } from '../../models/ProposalDetails'
 import { useWeb3React } from '../../hooks'
-import { amountFormatter } from '../../utils'
+import { amountFormatter, DMM_API_URL, shorten } from '../../utils'
 import { ReactComponent as ExternalLink } from '../../assets/svg/ExternalLink.svg'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { useAllTransactions } from '../../contexts/Transactions'
@@ -13,6 +13,8 @@ import ReactMarkdown from 'react-markdown'
 import { fromWei } from 'web3-utils'
 import ethers from 'ethers'
 import { AccountDetails } from '../../models/AccountDetails'
+import ViewMoreVotersDialogue from './ViewMoreVotersDialogue'
+import { useBlockNumber } from '../../contexts/Application'
 
 const Main = styled.div`
   width: 60vw;
@@ -214,6 +216,7 @@ const Description = styled.div`
 	font-size: 13px;
 	font-weight: 600;
 	line-height: 1.4;
+	overflow: hidden;
 `
 
 
@@ -230,19 +233,21 @@ const History = styled.div`
 
 const Check = styled.div`
 	border-radius: 50%;
-	height: 20px;
-	width: 20px;
-	background-color: #b0bdc5;
+	height: 24px;
+	width: 24px;
+	line-height: 24px;
+	text-align: center;
 	color: #FFFFFF;
 	font-weight: 700;
 	font-size: 18px;
 	display: inline-block;
-	vertical-align: middle;
-	padding: 2px 4px 2px 4px;
+	background-color: #b0bdc5;
+	flex-shrink: 0 !important;
 
 	${({ active }) => active && `
     background-color: #4487CE;
-    padding: 2px 1px 3px 4px;
+    padding-left: 0;
+    padding-right: 0;
   `}
 `
 
@@ -308,13 +313,12 @@ function isValidProposalId(proposalId) {
 }
 
 async function getDetails(proposalId, walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/proposals/${proposalId}`)
+  return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposalId}`)
     .then(response => response.json())
     .then(response => !!response.data ? new ProposalDetails(response.data) : null)
     .then(proposal => {
       if (proposal && walletAddress) {
-        return fetch(`${baseUrl}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
+        return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
           .then(response => response.json())
           .then(response => proposal.withAccount(response.data))
       } else {
@@ -326,25 +330,26 @@ async function getDetails(proposalId, walletAddress) {
 const CAST_VOTE = 'Vote'
 
 async function getAccountInfo(walletAddress) {
-  const baseUrl = 'https://api.defimoneymarket.com'
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+  return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
     .then(response => response.json())
     .then(response => !!response.data ? new AccountDetails(response.data) : null)
 }
 
-export default function ProposalDetailsPage(props) {  
+export default function ProposalDetailsPage(props) {
   const [vote, setVote] = useState(CAST_VOTE)
   const [accountInfo, setAccountInfo] = useState({})
   const [cast, setCast] = useState(true)
   const [showCast, changeShowCast] = useState(false)
   const [castHash, setCastHash] = useState('')
 
-  const [topVotersAmount, setTopVotersAmount] = useState(3)
+  const [topVotersAmount] = useState(5)
   let location = useLocation()
 
-  const handleClick = (e) => {
-    if (e) {
-      setVote(e)
+  const [viewMoreVoters, setViewMoreVoters] = useState([])
+
+  const setShowCastDialogue = (shouldShowCastDialogue) => {
+    if (shouldShowCastDialogue) {
+      setVote(shouldShowCastDialogue)
       setCast(false)
     }
     changeShowCast(false)
@@ -368,6 +373,8 @@ export default function ProposalDetailsPage(props) {
   const allTransactions = useAllTransactions()
   const pending = Object.keys(allTransactions).filter(hash => !allTransactions[hash].receipt)
 
+  const currentBlock = useBlockNumber()
+
   useEffect(() => {
     let subscriptionId
     if (Object.keys(pending).filter(hash => hash === castHash).length === 0) {
@@ -379,6 +386,8 @@ export default function ProposalDetailsPage(props) {
 
     return () => !!subscriptionId && clearInterval(subscriptionId)
   }, [castHash, pending])
+
+  const proposalId = useParams().proposal_id
 
   useEffect(() => {
     const perform = () => {
@@ -407,15 +416,9 @@ export default function ProposalDetailsPage(props) {
     }, 15000)
 
     return () => clearInterval(subscriptionId)
-  }, [walletAddress])
+  }, [proposalId, walletAddress])
 
-  const shorten = (a) => `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`
-  const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Addresses'}`
-  const showMoreTopVoters = (topVoters) => {
-    console.log('showing more...')
-  }
-
-  const proposalId = useParams().proposal_id
+  const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Top Addresses'}`
   if (!isValidProposalId(proposalId) || proposal === 'BAD') {
     return <Redirect to={{ pathname: '/governance/proposals', state: { isBadPath: true } }}/>
   }
@@ -443,7 +446,7 @@ export default function ProposalDetailsPage(props) {
               {proposal?.proposalStatus}
             </Status>
             <Extra>
-              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText() : undefined}
+              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText(currentBlock) : undefined}
             </Extra>
           </Info>
         </Wrapper>
@@ -458,7 +461,7 @@ export default function ProposalDetailsPage(props) {
         }
       </div>
       <Body>
-        {voteDetails.map(({ title, votesBN, topVoters, color }, index) => {
+        {voteDetails.map(({ title, votesBN, topVoters, color }) => {
           const _0 = ethers.BigNumber.from('0')
           const sumVotes = voteDetails
             .map(vote => vote.votesBN)
@@ -469,40 +472,41 @@ export default function ProposalDetailsPage(props) {
           const percentageBN = (!!votesBN && votesBN.gt(_0)) ? votesBN.mul(_100).div(sumVotes).toString() : _0.toString()
           const percentage = parseInt(fromWei(percentageBN)).toString(10)
 
+          const filteredTopVoters = topVoters.filter((value, index) => index < topVotersAmount)
+
           return (
             <Card width={50} key={`vote-details-${color}`}>
               <Title>
-                {title}:&nbsp;&nbsp;&nbsp;{amountFormatter(votesBN, 18, 2)}
+                {title}:&nbsp;&nbsp;&nbsp;{amountFormatter(votesBN, 18, 2, true, true)}
                 <Bar>
-                  <Color color={color}
-                         percentage={!!votesBN ? percentage : '50'}/>
+                  <Color color={color} percentage={!!votesBN ? percentage : '50'}/>
                 </Bar>
               </Title>
               <Addresses>
                 <AddressTitle>
-                  {addressTitle(topVoters.length)}
+                  {addressTitle(filteredTopVoters.length)}
                   <VotesTitle>Votes</VotesTitle>
                 </AddressTitle>
-                {topVoters.length === 0 ? (
+                {filteredTopVoters.length === 0 ? (
                   <NoVoters>No votes {title.toLowerCase()} the proposal have been cast</NoVoters>) : (<span/>)}
-                {topVoters.map((topVoter) => {
+                {filteredTopVoters.map((topVoter) => {
                   return (
-                    <Link to={{pathname: `/governance/address/${topVoter.walletAddress}`, state: { prevPath: location.pathname}}} style={addressLink}>        
+                    <Link to={{pathname: `/governance/address/${topVoter.walletAddress}`, state: { prevPath: location.pathname}}} style={addressLink}>
                       <Address active key={`voter-${topVoter.walletAddress}`}>
                         {shorten(topVoter.walletAddress)}
                         <Votes>
-                          {amountFormatter(topVoter.voteInfo?.votesCastedBN)}
+                          {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2, true, true)}
                         </Votes>
                       </Address>
                     </Link>
                   )
                 })}
               </Addresses>
-              {topVoters.length > topVotersAmount ? (
-                <View onClick={() => showMoreTopVoters(topVoters)}>
+              {topVoters.length > topVotersAmount && (
+                <View onClick={() => setViewMoreVoters(topVoters)}>
                   {'View More'}
                 </View>
-              ) : (<span/>)}
+              )}
             </Card>
           )
         })}
@@ -532,7 +536,7 @@ export default function ProposalDetailsPage(props) {
                   <HistoryTitle>
                     {breadcrumb.statusFormatted()}
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                    <a href={`https://etherscan.io/tx/${breadcrumb.transactionHash}`} target={'_blank'}>
+                    <a href={`https://etherscan.io/tx/${breadcrumb.transactionHash}`} target={'_blank'} rel="noopener noreferrer">
                       <ExternalLink/>
                     </a>
                   </HistoryTitle>
@@ -558,18 +562,28 @@ export default function ProposalDetailsPage(props) {
           {vote}
         </Vote>
       }
-      {showCast ?
+      <div>
+        {showCast &&
         <CastVoteDialogue
           proposal={proposal}
-          timestamp={proposal.mostRecentDateText()}
-          onChange={e => handleClick(e)}
+          timestamp={proposal.mostRecentDateText(currentBlock)}
+          onClose={() => setShowCastDialogue(false)}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
           votesBN={accountInfo?.voteInfo?.votesBN}
           onVoteCasted={(hash) => {
             setCastHash(hash)
           }}/>
-        : null
-      }
+        }
+      </div>
+      <div>
+        {viewMoreVoters.length !== 0 &&
+        <ViewMoreVotersDialogue
+          proposal={proposal}
+          voters={viewMoreVoters}
+          onClose={() => setViewMoreVoters([])}
+        />
+        }
+      </div>
     </Main>
   )
 }

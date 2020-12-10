@@ -1,8 +1,8 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useRef } from 'react'
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer } from 'react'
 
 import { useInterval, useWeb3React } from '../hooks'
 import { exchange } from '../connectors/index'
-import { DMG_ADDRESS, INITIAL_TOKENS_CONTEXT } from './Tokens'
+import { DMG_ADDRESS, SWAP_TOKENS_CONTEXT } from './Tokens'
 
 export const START_LISTENING = 'START_LISTENING'
 export const STOP_LISTENING = 'STOP_LISTENING'
@@ -24,8 +24,6 @@ function useDolomiteOrderBooksContext() {
 }
 
 export function useDolomiteOrderBooks(primarySymbol, secondarySymbol) {
-  // const [state] = useDolomiteOrderBooksContext()
-  // return useMemo(() => undefined, undefined)
   const { chainId } = useWeb3React()
   const [state, { startListening, stopListening }] = useDolomiteOrderBooksContext()
 
@@ -56,12 +54,12 @@ function reducer(state, { type, payload }) {
           ...state?.[chainId],
           [market]: uninitialized
             ? {
-                listenerCount: 1
-              }
+              listenerCount: 1
+            }
             : {
-                ...state[chainId][market],
-                listenerCount: state[chainId][market].listenerCount + 1
-              }
+              ...state[chainId][market],
+              listenerCount: state[chainId][market].listenerCount + 1
+            }
         }
       }
     }
@@ -140,10 +138,10 @@ export default function Provider({ children }) {
 }
 
 function getAllBooksAndDispatch(dispatch, chainId) {
-  const primarySymbol = INITIAL_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
-  const secondarySymbols = Object.keys(INITIAL_TOKENS_CONTEXT['1'])
-    .filter(tokenAddress => INITIAL_TOKENS_CONTEXT['1'][tokenAddress].symbol !== primarySymbol)
-    .map(tokenAddress => INITIAL_TOKENS_CONTEXT['1'][tokenAddress].symbol)
+  const primarySymbol = SWAP_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
+  const secondarySymbols = Object.keys(SWAP_TOKENS_CONTEXT['1'])
+    .filter(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol !== primarySymbol)
+    .map(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol)
 
   const booksPromises = secondarySymbols.map(secondarySymbol => {
     const market = `${primarySymbol}-${secondarySymbol}`

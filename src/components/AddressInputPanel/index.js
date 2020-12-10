@@ -10,7 +10,7 @@ const InputPanel = styled.div`
   ${({ theme }) => theme.flexColumnNoWrap}
   box-shadow: 0 4px 8px 0 ${({ theme }) => transparentize(0.95, theme.shadowColor)};
   position: relative;
-  border-radius: 1.25rem;
+  border-radius: 5px;
   background-color: ${({ theme }) => theme.inputBackground};
   z-index: 1;
 `
@@ -19,7 +19,7 @@ const ContainerRow = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
-  border-radius: 1.25rem;
+  border-radius: 5px;
   border: 1px solid #000000;
 
   background-color: ${({ theme }) => theme.inputBackground};

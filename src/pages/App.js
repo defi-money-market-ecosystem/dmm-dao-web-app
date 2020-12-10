@@ -8,12 +8,13 @@ import Footer from '../components/Footer'
 
 import NavigationTabs from '../components/NavigationTabs'
 import { getAllQueryParams } from '../utils'
-
 import Send from './Send'
 import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
 import ProfilePage from './Vote/ProfilePage'
 import { isAddress } from '../utils/index'
+import Farm from './Farm/index'
+import NFT from './NFT/index'
 
 const Swap = lazy(() => import('./Swap'))
 
@@ -21,8 +22,8 @@ const AppWrapper = styled.div`
   display: flex;
   flex-flow: column;
   align-items: flex-start;
-  max-height: 100vh;
-  height: 100%;
+  /*max-height: 100vh;
+  height: 100%;*/
   background: linear-gradient(360deg, #327ccb, #4f94de 5%, #8bbbef 15%, #bdddff 25%, #deeeff 40%);
 `
 
@@ -58,8 +59,7 @@ const BodyWrapper = styled.div`
 `
 
 const Body = styled.div`
-  max-width: 540px;
-  width: 90%;
+  width: 100%;
   margin-top: 16px;
   display: flex;
   flex-direction: column;
@@ -120,6 +120,7 @@ class App extends React.Component {
                         <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
                         <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
+                        <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params}/>}/>
                         <Redirect to="/swap"/>
                       </Switch>
                     </Suspense>
