@@ -618,7 +618,7 @@ export default function NFT({ params }) {
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
       .catch(error => {
-        console.error('Error setting max token approval ', error)
+        console.error('Error estimating gas cost for buying asset introducer slot ', error)
         return ethers.BigNumber.from('1000000')
       })
     buyerRouter

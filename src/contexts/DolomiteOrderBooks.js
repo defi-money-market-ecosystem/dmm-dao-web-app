@@ -138,10 +138,13 @@ export default function Provider({ children }) {
 }
 
 function getAllBooksAndDispatch(dispatch, chainId) {
-  const primarySymbol = SWAP_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
-  const secondarySymbols = Object.keys(SWAP_TOKENS_CONTEXT['1'])
-    .filter(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol !== primarySymbol)
-    .map(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol)
+  const context = SWAP_TOKENS_CONTEXT['1']
+  const primarySymbol = context[DMG_ADDRESS].symbol
+  const secondarySymbols = Object.keys(context)
+    .filter(tokenAddress => {
+      return context[tokenAddress].symbol !== primarySymbol && context[tokenAddress].symbol !== 'ETH'
+    })
+    .map(tokenAddress => context[tokenAddress].symbol)
 
   const booksPromises = secondarySymbols.map(secondarySymbol => {
     const market = `${primarySymbol}-${secondarySymbol}`
