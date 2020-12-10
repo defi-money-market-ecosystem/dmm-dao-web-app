@@ -610,10 +610,13 @@ export default function NFT({ params }) {
   const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'));
   const stakingTokenContract = useTokenContract(stakingTokenAddress);
   const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress);
+  const stakingDmmTokenId = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id']);
 
   const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
 
-  const purchaseNft = async (tokenId) => {
+  console.log(selectedCountry);
+
+  const purchaseNft = async (tokenId, dmmTokenId, stakingDuration) => {
     let estimatedGas
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
@@ -970,7 +973,7 @@ export default function NFT({ params }) {
                     !stakingSelected || stakingTokenAllowanceSet ? (
                       dmgAllowanceSet ? (
                         <Button
-                          onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
+                          onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID, stakingDmmTokenId, selectedStakingPeriod['period'])}>
                           Purchase
                         </Button>
                       ) : (
