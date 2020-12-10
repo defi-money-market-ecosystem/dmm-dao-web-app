@@ -523,17 +523,18 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
 
   const isTokenListSet = !!tokenList
   tokenList = useMemo(() => {
+    let tokensForAlgo
     if (isTokenListSet) {
-      return Object.keys(tokenList)
-        .map(key => tokenList[key])
-        .filter((value, index, list) => list.indexOf(value) === index)
+      tokensForAlgo = tokenList
+    } else {
+      tokensForAlgo = allTokens
     }
 
-    return Object.keys(allTokens)
+    return Object.keys(tokensForAlgo)
       .sort((a, b) => {
-        if (allTokens[a].symbol && allTokens[b].symbol) {
-          const aSymbol = allTokens[a].symbol.toLowerCase()
-          const bSymbol = allTokens[b].symbol.toLowerCase()
+        if (tokensForAlgo[a].symbol && tokensForAlgo[b].symbol) {
+          const aSymbol = tokensForAlgo[a].symbol.toLowerCase()
+          const bSymbol = tokensForAlgo[b].symbol.toLowerCase()
 
           // pin ETH to top
           if (aSymbol === 'ETH'.toLowerCase() || bSymbol === 'ETH'.toLowerCase()) {
@@ -569,12 +570,12 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
           balance = formatEthBalance(ethers.BigNumber.from(allBalances[account][k].value))
           usdBalance = usdAmounts[k]
         } else if (allBalances[account] && allBalances[account][k] && allBalances[account][k].value) {
-          balance = formatTokenBalance(ethers.BigNumber.from(allBalances[account][k].value), allTokens[k].decimals)
+          balance = formatTokenBalance(ethers.BigNumber.from(allBalances[account][k].value), tokensForAlgo[k].decimals)
           usdBalance = usdAmounts[k]
         }
         return {
-          name: allTokens[k].name,
-          symbol: allTokens[k].symbol,
+          name: tokensForAlgo[k].name,
+          symbol: tokensForAlgo[k].symbol,
           address: k,
           balance: balance,
           usdBalance: usdBalance

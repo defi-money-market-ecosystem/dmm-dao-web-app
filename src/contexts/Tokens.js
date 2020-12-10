@@ -53,8 +53,9 @@ export const ETH = {
 
 export const DELEGATE_ADDRESS = '0xE2466deB9536A69BF8131Ecd0c267EE41dd1cdA0'
 
-export const INITIAL_TOKENS_CONTEXT = {
+export const SWAP_TOKENS_CONTEXT = {
   1: {
+    ...ETH,
     [DAI_ADDRESS]: {
       [NAME]: 'Dai Stablecoin',
       [SYMBOL]: 'DAI',
@@ -91,7 +92,7 @@ export const INITIAL_TOKENS_CONTEXT = {
 }
 
 function initializeAllTokens() {
-  const allTokens = JSON.parse(JSON.stringify(INITIAL_TOKENS_CONTEXT))
+  const allTokens = JSON.parse(JSON.stringify(SWAP_TOKENS_CONTEXT))
 
   // Add mTokens
   allTokens['1'][M_DAI_ADDRESS] = {
@@ -328,7 +329,7 @@ function reducer(state, { type, payload }) {
 }
 
 export default function Provider({ children }) {
-  const [state, dispatch] = useReducer(reducer, INITIAL_TOKENS_CONTEXT)
+  const [state, dispatch] = useReducer(reducer, ALL_TOKENS_CONTEXT)
 
   const update = useCallback((networkId, tokenAddress, name, symbol, decimals, exchangeAddress) => {
     dispatch({ type: UPDATE, payload: { networkId, tokenAddress, name, symbol, decimals, exchangeAddress } })

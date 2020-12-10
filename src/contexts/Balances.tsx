@@ -18,7 +18,7 @@ import { useBlockNumber } from './Application'
 import { useAllTokenDetails } from './Tokens'
 import { getUSDPrice } from '../utils/price'
 
-const LOCAL_STORAGE_KEY = 'BALANCES'
+const LOCAL_STORAGE_KEY = 'BALANCES-V2'
 const SHORT_BLOCK_TIMEOUT = 1 // in seconds, represented as a block number delta
 const LONG_BLOCK_TIMEOUT = (60 * 2) / 15 // in seconds, represented as a block number delta
 

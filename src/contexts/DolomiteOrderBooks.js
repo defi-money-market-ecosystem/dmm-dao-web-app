@@ -2,7 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useR
 
 import { useInterval, useWeb3React } from '../hooks'
 import { exchange } from '../connectors/index'
-import { DMG_ADDRESS, INITIAL_TOKENS_CONTEXT } from './Tokens'
+import { DMG_ADDRESS, SWAP_TOKENS_CONTEXT } from './Tokens'
 
 export const START_LISTENING = 'START_LISTENING'
 export const STOP_LISTENING = 'STOP_LISTENING'
@@ -138,10 +138,10 @@ export default function Provider({ children }) {
 }
 
 function getAllBooksAndDispatch(dispatch, chainId) {
-  const primarySymbol = INITIAL_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
-  const secondarySymbols = Object.keys(INITIAL_TOKENS_CONTEXT['1'])
-    .filter(tokenAddress => INITIAL_TOKENS_CONTEXT['1'][tokenAddress].symbol !== primarySymbol)
-    .map(tokenAddress => INITIAL_TOKENS_CONTEXT['1'][tokenAddress].symbol)
+  const primarySymbol = SWAP_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
+  const secondarySymbols = Object.keys(SWAP_TOKENS_CONTEXT['1'])
+    .filter(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol !== primarySymbol)
+    .map(tokenAddress => SWAP_TOKENS_CONTEXT['1'][tokenAddress].symbol)
 
   const booksPromises = secondarySymbols.map(secondarySymbol => {
     const market = `${primarySymbol}-${secondarySymbol}`

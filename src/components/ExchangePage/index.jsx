@@ -14,7 +14,7 @@ import {
   DECIMALS,
   DELEGATE_ADDRESS,
   DMG_ADDRESS,
-  INITIAL_TOKENS_CONTEXT,
+  SWAP_TOKENS_CONTEXT,
   MARKETS,
   MIN_ORDER,
   PRIMARY,
@@ -395,8 +395,8 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
   const inputAllowance = useAddressAllowance(account, effectiveInputCurrency, DELEGATE_ADDRESS)
 
   // fetch reserves for each of the currency types
-  const primarySymbol = INITIAL_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
-  const secondarySymbol = INITIAL_TOKENS_CONTEXT['1'][secondaryToken].symbol
+  const primarySymbol = SWAP_TOKENS_CONTEXT['1'][DMG_ADDRESS].symbol
+  const secondarySymbol = SWAP_TOKENS_CONTEXT['1'][secondaryToken].symbol
   const orderBooks = useDolomiteOrderBooks(primarySymbol, secondarySymbol)
 
   const tokenContract = useTokenContract(effectiveInputCurrency)
@@ -450,10 +450,10 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
 
         let minValue
         if (isPrimary) {
-          const decimalsDiff = INITIAL_TOKENS_CONTEXT['1'][market.primary][DECIMALS] - market[PRIMARY_DECIMALS]
+          const decimalsDiff = SWAP_TOKENS_CONTEXT['1'][market.primary][DECIMALS] - market[PRIMARY_DECIMALS]
           minValue = ethers.BigNumber.from(10).pow(decimalsDiff)
         } else {
-          const decimalsDiff = INITIAL_TOKENS_CONTEXT['1'][market.secondary][DECIMALS] - market[SECONDARY_DECIMALS]
+          const decimalsDiff = SWAP_TOKENS_CONTEXT['1'][market.secondary][DECIMALS] - market[SECONDARY_DECIMALS]
           minValue = ethers.BigNumber.from(10).pow(decimalsDiff)
         }
 
@@ -515,8 +515,8 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         setInputError(t('insufficientBalanceWithBuffer'))
         setShowWrap(false)
         setShowUnlock(false)
-      } else if (valueForMinOrder && valueForMinOrder.lt(INITIAL_TOKENS_CONTEXT['1'][currencyForMinOrder][MIN_ORDER])) {
-        const token = INITIAL_TOKENS_CONTEXT['1'][currencyForMinOrder]
+      } else if (valueForMinOrder && valueForMinOrder.lt(SWAP_TOKENS_CONTEXT['1'][currencyForMinOrder][MIN_ORDER])) {
+        const token = SWAP_TOKENS_CONTEXT['1'][currencyForMinOrder]
         const minimumOrder = token[MIN_ORDER]
         setInputError(`Minimum order is ${ethers.utils.formatUnits(minimumOrder.toString(), token[DECIMALS])} ${token[SYMBOL]}`)
         setShowUnlock(false)
@@ -796,7 +796,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
       const gasFeeAmount = new BigNumber(exchangeInfo.premiumForSpotTrade[tokenB.ticker].valueBN)
       const secondaryTokenUsdValue = new BigNumber(web3.toWei(rates[secondaryToken.ticker]['USD']))
       const _1e18 = new BigNumber('1000000000000000000')
-      const usdTruncationFactor = new BigNumber(10).pow(new BigNumber(INITIAL_TOKENS_CONTEXT['1'][secondaryToken.address][DECIMALS] - 6)) // USD has 6 decimals, always
+      const usdTruncationFactor = new BigNumber(10).pow(new BigNumber(SWAP_TOKENS_CONTEXT['1'][secondaryToken.address][DECIMALS] - 6)) // USD has 6 decimals, always
       const totalSecondaryUsdValue = secondaryAmount.mul(secondaryTokenUsdValue).div(_1e18).div(usdTruncationFactor)
 
       let takerFeeBN
@@ -809,20 +809,20 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
       console.log('gasFeeAmount ', gasFeeAmount.toString())
       console.log('commissionAmount ', commissionAmount.toString())
 
-      const tokenBTruncationFactor = new BigNumber(10).pow(INITIAL_TOKENS_CONTEXT['1'][tokenB.address].decimals - 8)
+      const tokenBTruncationFactor = new BigNumber(10).pow(SWAP_TOKENS_CONTEXT['1'][tokenB.address].decimals - 8)
       return (gasFeeAmount.add(commissionAmount)).div(tokenBTruncationFactor).mul(tokenBTruncationFactor)
     }
 
     let primaryToken
     let secondaryToken
     if (loopringOrderData.tokenB === DMG_ADDRESS) {
-      const primary = INITIAL_TOKENS_CONTEXT['1'][loopringOrderData.tokenB]
-      const secondary = INITIAL_TOKENS_CONTEXT['1'][loopringOrderData.tokenS]
+      const primary = SWAP_TOKENS_CONTEXT['1'][loopringOrderData.tokenB]
+      const secondary = SWAP_TOKENS_CONTEXT['1'][loopringOrderData.tokenS]
       primaryToken = { address: loopringOrderData.tokenB, ticker: primary.symbol }
       secondaryToken = { address: loopringOrderData.tokenS, ticker: secondary.symbol }
     } else {
-      const primary = INITIAL_TOKENS_CONTEXT['1'][loopringOrderData.tokenS]
-      const secondary = INITIAL_TOKENS_CONTEXT['1'][loopringOrderData.tokenB]
+      const primary = SWAP_TOKENS_CONTEXT['1'][loopringOrderData.tokenS]
+      const secondary = SWAP_TOKENS_CONTEXT['1'][loopringOrderData.tokenB]
       primaryToken = { address: loopringOrderData.tokenS, ticker: primary.symbol }
       secondaryToken = { address: loopringOrderData.tokenB, ticker: secondary.symbol }
     }
@@ -836,7 +836,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
 
     const feeAmount = getTakerFee(
       new BigNumber(loopringOrderData.amountB),
-      { address: loopringOrderData.tokenB, ticker: INITIAL_TOKENS_CONTEXT['1'][loopringOrderData.tokenB].symbol },
+      { address: loopringOrderData.tokenB, ticker: SWAP_TOKENS_CONTEXT['1'][loopringOrderData.tokenB].symbol },
       secondaryAmount,
       secondaryToken,
       exchangeInfo,
@@ -997,11 +997,11 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
 
   const newInputDetected = effectiveInputCurrency !== 'ETH' &&
     effectiveInputCurrency &&
-    !INITIAL_TOKENS_CONTEXT[chainId].hasOwnProperty(effectiveInputCurrency)
+    !SWAP_TOKENS_CONTEXT[chainId].hasOwnProperty(effectiveInputCurrency)
 
   const newOutputDetected = effectiveOutputCurrency !== 'ETH' &&
     effectiveOutputCurrency &&
-    !INITIAL_TOKENS_CONTEXT[chainId].hasOwnProperty(effectiveOutputCurrency)
+    !SWAP_TOKENS_CONTEXT[chainId].hasOwnProperty(effectiveOutputCurrency)
 
   const [showInputWarning, setShowInputWarning] = useState(false)
   const [showOutputWarning, setShowOutputWarning] = useState(false)
@@ -1106,6 +1106,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         market={market}
         disableTokenSelect={inputCurrency === DMG_ADDRESS}
         unlockAddress={DELEGATE_ADDRESS}
+        tokenList={SWAP_TOKENS_CONTEXT[chainId]}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -1147,6 +1148,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         tokenAddress={outputCurrency}
         market={market}
         unlockAddress={DELEGATE_ADDRESS}
+        tokenList={SWAP_TOKENS_CONTEXT[chainId]}
       />
       <OversizedPanel hideBottom>
         <ExchangeRateWrapper

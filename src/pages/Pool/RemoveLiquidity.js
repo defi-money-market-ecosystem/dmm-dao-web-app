@@ -7,7 +7,7 @@ import styled from 'styled-components'
 
 import { useWeb3React, useExchangeContract } from '../../hooks'
 import { useTransactionAdder } from '../../contexts/Transactions'
-import { useTokenDetails, INITIAL_TOKENS_CONTEXT } from '../../contexts/Tokens'
+import { useTokenDetails, SWAP_TOKENS_CONTEXT } from '../../contexts/Tokens'
 import { useAddressBalance } from '../../contexts/Balances'
 
 import { calculateGasMargin, amountFormatter } from '../../utils'
@@ -366,7 +366,7 @@ export default function RemoveLiquidity({ params }) {
   const marketRate = getMarketRate(exchangeETHBalance, exchangeTokenBalance, decimals)
 
   const newOutputDetected =
-    outputCurrency !== 'ETH' && outputCurrency && !INITIAL_TOKENS_CONTEXT[chainId].hasOwnProperty(outputCurrency)
+    outputCurrency !== 'ETH' && outputCurrency && !SWAP_TOKENS_CONTEXT[chainId].hasOwnProperty(outputCurrency)
 
   const [showCustomTokenWarning, setShowCustomTokenWarning] = useState(false)
 
