@@ -517,7 +517,7 @@ export default function ProfilePage() {
         setProposals(data)
       })
 
-      const nftsPromise = getNFTs(address).then(data => {
+      getNFTs(address).then(data => {
         setNfts(data)
       })
 
