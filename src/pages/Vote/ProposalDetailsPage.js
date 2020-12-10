@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import CastVoteDialogue from './CastVoteDialogue'
-import { Link, Redirect, useParams } from 'react-router-dom'
+import { Link, Redirect, useParams, useLocation } from 'react-router-dom'
 import { ProposalDetails } from '../../models/ProposalDetails'
 import { useWeb3React } from '../../hooks'
 import { amountFormatter, DMM_API_URL, shorten } from '../../utils'
@@ -40,13 +40,18 @@ const Main = styled.div`
   }
 `
 
-const link = {
+const backLink = {
   textDecoration: 'none',
   color: '#808080',
   cursor: 'pointer',
   fontWeight: '700',
   fontSize: '15px',
   marginLeft: '10px'
+}
+
+const addressLink = {
+  textDecoration: 'none',
+  cursor: 'pointer',
 }
 
 const Wrapper = styled.div`
@@ -330,7 +335,7 @@ async function getAccountInfo(walletAddress) {
     .then(response => !!response.data ? new AccountDetails(response.data) : null)
 }
 
-export default function ProposalDetailsPage() {
+export default function ProposalDetailsPage(props) {
   const [vote, setVote] = useState(CAST_VOTE)
   const [accountInfo, setAccountInfo] = useState({})
   const [cast, setCast] = useState(true)
@@ -338,6 +343,7 @@ export default function ProposalDetailsPage() {
   const [castHash, setCastHash] = useState('')
 
   const [topVotersAmount] = useState(5)
+  let location = useLocation()
 
   const [viewMoreVoters, setViewMoreVoters] = useState([])
 
@@ -427,7 +433,7 @@ export default function ProposalDetailsPage() {
 
   return (
     <Main>
-      <Link to={'/governance/proposals'} style={link}>
+      <Link to={'/governance/proposals'} style={backLink}>
         &#8592; Overview
       </Link>
       <div>
@@ -485,12 +491,14 @@ export default function ProposalDetailsPage() {
                   <NoVoters>No votes {title.toLowerCase()} the proposal have been cast</NoVoters>) : (<span/>)}
                 {filteredTopVoters.map((topVoter) => {
                   return (
-                    <Address active key={`voter-${topVoter.walletAddress}`}>
-                      {shorten(topVoter.walletAddress)}
-                      <Votes>
-                        {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2, true, true)}
-                      </Votes>
-                    </Address>
+                    <Link to={{pathname: `/governance/address/${topVoter.walletAddress}`, state: { prevPath: location.pathname}}} style={addressLink}>
+                      <Address active key={`voter-${topVoter.walletAddress}`}>
+                        {shorten(topVoter.walletAddress)}
+                        <Votes>
+                          {amountFormatter(topVoter.proposalVoteInfo?.votesCastedBN, 18, 2, true, true)}
+                        </Votes>
+                      </Address>
+                    </Link>
                   )
                 })}
               </Addresses>

@@ -551,6 +551,7 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
 };
 
 const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF';
+const ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS = '0x2bd086E46af30eDb0039b6b0B528F8218151c898';
 
 export default function NFT({ params }) {
   const { t } = useTranslation()
@@ -570,7 +571,7 @@ export default function NFT({ params }) {
 
   const tokenContract = useTokenContract(DMG_ADDRESS);
 
-  const allowance = useAddressAllowance(account, DMG_ADDRESS, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
+  const allowance = useAddressAllowance(account, DMG_ADDRESS, stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
   const dmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'));
 
   // Make sure the wallet has sufficient balance
@@ -606,14 +607,15 @@ export default function NFT({ params }) {
   const stakingTokenAddress = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address']);
   const stakingTokenDecimals = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals']);
 
-  const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS); // TODO - INSERT CORRECT CONTRACT ADDRESS TO CHECK ALLOWANCE
+  const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS);
   const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'));
   const stakingTokenContract = useTokenContract(stakingTokenAddress);
   const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress);
+  const stakingDmmTokenId = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id']);
 
   const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
 
-  const purchaseNft = async (tokenId) => {
+  const purchaseNft = async (tokenId, dmmTokenId, stakingDuration) => {
     let estimatedGas
     estimatedGas = await buyerRouter.estimateGas
       .buyAssetIntroducerSlot(tokenId)
@@ -970,7 +972,7 @@ export default function NFT({ params }) {
                     !stakingSelected || stakingTokenAllowanceSet ? (
                       dmgAllowanceSet ? (
                         <Button
-                          onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID)}>
+                          onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID, stakingDmmTokenId, selectedStakingPeriod['period'])}>
                           Purchase
                         </Button>
                       ) : (
@@ -979,25 +981,25 @@ export default function NFT({ params }) {
                             let estimatedGas
                             let useUserBalance = false
                             estimatedGas = await tokenContract.estimateGas
-                              .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
+                              .approve(stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
                               .catch(error => {
                                 console.error('Error setting max token approval ', error)
                               })
                             if (!estimatedGas) {
                               // general fallback for tokens who restrict approval amounts
-                              estimatedGas = await tokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, userTokenBalance)
+                              estimatedGas = await tokenContract.estimateGas.approve(stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, userTokenBalance)
                               useUserBalance = true
                             }
                             tokenContract
-                              .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
+                              .approve(stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? userTokenBalance : ethers.constants.MaxUint256, {
                                 gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
                               })
                               .then(response => {
-                                addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
+                                addTransaction(response, { approval: stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
                               })
                               .catch(error => {
                                 if (error?.code !== 4001) {
-                                  console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+                                  console.error(`Could not approve ${stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
                                   Sentry.captureException(error)
                                 } else {
                                   console.log('Could not approve tokens because the txn was cancelled')
@@ -1015,25 +1017,25 @@ export default function NFT({ params }) {
                           let useUserBalance = false
                           //TODO - replace tokenContract with tokenTokenContract
                           estimatedGas = await stakingTokenContract.estimateGas
-                            .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, ethers.constants.MaxUint256)
+                            .approve(ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS, ethers.constants.MaxUint256)
                             .catch(error => {
                               console.error('Error setting max token approval ', error)
                             })
                           if (!estimatedGas) {
                             // general fallback for tokens who restrict approval amounts
-                            estimatedGas = await stakingTokenContract.estimateGas.approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, stakingTokenBalance)
+                            estimatedGas = await stakingTokenContract.estimateGas.approve(ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS, stakingTokenBalance)
                             useUserBalance = true
                           }
                           stakingTokenContract
-                            .approve(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, useUserBalance ? stakingTokenBalance : ethers.constants.MaxUint256, {
+                            .approve(ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS, useUserBalance ? stakingTokenBalance : ethers.constants.MaxUint256, {
                               gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
                             })
                             .then(response => {
-                              addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
+                              addTransaction(response, { approval: ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS })
                             })
                             .catch(error => {
                               if (error?.code !== 4001) {
-                                console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+                                console.error(`Could not approve ${ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS} due to error: `, error)
                                 Sentry.captureException(error)
                               } else {
                                 console.log('Could not approve tokens because the txn was cancelled')
