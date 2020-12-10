@@ -21,6 +21,7 @@ import { useAddressAllowance } from '../../contexts/Allowances'
 import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '../../utils/api-signer'
 //import Button from '@material-ui/core/Button'
 import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
+import STAKING_ABI from '../../constants/abis/asset_introducer_staking_router'
 
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
@@ -477,23 +478,23 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
     .then(response => response.json())
     .then(response => response['data'])
     .then(countries => {
-      let constructedCountryData = [];
+      let constructedCountryData = []
 
       for (let country in countries) {
         if (countries[country]['introducer_type']) {
 
-          const country_name = countries[country]['country_name'];
-          const available_affiliates = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['token_ids'].length : 0;
-          const available_principals = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['token_ids'].length : 0;
-          const total_available = (available_affiliates || 0) + (available_principals || 0);
-          const price_affiliate_usd = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_usd'] : null;
-          const price_affiliate_dmg = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_dmg'] : null;
-          const price_principal_usd = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_usd'] : null;
-          const price_principal_dmg = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_dmg'] : null;
-          const affiliate_token_id = countries[country]['introducer_type']['AFFILIATE'] && countries[country]['introducer_type']['AFFILIATE']['token_ids'][0];
-          const principal_token_id = countries[country]['introducer_type']['PRINCIPAL'] && countries[country]['introducer_type']['PRINCIPAL']['token_ids'][0];
-          const affiliate_staking_data = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['staking_prices'] : {};
-          const principal_staking_data = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['staking_prices'] : {};
+          const country_name = countries[country]['country_name']
+          const available_affiliates = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['token_ids'].length : 0
+          const available_principals = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['token_ids'].length : 0
+          const total_available = (available_affiliates || 0) + (available_principals || 0)
+          const price_affiliate_usd = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_usd'] : null
+          const price_affiliate_dmg = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_dmg'] : null
+          const price_principal_usd = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_usd'] : null
+          const price_principal_dmg = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_dmg'] : null
+          const affiliate_token_id = countries[country]['introducer_type']['AFFILIATE'] && countries[country]['introducer_type']['AFFILIATE']['token_ids'][0]
+          const principal_token_id = countries[country]['introducer_type']['PRINCIPAL'] && countries[country]['introducer_type']['PRINCIPAL']['token_ids'][0]
+          const affiliate_staking_data = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['staking_prices'] : {}
+          const principal_staking_data = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['staking_prices'] : {}
 
           constructedCountryData.push({
             country: country_name,
@@ -507,124 +508,151 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
             affiliateTokenID: affiliate_token_id,
             principalTokenID: principal_token_id,
             stakingDataAffiliate: affiliate_staking_data,
-            stakingDataPrincipal: principal_staking_data,
+            stakingDataPrincipal: principal_staking_data
           })
         }
       }
 
-      setConstructedCountryData(constructedCountryData);
+      setConstructedCountryData(constructedCountryData)
 
       // --- Staking ---
-      let stakingPeriods = []; // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
+      let stakingPeriods = [] // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
 
       if (constructedCountryData && constructedCountryData[0]) {
-        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
         for (let period in stakingData) {
-          stakingPeriods.push(stakingData[period]['staking_period']);
+          stakingPeriods.push(stakingData[period]['staking_period'])
         }
       }
 
-      setSelectedStakingPeriod(stakingPeriods[0] ? stakingPeriods[0] : '');
+      setSelectedStakingPeriod(stakingPeriods[0] ? stakingPeriods[0] : '')
 
-      let stakingTokens = [];
+      let stakingTokens = []
 
       if (constructedCountryData && constructedCountryData[0]) {
-        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+        const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
         for (let token in stakingData[stakingPeriods[0]['period']]['staking_amounts']) {
-          stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol']);
+          stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol'])
         }
       }
 
-      setSelectedStakingToken(stakingTokens[0] || '');
+      setSelectedStakingToken(stakingTokens[0] || '')
 
-      let mapData = [['Country', 'Available NFTs']];
+      let mapData = [['Country', 'Available NFTs']]
 
       if (constructedCountryData) {
         for (let country in constructedCountryData) {
-          mapData.push([constructedCountryData[country].country, constructedCountryData[country].totalAvailable]);
+          mapData.push([constructedCountryData[country].country, constructedCountryData[country].totalAvailable])
         }
       }
 
-      setConstructedMapData(mapData);
+      setConstructedMapData(mapData)
 
     })
-};
+}
 
-const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF';
-const ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS = '0x2bd086E46af30eDb0039b6b0B528F8218151c898';
+const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF'
+const ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS = '0x2bd086E46af30eDb0039b6b0B528F8218151c898'
 
 export default function NFT({ params }) {
   const { t } = useTranslation()
-  const oneWei = ethers.BigNumber.from('1000000000000000000');
+  const oneWei = ethers.BigNumber.from('1000000000000000000')
 
-  const { library, account, chainId } = useWeb3React();
+  const { library, account, chainId } = useWeb3React()
 
   //const [isDisplayConfirmWithdraw, setIsDisplayConfirmWithdraw] = useState(false)
-  const [selectedType, setSelectedType] = useState('Affiliate');
-  const [dropdownExpanded, setDropdownExpanded] = useState(false);
-  const [selectedCountry, setSelectedCountry] = useState(null);
-  const [constructedCountryData, setConstructedCountryData] = useState(null);
-  const [constructedMapData, setConstructedMapData] = useState(null);
-  const [stakingSelected,setStakingSelected] = useState(false);
-  const [mTokenDropdownExpanded, setmTokenDropdownExpanded] = useState(false);
-  const [periodDropdownExpanded, setPeriodDropdownExpanded] = useState(false);
+  const [selectedType, setSelectedType] = useState('Affiliate')
+  const [dropdownExpanded, setDropdownExpanded] = useState(false)
+  const [selectedCountry, setSelectedCountry] = useState(null)
+  const [constructedCountryData, setConstructedCountryData] = useState(null)
+  const [constructedMapData, setConstructedMapData] = useState(null)
+  const [stakingSelected, setStakingSelected] = useState(false)
+  const [mTokenDropdownExpanded, setmTokenDropdownExpanded] = useState(false)
+  const [periodDropdownExpanded, setPeriodDropdownExpanded] = useState(false)
 
-  const tokenContract = useTokenContract(DMG_ADDRESS);
+  const tokenContract = useTokenContract(DMG_ADDRESS)
 
-  const allowance = useAddressAllowance(account, DMG_ADDRESS, stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS);
-  const dmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'));
+  const allowance = useAddressAllowance(account, DMG_ADDRESS, stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS)
+  const dmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
 
   // Make sure the wallet has sufficient balance
-  const userTokenBalance = useAddressBalance(account, DMG_ADDRESS);
+  const userTokenBalance = useAddressBalance(account, DMG_ADDRESS)
 
-  const addTransaction = useTransactionAdder();
+  const addTransaction = useTransactionAdder()
 
-  const [selectedStakingToken, setSelectedStakingToken] = useState('');
-  const [selectedStakingPeriod, setSelectedStakingPeriod] = useState({});
+  const [selectedStakingToken, setSelectedStakingToken] = useState('')
+  const [selectedStakingPeriod, setSelectedStakingPeriod] = useState({})
 
-  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod);
+  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod)
 
-  let stakingPeriods = []; // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
+  let stakingPeriods = [] // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
 
   if (constructedCountryData && constructedCountryData[0]) {
-    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
     for (let period in stakingData) {
-      stakingPeriods.push(stakingData[period]['staking_period']);
+      stakingPeriods.push(stakingData[period]['staking_period'])
     }
   }
 
-  let stakingTokens = [];
+  let stakingTokens = []
 
   if (constructedCountryData && constructedCountryData[0]) {
-    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal;
+    const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
     for (let token in stakingData[stakingPeriods[0]['period']]['staking_amounts']) {
-      stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol']);
+      stakingTokens.push(stakingData[stakingPeriods[0]['period']]['staking_amounts'][token]['m_token']['symbol'])
     }
   }
 
-  const lockupAmount = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei']);
-  const stakingPurchaseSize = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['price_dmg'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['price_dmg']);
-  const stakingTokenAddress = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address']);
-  const stakingTokenDecimals = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals']);
+  const lockupAmount = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token_amount_wei'])
+  const stakingPurchaseSize = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['price_dmg'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['price_dmg'])
+  const stakingTokenAddress = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_address'])
+  const stakingTokenDecimals = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'])
 
-  const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS);
-  const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'));
-  const stakingTokenContract = useTokenContract(stakingTokenAddress);
-  const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress);
-  const stakingDmmTokenId = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id']);
+  const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS)
+  const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'))
+  const stakingTokenContract = useTokenContract(stakingTokenAddress)
+  const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress)
+  const stakingDmmTokenId = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'])
 
-  const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI);
+  const buyerRouter = useContract(ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS, BUYER_ABI)
+  const stakingRouter = useContract(ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS, STAKING_ABI)
 
   const purchaseNft = async (tokenId, dmmTokenId, stakingDuration) => {
     let estimatedGas
-    estimatedGas = await buyerRouter.estimateGas
-      .buyAssetIntroducerSlot(tokenId)
-      .catch(error => {
-        console.error('Error estimating gas cost for buying asset introducer slot ', error)
-        return ethers.BigNumber.from('1000000')
-      })
-    buyerRouter
-      .buyAssetIntroducerSlot(tokenId, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
+    let stakingDurationInt
+    if (stakingSelected) {
+      if (stakingDuration === 'TWELVE_MONTHS') {
+        stakingDurationInt = 0
+      } else if (stakingDuration === 'EIGHTEEN_MONTHS') {
+        stakingDurationInt = 1
+      } else {
+        console.error('invalid staking duration, found ', stakingDuration)
+        return
+      }
+
+      estimatedGas = await stakingRouter.estimateGas
+        .buyAssetIntroducerSlot(tokenId, dmmTokenId, stakingDurationInt)
+        .catch(error => {
+          console.error('Error estimating gas cost for buying asset introducer slot ', error)
+          return ethers.BigNumber.from('1000000')
+        })
+    } else {
+      estimatedGas = await buyerRouter.estimateGas
+        .buyAssetIntroducerSlot(tokenId)
+        .catch(error => {
+          console.error('Error estimating gas cost for buying asset introducer slot ', error)
+          return ethers.BigNumber.from('1000000')
+        })
+    }
+
+    let web3Call
+    if(stakingSelected) {
+      web3Call = stakingRouter.buyAssetIntroducerSlot(tokenId, dmmTokenId, stakingDurationInt, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
+    } else {
+      web3Call = buyerRouter.buyAssetIntroducerSlot(tokenId, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
+    }
+
+    web3Call
       .then(response => {
         addTransaction(response, { approval: ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS })
 
@@ -632,7 +660,7 @@ export default function NFT({ params }) {
           wallet_address: account,
           company_name: 'DMMF',
           company_description: null,
-          company_website_url: null,
+          company_website_url: null
         }
         const options = {
           method: 'POST',
@@ -642,19 +670,19 @@ export default function NFT({ params }) {
         fetch('https://api.defimoneymarket.com/v1/asset-introducers/purchase', options)
           .then(response => response.json())
           .then(response => {
-            console.log('Found response ', response);
+            console.log('Found response ', response)
           })
           .catch(error => {
-            console.error('Could not submit due to error ', error);
-          });
+            console.error('Could not submit data due to error ', error)
+          })
 
       })
       .catch(error => {
         if (error?.code !== 4001) {
-          console.error(`Could not approve ${ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
+          console.error(`Could not purchase NFT ${stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS} due to error: `, error)
           Sentry.captureException(error)
         } else {
-          console.log('Could not approve tokens because the txn was cancelled')
+          console.log('Could not purchase NFT because the txn was cancelled')
         }
       })
   }
@@ -668,7 +696,7 @@ export default function NFT({ params }) {
         <PageTitle>
           Become an Asset Introducer
         </PageTitle>
-        <Underline/>
+        <Underline />
       </TitleSection>
       <SelectCountrySection>
         <CountrySelect>
@@ -703,7 +731,7 @@ export default function NFT({ params }) {
             )}
           </CountryDropdown>
           <CountryInformation>
-            { selectedCountry && <div>
+            {selectedCountry && <div>
               <InformationItem>
                 <InformationTitle>
                   Country:
@@ -720,15 +748,15 @@ export default function NFT({ params }) {
                   {selectedCountry.availableAffiliates || 0} NFT{selectedCountry && selectedCountry.availableAffiliates !== 1 ? 's' : ''}
                 </InformationData>
               </InformationItem>
-              { selectedCountry.availableAffiliates > 0 &&
-                <InformationItem>
-                  <InformationTitle>
-                    Affiliate NFT Price:
-                  </InformationTitle>
-                  <InformationData>
-                    {amountFormatter(ethers.BigNumber.from(selectedCountry.priceAffiliateDMG), 18, 2, true, true)} DMG
-                  </InformationData>
-                </InformationItem>
+              {selectedCountry.availableAffiliates > 0 &&
+              <InformationItem>
+                <InformationTitle>
+                  Affiliate NFT Price:
+                </InformationTitle>
+                <InformationData>
+                  {amountFormatter(ethers.BigNumber.from(selectedCountry.priceAffiliateDMG), 18, 2, true, true)} DMG
+                </InformationData>
+              </InformationItem>
               }
               <InformationItem>
                 <InformationTitle>
@@ -738,15 +766,15 @@ export default function NFT({ params }) {
                   {selectedCountry.availablePrincipals || 0} NFT{selectedCountry && selectedCountry.availablePrincipals !== 1 ? 's' : ''}
                 </InformationData>
               </InformationItem>
-              { selectedCountry.availablePrincipals > 0 &&
-                <InformationItem>
-                  <InformationTitle>
-                    Principal NFT Price:
-                  </InformationTitle>
-                  <InformationData>
-                    {amountFormatter(ethers.BigNumber.from(selectedCountry.pricePrincipalDMG), 18, 2, true, true)} DMG
-                  </InformationData>
-                </InformationItem>
+              {selectedCountry.availablePrincipals > 0 &&
+              <InformationItem>
+                <InformationTitle>
+                  Principal NFT Price:
+                </InformationTitle>
+                <InformationData>
+                  {amountFormatter(ethers.BigNumber.from(selectedCountry.pricePrincipalDMG), 18, 2, true, true)} DMG
+                </InformationData>
+              </InformationItem>
               }
             </div>}
           </CountryInformation>
@@ -904,11 +932,11 @@ export default function NFT({ params }) {
                 )}
                 {stakingTokens.map(token =>
                   token !== selectedStakingToken &&
-                    <CountryDropdownRow
-                      onClick={() => setSelectedStakingToken(token)}
-                    >
-                      {token}
-                    </CountryDropdownRow>
+                  <CountryDropdownRow
+                    onClick={() => setSelectedStakingToken(token)}
+                  >
+                    {token}
+                  </CountryDropdownRow>
                 )}
               </CountryDropdown>
             </StakingSelectSection>
@@ -1054,15 +1082,15 @@ export default function NFT({ params }) {
                     </Button>
                   )
                 ) : (
-                <Button
-                  disabled
-                >
-                  Insufficient {selectedStakingToken}
-                </Button>
-              )
+                  <Button
+                    disabled
+                  >
+                    Insufficient {selectedStakingToken}
+                  </Button>
+                )
               ) : (
                 <ConnectWalletButton>
-                  <Web3Status/>
+                  <Web3Status />
                 </ConnectWalletButton>
               )
             }

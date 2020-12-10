@@ -19,6 +19,7 @@ import { ethers } from 'ethers'
 import Web3 from 'web3'
 import { BigNumber } from 'ethers-utils'
 import * as Sentry from '@sentry/browser'
+import DMG_ABI from '../../constants/abis/dmg'
 
 const Main = styled.div`
   width: 60vw;
@@ -644,19 +645,19 @@ export default function ProfilePage() {
               </DMGTitle>
               <Value active={true}>
                 { isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) :  'N/A'}
-                  <DelegateButton active={delegating} onClick={() => setDelegateView(true)}>
-                    { edit ? 
-                      (
-                        isActivating ?
-                        <dt>Delegate to Self</dt>:
-                        <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>
-                      ):
-                      <div>
-                        <dt>Delegate to</dt>
-                        <dt>{(name || shorten(address))}</dt>
-                      </div>
-                    }
-                  </DelegateButton>
+                  {/*<DelegateButton active={delegating} onClick={() => setDelegateView(true)}>*/}
+                  {/*  { edit ? */}
+                  {/*    (*/}
+                  {/*      isActivating ?*/}
+                  {/*      <dt>Delegate to Self</dt>:*/}
+                  {/*      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>*/}
+                  {/*    ):*/}
+                  {/*    <div>*/}
+                  {/*      <dt>Delegate to</dt>*/}
+                  {/*      <dt>{(name || shorten(address))}</dt>*/}
+                  {/*    </div>*/}
+                  {/*  }*/}
+                  {/*</DelegateButton>*/}
               </Value>
             </Balance>
           ))}
@@ -676,7 +677,7 @@ export default function ProfilePage() {
             {transactions.slice(0,transactionsAmount).map(({vote_delta, block_number, transaction_hash}) => (
               <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                 <TransactionField long>
-                  {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                  {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
                 </TransactionField>
                 <TransactionField>{block_number}</TransactionField>
               </Transaction>
