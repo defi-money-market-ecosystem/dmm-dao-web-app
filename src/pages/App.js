@@ -116,7 +116,7 @@ class App extends React.Component {
                             }
                           }}
                         />
-                        <Route exact strict path="/burn" component={() => <Send params={params} />} />
+                        <Route exact strict path="/farm" component={() => <Farm params={params} />} />
                         <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
                         <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
