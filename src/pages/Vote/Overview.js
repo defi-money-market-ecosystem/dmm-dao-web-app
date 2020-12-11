@@ -319,7 +319,7 @@ async function getAccountInfo(walletAddress) {
   }
 }
 
-export default function Vote() {
+export default function Overview() {
   const [proposals, setProposals] = useState([])
   const [accountInfo, setAccountInfo] = useState({})
   const [loading, setLoading] = useState(true)
