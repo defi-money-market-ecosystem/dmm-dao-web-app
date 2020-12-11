@@ -102,7 +102,6 @@ const GovernanceProposals = styled.div`
 
 const GovernanceInner = styled.div`
   background-color: #FFFFFF;
-  margin-bottom: 80px;
   box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
   border-radius: 5px;
 `
@@ -187,7 +186,7 @@ const AssetIntroducer = styled.a`
 const Pages = styled.div`
   text-align: center;
   font-weight: 400;
-  margin: 10px;
+  padding: 10px;
 `
 
 const Page = styled.div`

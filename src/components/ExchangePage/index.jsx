@@ -59,7 +59,6 @@ const GAS_MARGIN = ethers.BigNumber.from(1000)
 const Wrapper = styled.div`
   width: 100%;
   margin-top: 32px;
-  min-height: calc(100vh - 226px);
   width: 540px;
   max-width: 90vw;
 `

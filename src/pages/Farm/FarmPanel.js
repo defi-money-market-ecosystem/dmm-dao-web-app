@@ -252,7 +252,7 @@ const CurrencySwitcher = styled.span`
 const Flex = styled.div`
   display: flex;
   justify-content: center;
-  padding: 5px 2rem 2rem 2rem;
+  padding: 5px 2rem 0 2rem;
 
   button {
     max-width: 20rem;
