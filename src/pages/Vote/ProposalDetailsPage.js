@@ -26,13 +26,11 @@ const Main = styled.div`
   }
 
   @media (max-width: 100000px) {
-    height: calc(100vh - 204px)
   }
   
   @media (max-width: 1000px) {
     top: 140px;
     width: 80vw;
-    height: calc(100vh - 200px);
   }
 
   @media (max-width: 800px) {

@@ -25,6 +25,7 @@ const AppWrapper = styled.div`
   /*max-height: 100vh;
   height: 100%;*/
   background: linear-gradient(360deg, #327ccb, #4f94de 5%, #8bbbef 15%, #bdddff 25%, #deeeff 40%);
+  min-height: 100vh;
 `
 
 const HeaderWrapper = styled.div`
@@ -55,7 +56,7 @@ const BodyWrapper = styled.div`
   overflow-y: visible;
   overflow-x: hidden;
   padding-bottom: 0;
-  padding-top: 72px; 
+  padding-top: 25px; 
 `
 
 const Body = styled.div`
@@ -64,8 +65,6 @@ const Body = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
-
-  margin-top: 16px;
 `
 
 class App extends React.Component {

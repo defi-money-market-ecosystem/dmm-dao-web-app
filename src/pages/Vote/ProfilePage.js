@@ -31,13 +31,11 @@ const Main = styled.div`
   }
 
   @media (max-width: 100000px) {
-    height: calc(100vh - 204px)
   }
   
   @media (max-width: 1000px) {
     top: 140px;
     width: 80vw;
-    height: calc(100vh - 200px);
   }
 
   @media (max-width: 800px) {
@@ -137,6 +135,8 @@ const Popup = styled.div`
   font-weight: 600;
   color: black;
   max-width: calc(80vw - 30px);
+  max-height: 70vh;
+  overflow-y: scroll;
   
   @media (max-width: 700px) {
     box-shadow: 1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5);
@@ -342,7 +342,7 @@ const Exit = styled.div`
 const Rank = styled.div`
   float: right;
   display: inline;
-  height: 70px;
+  height: fit-content;
   width: 50px;
   padding: 10px;
   border-radius: 5px;
@@ -352,7 +352,6 @@ const Rank = styled.div`
   text-align: center;
   background-color: #327ccb;
   color: abb9c1;
-  margin-top: -15px;
   margin-right: 10px;
 `
 
@@ -360,7 +359,7 @@ const RankNum = styled.div`
   font-size: 20px;
   font-weight: 700;
   color: white;
-  margin-top: 15px;
+  margin-top: 5px;
 `
 
 const DelegateButton = styled.div`
@@ -683,17 +682,19 @@ export default function ProfilePage() {
               </Value>
             </Balance>
           ))}
-          { nfts && nfts.length > 0 &&
+          { /*nfts*/true /*&& nfts.length > 0*/ &&
             <Balance key={`balance-NFT`}>
               <DMGTitle active={false}>
                 NFTs
               </DMGTitle>
               {nfts.map(nft =>
                 <NFTSection>
-                  {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
+                  {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
                 </NFTSection>
               )}
-
+              <NFTSection>
+                {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
+              </NFTSection>
             </Balance>
           }
         </Card>

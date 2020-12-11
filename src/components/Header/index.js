@@ -28,13 +28,6 @@ class Header extends React.Component {
             </div>
           </div>
           <div className={'buttonsWrapper'}>
-            <div className={'tokenInfoButton'}>
-              {!this.props.hideInfo && (
-                <Button className={'loadWallet'} onClick={() => this.props.onDisplayInfo()}>
-                  Token Sale Info
-                </Button>
-              )}
-            </div>
             <div className={'purchaseCryptoButton'}>
               {!this.props.hideBuy && (
                 <Button className={'loadWallet'} onClick={() => this.setState({ fiatAdapterOpen: true })}>
@@ -48,7 +41,7 @@ class Header extends React.Component {
           </div>
         </div>
         <FiatAdapter
-          open={this.state.fiatAdapterOpen}
+          open={this.state.fiatAdapterOpen}background
           onClose={() => this.setState({ fiatAdapterOpen: false })}
           allowedCryptos={['DAI', 'USDC']}
         />

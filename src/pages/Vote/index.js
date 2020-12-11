@@ -19,7 +19,6 @@ import { AccountDetails } from '../../models/AccountDetails'
 import { primaryColor } from '../../theme/index'
 
 const Main = styled.div`
-  height: calc(100vh - 204px);
   width: 80vw;
   /*position: absolute;*/
   top: 156px;
@@ -39,7 +38,6 @@ const Main = styled.div`
 
   @media (max-width: 1000px) {
     top: 140px;
-    height: calc(100vh - 190px);
   }
 
   @media (max-width: 800px) {
@@ -99,7 +97,6 @@ const GovernanceProposals = styled.div`
 
   @media (max-width: 900px) {
     width: calc(100% - 20px);
-    margin-bottom: 100px;
   }
 `
 
@@ -120,6 +117,13 @@ const Title = styled.div`
   @media (max-width: 800px) {
     font-size: 23px;
   }
+`
+
+const ProfileLink = styled.div`
+  width: 100%;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 400;
 `
 
 const Proposals = styled.div`
@@ -475,6 +479,9 @@ export default function Vote() {
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
             </Balance>
           ))}
+          {/*<ProfileLink>
+            See your profile
+          </ProfileLink>*/}
           <Balance>
             <AssetIntroducer onClick={() => history.push('/asset-introducers/purchase')}>
               Become an Asset Introducer

@@ -85,7 +85,6 @@ const FarmingWrapper = styled.div`
   /*width: calc(150% + 25px);*/
   width: 835px;
   max-width: 90vw;
-  min-height: calc(100vh - 204px);
   display: flex;
   justify-content: space-between;
   
@@ -93,7 +92,6 @@ const FarmingWrapper = styled.div`
     flex-direction: column;
     width: 100%;
     overflow-y: scroll;
-    height: calc(100vh - 194px);
   }
 `
 
