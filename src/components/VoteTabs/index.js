@@ -43,7 +43,7 @@ const StyledNavLink = styled(NavLink).attrs({
   color: ${({ theme }) => theme.black};
   font-size: 1rem;
   box-sizing: border-box;
-  font-weight: 700;
+  font-weight: 300;
   margin: 8px 20px;
   font-size: 16px;
 
@@ -57,8 +57,8 @@ const StyledNavLink = styled(NavLink).attrs({
   `}
 
   &.${activeClassName} {
-    color: ${({ theme }) => theme.primary};
-    border-bottom: 2px solid ${({ theme }) => theme.primary};
+    color: #327ccb;
+    border-bottom: 1px solid #327ccb;
     :focus
     
   }

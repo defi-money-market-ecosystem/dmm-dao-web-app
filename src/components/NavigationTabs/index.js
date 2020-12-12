@@ -10,7 +10,7 @@ const tabOrder = [
   {
     path: '/governance/proposals',
     textKey: 'Vote',
-    regex: /\/governance\/proposals/,
+    regex: /\/governance\//,
   },
   {
     path: '/earn',

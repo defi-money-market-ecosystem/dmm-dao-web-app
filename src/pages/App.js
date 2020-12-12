@@ -13,6 +13,7 @@ import Vote from './Vote'
 import ProposalDetailsPage from './Vote/ProposalDetailsPage'
 import ProfilePage from './Vote/ProfilePage'
 import Overview from './Vote/Overview'
+import Leaderboard from './Vote/Leaderboard'
 import { isAddress } from '../utils/index'
 import Farm from './Farm/index'
 import NFT from './NFT/index'
@@ -120,6 +121,7 @@ class App extends React.Component {
                         <Route exact strict path="/burn" component={() => <Send params={params} />} />
                         <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
                         <Route exact strict path="/governance/overview" component={() => <Overview/>}/>
+                        <Route exact strict path="/governance/leaderboard" component={() => <Leaderboard/>}/>
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
                         <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
                         <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params}/>}/>
