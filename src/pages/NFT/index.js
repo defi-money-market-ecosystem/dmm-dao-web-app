@@ -472,7 +472,7 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
       let constructedCountryData = []
 
       for (let country in countries) {
-        const introducers = countries[country]['introducer_type'];
+        const introducers = countries[country]['introducer_type']
         if (introducers) {
           const affiliate = 'AFFILIATE'
           const principal = 'PRINCIPAL'
@@ -579,14 +579,14 @@ export default function NFT({ params }) {
 
   useInterval(() => {
     getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod)
-  }, 15000, true)
+  }, 5000, true)
 
   let stakingPeriods = [] // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
 
   if (constructedCountryData && constructedCountryData[0]) {
     const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
     for (let period in stakingData) {
-      if(stakingData.hasOwnProperty(period)) {
+      if (stakingData.hasOwnProperty(period)) {
         stakingPeriods.push(stakingData[period]['staking_period'])
       }
     }
@@ -644,7 +644,7 @@ export default function NFT({ params }) {
     }
 
     let web3Call
-    if(stakingSelected) {
+    if (stakingSelected) {
       web3Call = stakingRouter.buyAssetIntroducerSlot(tokenId, dmmTokenId, stakingDurationInt, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
     } else {
       web3Call = buyerRouter.buyAssetIntroducerSlot(tokenId, { gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN) })
@@ -978,7 +978,8 @@ export default function NFT({ params }) {
               Lockup Size:
             </LockupInfoFieldTitle>
             <LockupInfoFieldValue>
-              {/*amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true) TODO*/}100,000 mUSDC{/*selectedStakingToken*/}
+              {/*amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true) TODO*/}100,000
+              mUSDC{/*selectedStakingToken*/}
             </LockupInfoFieldValue>
           </LockupInfoField>
           }
@@ -987,7 +988,8 @@ export default function NFT({ params }) {
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {/*amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) TODO */}175,009 DMG
+              {/*amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) TODO */}175,009
+              DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
