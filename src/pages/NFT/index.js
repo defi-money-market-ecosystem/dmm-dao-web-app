@@ -11,7 +11,7 @@ import { Button } from '../../theme'
 import styled from 'styled-components'
 import { useTranslation } from 'react-i18next'
 import Chart from 'react-google-charts'
-import { calculateGasMargin, getProviderOrSigner } from '../../utils'
+import { calculateGasMargin, DMM_API_URL, getProviderOrSigner } from '../../utils'
 import { safeAccess, isAddress, getTokenAllowance, amountFormatter } from '../../utils'
 import { useAddressBalance } from '../../contexts/Balances'
 import * as Sentry from '@sentry/browser/dist/index'
@@ -464,37 +464,31 @@ const PurchaseButton = styled.div`
   width: 240px;
 `
 
-const ConnectWalletButton = styled.div`
-  button {
-    color: white;
-    width: fit-content;
-    padding: 10px 25px;
-    background: #327ccb;
-  }
-`
-
 const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod) => {
-  fetch(`https://api.defimoneymarket.com/v1/asset-introducers/primary-market`)
+  fetch(`${DMM_API_URL}/v1/asset-introducers/primary-market`)
     .then(response => response.json())
     .then(response => response['data'])
     .then(countries => {
       let constructedCountryData = []
 
       for (let country in countries) {
-        if (countries[country]['introducer_type']) {
+        const introducers = countries[country]['introducer_type'];
+        if (introducers) {
+          const affiliate = 'AFFILIATE'
+          const principal = 'PRINCIPAL'
 
           const country_name = countries[country]['country_name']
-          const available_affiliates = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['token_ids'].length : 0
-          const available_principals = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['token_ids'].length : 0
+          const available_affiliates = introducers[affiliate] ? introducers[affiliate]['token_ids'].length : 0
+          const available_principals = introducers[principal] ? introducers[principal]['token_ids'].length : 0
           const total_available = (available_affiliates || 0) + (available_principals || 0)
-          const price_affiliate_usd = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_usd'] : null
-          const price_affiliate_dmg = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['price_dmg'] : null
-          const price_principal_usd = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_usd'] : null
-          const price_principal_dmg = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['price_dmg'] : null
-          const affiliate_token_id = countries[country]['introducer_type']['AFFILIATE'] && countries[country]['introducer_type']['AFFILIATE']['token_ids'][0]
-          const principal_token_id = countries[country]['introducer_type']['PRINCIPAL'] && countries[country]['introducer_type']['PRINCIPAL']['token_ids'][0]
-          const affiliate_staking_data = countries[country]['introducer_type']['AFFILIATE'] ? countries[country]['introducer_type']['AFFILIATE']['staking_prices'] : {}
-          const principal_staking_data = countries[country]['introducer_type']['PRINCIPAL'] ? countries[country]['introducer_type']['PRINCIPAL']['staking_prices'] : {}
+          const price_affiliate_usd = introducers[affiliate] ? introducers[affiliate]['price_usd'] : null
+          const price_affiliate_dmg = introducers[affiliate] ? introducers[affiliate]['price_dmg'] : null
+          const price_principal_usd = introducers[principal] ? introducers[principal]['price_usd'] : null
+          const price_principal_dmg = introducers[principal] ? introducers[principal]['price_dmg'] : null
+          const affiliate_token_id = introducers[affiliate] && introducers[affiliate]['token_ids'][0]
+          const principal_token_id = introducers[principal] && introducers[principal]['token_ids'][0]
+          const affiliate_staking_data = introducers[affiliate] ? introducers[affiliate]['staking_prices'] : {}
+          const principal_staking_data = introducers[principal] ? introducers[principal]['staking_prices'] : {}
 
           constructedCountryData.push({
             country: country_name,
@@ -583,14 +577,18 @@ export default function NFT({ params }) {
   const [selectedStakingToken, setSelectedStakingToken] = useState('')
   const [selectedStakingPeriod, setSelectedStakingPeriod] = useState({})
 
-  if (!constructedCountryData) getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod)
+  useInterval(() => {
+    getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod)
+  }, 15000, true)
 
   let stakingPeriods = [] // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
 
   if (constructedCountryData && constructedCountryData[0]) {
     const stakingData = constructedCountryData[0].availableAffiliates > 0 ? constructedCountryData[0].stakingDataAffiliate : constructedCountryData[0].stakingDataPrincipal
     for (let period in stakingData) {
-      stakingPeriods.push(stakingData[period]['staking_period'])
+      if(stakingData.hasOwnProperty(period)) {
+        stakingPeriods.push(stakingData[period]['staking_period'])
+      }
     }
   }
 
@@ -667,7 +665,7 @@ export default function NFT({ params }) {
           headers: getDefaultApiKeyHeaders(),
           body: JSON.stringify(body)
         }
-        fetch('https://api.defimoneymarket.com/v1/asset-introducers/purchase', options)
+        fetch(`${DMM_API_URL}/v1/asset-introducers/purchase`, options)
           .then(response => response.json())
           .then(response => {
             console.log('Found response ', response)

@@ -16,7 +16,7 @@ import { YIELD_FARMING_PROXY_ADDRESS } from '../contexts/YieldFarming'
 export const MIN_DECIMALS = 6
 export const MIN_DECIMALS_EXCHANGE_RATE = 8
 
-export const DMM_API_URL = 'https://api.defimoneymarket.com'
+export const DMM_API_URL = process.env.REACT_APP_API_BASE_URL
 
 export const ERROR_CODES = ['TOKEN_NAME', 'TOKEN_SYMBOL', 'TOKEN_DECIMALS'].reduce(
   (accumulator, currentValue, currentIndex) => {

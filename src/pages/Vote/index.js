@@ -449,7 +449,6 @@ export default function Vote() {
         )
     )
   }
-  console.log(balances)
   return (
     <Main>
       <Votes>

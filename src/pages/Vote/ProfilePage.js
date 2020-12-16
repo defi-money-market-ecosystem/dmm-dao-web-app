@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 import styled from 'styled-components'
 import { Link, Redirect, useParams, useHistory } from 'react-router-dom'
 import { useDmgContract, useWeb3React } from '../../hooks'
-import { amountFormatter, isAddress, calculateGasMargin } from '../../utils'
+import { amountFormatter, isAddress, calculateGasMargin, DMM_API_URL } from '../../utils'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
 import { useAddressBalance } from '../../contexts/Balances'
@@ -67,7 +67,7 @@ const pfp = {
 
 const defaultPfp = {
   color: '#327ccb',
-  fontSize: '60px',
+  fontSize: '60px'
 }
 
 const Name = styled.div`
@@ -389,17 +389,15 @@ function isValidWalletAddress(walletAddress) {
   return isAddress(walletAddress)
 }
 
-const baseUrl = 'https://api.defimoneymarket.com'
-
 async function getProposals(walletAddress) {
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+  return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
     .then(response => response.json())
     .then(response => response.data ? response.data.vote_history.map(proposal => new ProposalSummary(proposal)) : [])
     .then(proposals => {
       if (walletAddress) {
         return Promise.all(
           proposals.map(proposal => {
-            return fetch(`${baseUrl}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
+            return fetch(`${DMM_API_URL}/v1/governance/proposals/${proposal.proposalId}/results/addresses/${walletAddress}`)
               .then(response => response.json())
               .then(response => proposal.withAccount(response.data))
           })
@@ -411,13 +409,13 @@ async function getProposals(walletAddress) {
 }
 
 async function getNFTs(walletAddress) {
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)
+  return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)
     .then(response => response.json())
-    .then(response => response.data.asset_introducer_nfts);
+    .then(response => response.data.asset_introducer_nfts)
 }
 
 async function getAccountInfo(walletAddress) {
-  return fetch(`${baseUrl}/v1/governance/accounts/${walletAddress}`)// 0x0F9Dd46B0E1F77ceC0f66C20B9a1F56Cb34A4556
+  return fetch(`${DMM_API_URL}/v1/governance/accounts/${walletAddress}`)// 0x0F9Dd46B0E1F77ceC0f66C20B9a1F56Cb34A4556
     .then(response => response.json())
     .then(response => !!response.data ? response.data : null)
 }
@@ -455,7 +453,7 @@ function display(p, selected, l) {
 }
 
 const capitalizeFirstLetter = string => {
-  return string.charAt(0).toUpperCase() + string.slice(1);
+  return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
 export default function ProfilePage() {
@@ -470,21 +468,21 @@ export default function ProfilePage() {
   const [delgateView, setDelegateView] = useState(false)
   const [isActivating, setIsActivating] = useState(false)
   const [viewMore, changeViewMore] = useState(false)
-  const [nfts, setNfts] = useState([]);
+  const [nfts, setNfts] = useState([])
 
   const { account: walletAddress, library } = useWeb3React()
   const address = useParams().wallet_address
   let history = useHistory()
   const balance = useAddressBalance(address, DMG_ADDRESS)
-  const edit = address === walletAddress   
+  const edit = address === walletAddress
 
   const [showEdit, changeShowEdit] = useState(false)
-  const shorten = (a) => isAddress(a) ? `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}`: a
-  
+  const shorten = (a) => isAddress(a) ? `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}` : a
+
   const delegate = accountInfo?.vote_info?.delegate_address || true
   holdings[0].valueBN = balance
   holdings[1].valueBN = accountInfo ? accountInfo.vote_info?.votes_padded : 'N/A'
-  holdings[2].delegating =  delegate === address ? 'Self' : delegate
+  holdings[2].delegating = delegate === address ? 'Self' : delegate
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
   const mp = page * proposalsPerPage - proposalsPerPage
@@ -498,15 +496,15 @@ export default function ProfilePage() {
 
   const emptyTransaction = {
     vote_delta: '-',
-    block_number: '-',
+    block_number: '-'
   }
 
   const transactionTitles = ['Action', 'Block Number']
   const transactionsAmount = 3
   let transactions = []
   let lt = loadedTransactions.length
-  if(lt < transactionsAmount) {
-    const empty = new Array(transactionsAmount-lt)
+  if (lt < transactionsAmount) {
+    const empty = new Array(transactionsAmount - lt)
     transactions = [...loadedTransactions, ...empty.fill(emptyTransaction)]
   } else transactions = [...loadedTransactions]
 
@@ -527,7 +525,7 @@ export default function ProfilePage() {
           setPicture(accountInfo?.profilePictureUrl)
           setTransactions(accountInfo?.transactions)
           setRank(accountInfo?.rank)
-        } 
+        }
       })
 
       Promise.all([proposalPromise]).then(() => {
@@ -556,8 +554,8 @@ export default function ProfilePage() {
     return () => clearInterval(subscriptionId)
   }, [isPendingDelegateTransaction])
 
-  if (!isValidWalletAddress(address)){
-    return <Redirect to={{ pathname: '/governance/proposals/' }}/>
+  if (!isValidWalletAddress(address)) {
+    return <Redirect to={{ pathname: '/governance/proposals/' }} />
   }
 
   let prevPath = null
@@ -568,7 +566,7 @@ export default function ProfilePage() {
 
   const handleClick = (e) => {
     // if (e) {}
-    setDelegateView(false)  
+    setDelegateView(false)
   }
 
   //fix editing logic
@@ -603,7 +601,7 @@ export default function ProfilePage() {
   }
 
   const openEtherscan = (hash) => {
-    if(!!hash) window.open(`https://etherscan.io/tx/${hash}`)
+    if (!!hash) window.open(`https://etherscan.io/tx/${hash}`)
   }
 
   return (
@@ -614,29 +612,29 @@ export default function ProfilePage() {
       <div>
         <Wrapper>
           <Image>
-            {!!picture ? 
-              <img src={picture} style={pfp} alt={"pfp"}/>:
+            {!!picture ?
+              <img src={picture} style={pfp} alt={'pfp'} /> :
               <span style={defaultPfp} class="material-icons">
                 account_circle
               </span>
-            }   
+            }
           </Image>
           <Info>
-            {name ? 
+            {name ?
               <div>
                 <Name>
                   {name}
                 </Name>
                 <AddressBottom>
                   {address}
-                </AddressBottom> 
-              </div>:
+                </AddressBottom>
+              </div> :
               <OnlyAddress>
                 {window.innerWidth > 725 ? address : shorten(address)}
-              </OnlyAddress> 
+              </OnlyAddress>
             }
           </Info>
-        {/*
+          {/*
           //Editing currently disabled
           <Edit
             onClick={() => changeShowEdit(true)}
@@ -658,67 +656,67 @@ export default function ProfilePage() {
           <Title>
             Holdings
           </Title>
-          <Underline/>
+          <Underline />
           {holdings.map(({ title, valueBN, delegating }, index) => (
             <Balance key={`balance-${title}`}>
               <DMGTitle active={false}>
                 {title}
               </DMGTitle>
               <Value active={true}>
-                { isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) :  'N/A'}
-                  {/*<DelegateButton active={delegating} onClick={() => setDelegateView(true)}>*/}
-                  {/*  { edit ? */}
-                  {/*    (*/}
-                  {/*      isActivating ?*/}
-                  {/*      <dt>Delegate to Self</dt>:*/}
-                  {/*      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>*/}
-                  {/*    ):*/}
-                  {/*    <div>*/}
-                  {/*      <dt>Delegate to</dt>*/}
-                  {/*      <dt>{(name || shorten(address))}</dt>*/}
-                  {/*    </div>*/}
-                  {/*  }*/}
-                  {/*</DelegateButton>*/}
+                {isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) : 'N/A'}
+                {/*<DelegateButton active={delegating} onClick={() => setDelegateView(true)}>*/}
+                {/*  { edit ? */}
+                {/*    (*/}
+                {/*      isActivating ?*/}
+                {/*      <dt>Delegate to Self</dt>:*/}
+                {/*      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>*/}
+                {/*    ):*/}
+                {/*    <div>*/}
+                {/*      <dt>Delegate to</dt>*/}
+                {/*      <dt>{(name || shorten(address))}</dt>*/}
+                {/*    </div>*/}
+                {/*  }*/}
+                {/*</DelegateButton>*/}
               </Value>
             </Balance>
           ))}
           { /*nfts*/true /*&& nfts.length > 0*/ &&
-            <Balance key={`balance-NFT`}>
-              <DMGTitle active={false}>
-                NFTs
-              </DMGTitle>
-              {nfts.map(nft =>
-                <NFTSection>
-                  {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
-                </NFTSection>
-              )}
+          <Balance key={`balance-NFT`}>
+            <DMGTitle active={false}>
+              NFTs
+            </DMGTitle>
+            {nfts.map(nft =>
               <NFTSection>
                 {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
               </NFTSection>
-            </Balance>
+            )}
+            <NFTSection>
+              {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
+            </NFTSection>
+          </Balance>
           }
         </Card>
         <Card width={65}>
           <Title>
             Transactions
           </Title>
-          <Underline/>
+          <Underline />
           <div>
-          <Transactions>
-            <Transaction>
-              {transactionTitles.map((title, i) => (
-                <TransactionField long={!i} >{title}</TransactionField>
-              ))}
-            </Transaction>
-            {transactions.slice(0,transactionsAmount).map(({vote_delta, block_number, transaction_hash}) => (
-              <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
-                <TransactionField long>
-                  {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
-                </TransactionField>
-                <TransactionField>{block_number}</TransactionField>
+            <Transactions>
+              <Transaction>
+                {transactionTitles.map((title, i) => (
+                  <TransactionField long={!i}>{title}</TransactionField>
+                ))}
               </Transaction>
-            ))}
-          </Transactions>
+              {transactions.slice(0, transactionsAmount).map(({ vote_delta, block_number, transaction_hash }) => (
+                <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
+                  <TransactionField long>
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
+                  </TransactionField>
+                  <TransactionField>{block_number}</TransactionField>
+                </Transaction>
+              ))}
+            </Transactions>
           </div>
           {transactions.length > transactionsAmount ? (
             <View onClick={() => changeViewMore(true)}>
@@ -726,21 +724,21 @@ export default function ProfilePage() {
                 {'View More'}
               </ViewText>
             </View>
-          ) : (<span/>)}
+          ) : (<span />)}
         </Card>
         <Card width={100}>
           <Title>
             Voting History
           </Title>
-          <Underline/>
+          <Underline />
           {loading ?
             (<div style={{ textAlign: 'center' }}>
-              <CircularProgress style={{ color: primaryColor }}/>
+              <CircularProgress style={{ color: primaryColor }} />
             </div>)
             :
             (<Proposals>
               {proposalPage.map((proposal) => (
-                <ProposalItem 
+                <ProposalItem
                   key={`proposal-${proposal.proposalId}`}
                   proposal={proposal}
                   isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
@@ -752,7 +750,7 @@ export default function ProfilePage() {
           }
           <Pages>
             <Page onClick={() => checkChange(page - 1)} off={page === 1}>
-              <img src={LeftArrow} alt={'Left Arrow'}/>
+              <img src={LeftArrow} alt={'Left Arrow'} />
             </Page>
             {pages.filter(i => display(i, page, l)).map((p, index) => (
               <Page key={`page-${index}`} onClick={() => changePage(p)} active={page === p}>
@@ -760,7 +758,7 @@ export default function ProfilePage() {
               </Page>
             ))}
             <Page onClick={() => checkChange(page + 1)} off={page === l || loading}>
-              <img src={RightArrow} alt={'Right Arrow'}/>
+              <img src={RightArrow} alt={'Right Arrow'} />
             </Page>
           </Pages>
         </Card>
@@ -771,20 +769,20 @@ export default function ProfilePage() {
             <Transactions small>
               <Transaction small>
                 {transactionTitles.map((title, i) => (
-                  <TransactionField long={!i} >{title}</TransactionField>
+                  <TransactionField long={!i}>{title}</TransactionField>
                 ))}
               </Transaction>
-              {transactions.map(({vote_delta, block_number, transaction_hash}) => (
+              {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === "-" ? 'Lost' : 'Received'} ${vote_delta === "-" ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
               ))}
             </Transactions>
             <Exit onClick={() => changeViewMore(false)}>
-              <img src={Close} alt={'X'}/>
+              <img src={Close} alt={'X'} />
             </Exit>
           </Popup>
         </BackDrop>
@@ -794,7 +792,7 @@ export default function ProfilePage() {
         <BackDrop>
           <Popup>
             <Exit onClick={() => changeShowEdit(false)}>
-              <img src={Close} alt={'X'}/>
+              <img src={Close} alt={'X'} />
             </Exit>
           </Popup>
         </BackDrop>
@@ -805,9 +803,9 @@ export default function ProfilePage() {
           address={address}
           self={edit}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-          onChange={e => handleClick(e)}/>
+          onChange={e => handleClick(e)} />
         : null
-      }    
-      </Main>
+      }
+    </Main>
   )
 }
