@@ -464,7 +464,16 @@ const PurchaseButton = styled.div`
   width: 240px;
 `
 
-const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod) => {
+const ConnectWalletButton = styled.div`
+  button {
+    color: white;
+    width: fit-content;
+    padding: 10px 25px;
+    background: #327ccb;
+  }
+`
+
+const getNFTData = (setConstructedCountryData, setConstructedMapData, selectedStakingToken, setSelectedStakingToken, selectedStakingPeriod, setSelectedStakingPeriod) => {
   fetch(`${DMM_API_URL}/v1/asset-introducers/primary-market`)
     .then(response => response.json())
     .then(response => response['data'])
@@ -519,7 +528,9 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
         }
       }
 
-      setSelectedStakingPeriod(stakingPeriods[0] ? stakingPeriods[0] : '')
+      if (Object.keys(selectedStakingPeriod).length === 0) {
+        setSelectedStakingPeriod(stakingPeriods[0] ? stakingPeriods[0] : '')
+      }
 
       let stakingTokens = []
 
@@ -530,7 +541,9 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
         }
       }
 
-      setSelectedStakingToken(stakingTokens[0] || '')
+      if (!selectedStakingToken) {
+        setSelectedStakingToken(stakingTokens[0] || '')
+      }
 
       let mapData = [['Country', 'Available NFTs']]
 
@@ -578,7 +591,7 @@ export default function NFT({ params }) {
   const [selectedStakingPeriod, setSelectedStakingPeriod] = useState({})
 
   useInterval(() => {
-    getNFTData(setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod)
+    getNFTData(setConstructedCountryData, setConstructedMapData, selectedStakingToken, setSelectedStakingToken, selectedStakingPeriod, setSelectedStakingPeriod)
   }, 5000, true)
 
   let stakingPeriods = [] // {'period', 'duration_months'} -> {'TWELVE_MONTHS', 12}
@@ -987,7 +1000,7 @@ export default function NFT({ params }) {
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) }
+              {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true)}
               DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
