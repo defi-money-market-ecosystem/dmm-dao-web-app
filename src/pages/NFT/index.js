@@ -872,7 +872,7 @@ export default function NFT({ params }) {
           </CompanyWebsite>
         </CompanyFields>
       </CompanyInfoSection>
-      {(true || selectedCountry) && <CompletePurchaseSection>{/* TODO*/}
+      {selectedCountry && <CompletePurchaseSection>
         <CompanyTitle>
           <SectionTitle>
             Complete Purchase
@@ -884,7 +884,7 @@ export default function NFT({ params }) {
               Country:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              Argentina{/*selectedCountry && selectedCountry.country TODO*/}
+              {selectedCountry && selectedCountry.country}
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseInfoField>
@@ -904,7 +904,7 @@ export default function NFT({ params }) {
               Stake mTokens for discounted purchase
             </StakeTitle>
           </StakeCheckboxWrapper>
-          {(true || stakingSelected) /* TODOO */ &&
+          {stakingSelected &&
           <StakingInfoSection>
             <StakingSelectSection>
               <StakingInfoTitle>
@@ -919,9 +919,9 @@ export default function NFT({ params }) {
                 >
                   ▼
                 </CountryDropdownIcon>
-                {true || selectedStakingToken /* TODO */ ? (
+                {selectedStakingToken ? (
                   <CountryDropdownRow>
-                    mUSDC{/*selectedStakingToken TODO*/}
+                    {selectedStakingToken}
                   </CountryDropdownRow>
                 ) : (
                   <CountryDropdownRow>
@@ -951,9 +951,9 @@ export default function NFT({ params }) {
                 >
                   ▼
                 </CountryDropdownIcon>
-                {true || selectedStakingPeriod /* TODO */ ? (
+                {selectedStakingPeriod ? (
                   <CountryDropdownRow>
-                    12{/*selectedStakingPeriod['duration_months'] TODO */} months
+                    {selectedStakingPeriod['duration_months']} months
                   </CountryDropdownRow>
                 ) : (
                   <CountryDropdownRow>
@@ -978,7 +978,7 @@ export default function NFT({ params }) {
               Lockup Size:
             </LockupInfoFieldTitle>
             <LockupInfoFieldValue>
-              {/*amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true) TODO*/}100,000 mUSDC{/*selectedStakingToken*/}
+              {amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true)} {selectedStakingToken}
             </LockupInfoFieldValue>
           </LockupInfoField>
           }
@@ -987,14 +987,11 @@ export default function NFT({ params }) {
               Purchase Size:
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
-              {/*amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) TODO */}175,009 DMG
+              {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) } DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
-            <Button>
-              Purchase
-            </Button>
-            {/*
+            {
               account ? (
                 !stakingSelected || !stakingTokenBalance || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
                   userTokenBalance.gte(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG))) ? (
@@ -1094,7 +1091,7 @@ export default function NFT({ params }) {
                   <Web3Status />
                 </ConnectWalletButton>
               )
-            */}
+            }
           </PurchaseButton>
         </CompanyFields>
       </CompletePurchaseSection>}
