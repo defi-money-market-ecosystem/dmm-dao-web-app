@@ -572,7 +572,7 @@ export default function NFT({ params }) {
   const [dropdownExpanded, setDropdownExpanded] = useState(false)
   const [selectedCountry, setSelectedCountry] = useState(null)
   const [constructedCountryData, setConstructedCountryData] = useState(null)
-  const [constructedMapData, setConstructedMapData] = useState(null)
+  const [constructedMapData, setConstructedMapData] = useState([['', 0]])
   const [stakingSelected, setStakingSelected] = useState(false)
   const [mTokenDropdownExpanded, setmTokenDropdownExpanded] = useState(false)
   const [periodDropdownExpanded, setPeriodDropdownExpanded] = useState(false)
