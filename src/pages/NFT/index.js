@@ -579,8 +579,8 @@ export default function NFT({ params }) {
 
   const tokenContract = useTokenContract(DMG_ADDRESS)
 
-  const allowance = useAddressAllowance(account, DMG_ADDRESS, stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS)
-  const dmgAllowanceSet = !!allowance && allowance.gt(ethers.BigNumber.from('0'))
+  const dmgAllowance = useAddressAllowance(account, DMG_ADDRESS, stakingSelected ? ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS : ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS)
+  const dmgAllowanceSet = !!dmgAllowance && dmgAllowance.gt(ethers.BigNumber.from('0'))
 
   // Make sure the wallet has sufficient balance
   const userTokenBalance = useAddressBalance(account, DMG_ADDRESS)
@@ -620,7 +620,7 @@ export default function NFT({ params }) {
   const stakingTokenDecimals = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['decimals'])
 
   const stakingAllowance = useAddressAllowance(account, stakingTokenAddress, ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS)
-  const stakingTokenAllowanceSet = selectedCountry && stakingSelected && allowance && allowance.gt(ethers.BigNumber.from('0'))
+  const stakingTokenAllowanceSet = selectedCountry && stakingSelected && stakingAllowance && stakingAllowance.gt(ethers.BigNumber.from('0'))
   const stakingTokenContract = useTokenContract(stakingTokenAddress)
   const stakingTokenBalance = useAddressBalance(account, stakingTokenAddress)
   const stakingDmmTokenId = selectedCountry && stakingSelected && (selectedType === 'Affiliate' ? selectedCountry.stakingDataAffiliate[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'] : selectedCountry.stakingDataPrincipal[selectedStakingPeriod['period']]['staking_amounts'][selectedStakingToken]['m_token']['dmm_token_id'])
@@ -1001,13 +1001,13 @@ export default function NFT({ params }) {
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
               {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true)}
-              DMG
+              &nbsp;DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
             {
               account ? (
-                !stakingSelected || !stakingTokenBalance || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
+                !stakingSelected || !stakingTokenBalance || !userTokenBalance || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
                   userTokenBalance.gte(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG))) ? (
                     !stakingSelected || stakingTokenAllowanceSet ? (
                       dmgAllowanceSet ? (
