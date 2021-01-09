@@ -179,11 +179,10 @@ const Light = styled.span`
 `
 
 const Value = styled.div`
-  margin-top: 10px;
+  padding-top: 8px;
   font-size: 18px;
   font-weight: 600;
   color: #b7c3cc;
-  display: inline;
 
   ${({ active }) => active && `
     color: black;
@@ -682,7 +681,6 @@ export default function ProfilePage() {
               </Value>
             </Balance>
           ))}
-          { /*nfts*/true /*&& nfts.length > 0*/ &&
           <Balance key={`balance-NFT`}>
             <DMGTitle active={false}>
               NFTs
@@ -695,7 +693,6 @@ export default function ProfilePage() {
                 </NFTSection>
               )}
           </Balance>
-          }
         </Card>
         <Card width={65}>
           <Title>
