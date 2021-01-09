@@ -664,7 +664,7 @@ export default function ProfilePage() {
                 {title}
               </DMGTitle>
               <Value active={true}>
-                {isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) : 'N/A'}
+                {isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2, true, true)) : 'N/A'}
                 {/*<DelegateButton active={delegating} onClick={() => setDelegateView(true)}>*/}
                 {/*  { edit ? */}
                 {/*    (*/}
