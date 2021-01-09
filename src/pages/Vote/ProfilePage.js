@@ -773,7 +773,7 @@ export default function ProfilePage() {
               {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2, true, true)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
