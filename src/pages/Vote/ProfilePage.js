@@ -171,7 +171,7 @@ const DMGTitle = styled.div`
 `
 
 const NFTSection = styled.div`
-
+  padding-top: 8px;
 `
 
 const Light = styled.span`
@@ -501,12 +501,14 @@ export default function ProfilePage() {
 
   const transactionTitles = ['Action', 'Block Number']
   const transactionsAmount = 3
-  let transactions = []
+  let transactions
   let lt = loadedTransactions.length
   if (lt < transactionsAmount) {
     const empty = new Array(transactionsAmount - lt)
     transactions = [...loadedTransactions, ...empty.fill(emptyTransaction)]
-  } else transactions = [...loadedTransactions]
+  } else {
+    transactions = [...loadedTransactions]
+  }
 
   useEffect(() => {
     const perform = () => {
@@ -687,12 +689,9 @@ export default function ProfilePage() {
             </DMGTitle>
             {nfts.map(nft =>
               <NFTSection>
-                {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
+                {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
               </NFTSection>
             )}
-            <NFTSection>
-              {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
-            </NFTSection>
           </Balance>
           }
         </Card>
@@ -709,6 +708,7 @@ export default function ProfilePage() {
                 ))}
               </Transaction>
               {transactions.slice(0, transactionsAmount).map(({ vote_delta, block_number, transaction_hash }) => (
+                console.log('vote_delta ', vote_delta) ||
                 <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
                     {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
@@ -775,7 +775,7 @@ export default function ProfilePage() {
               {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2, true, true)} Votes`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>

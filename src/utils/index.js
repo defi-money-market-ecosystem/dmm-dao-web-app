@@ -342,7 +342,7 @@ export function amountFormatter(amount, baseDecimals = 18, displayDecimals = MIN
     // if balance is less than the minimum display amount
     if (amount.lt(minimumDisplayAmount)) {
       return useLessThan
-        ? `<${ethers.utils.formatUnits(minimumDisplayAmount, baseDecimals)}`
+        ? `< ${ethers.utils.formatUnits(minimumDisplayAmount, baseDecimals)}`
         : `${ethers.utils.formatUnits(amount, baseDecimals)}`
     }
     // if the balance is greater than the minimum display amount
