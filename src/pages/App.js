@@ -120,7 +120,7 @@ class App extends React.Component {
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
                         <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
                         <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params}/>}/>
-                        <Redirect to="/swap"/>
+                        <Redirect to="/governance/proposals"/>
                       </Switch>
                     </Suspense>
                   </BrowserRouter>

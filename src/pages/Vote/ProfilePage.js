@@ -687,11 +687,13 @@ export default function ProfilePage() {
             <DMGTitle active={false}>
               NFTs
             </DMGTitle>
-            {nfts.map(nft =>
-              <NFTSection>
-                {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
-              </NFTSection>
-            )}
+            {nfts.length === 0 ?
+              <NFTSection>N/A</NFTSection> :
+              nfts.map(nft =>
+                <NFTSection>
+                  {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
+                </NFTSection>
+              )}
           </Balance>
           }
         </Card>
@@ -708,7 +710,6 @@ export default function ProfilePage() {
                 ))}
               </Transaction>
               {transactions.slice(0, transactionsAmount).map(({ vote_delta, block_number, transaction_hash }) => (
-                console.log('vote_delta ', vote_delta) ||
                 <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
                     {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
