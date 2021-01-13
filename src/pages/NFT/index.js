@@ -22,6 +22,7 @@ import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '..
 //import Button from '@material-ui/core/Button'
 import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 import STAKING_ABI from '../../constants/abis/asset_introducer_staking_router'
+import { Link } from 'react-router-dom'
 
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
@@ -473,6 +474,20 @@ const ConnectWalletButton = styled.div`
   }
 `
 
+const backLink = {
+  textDecoration: 'none',
+  color: '#808080',
+  cursor: 'pointer',
+  fontWeight: '700',
+  fontSize: '15px',
+}
+
+const BackLinkWrapper = styled.div`
+  width: 70%;
+  padding: 0 5%;
+  margin-top: 8px;
+`
+
 const getNFTData = (setConstructedCountryData, setConstructedMapData, selectedStakingToken, setSelectedStakingToken, selectedStakingPeriod, setSelectedStakingPeriod) => {
   fetch(`${DMM_API_URL}/v1/asset-introducers/primary-market`)
     .then(response => response.json())
@@ -700,6 +715,11 @@ export default function NFT({ params }) {
 
   return (
     <NFTWrapper>
+      <BackLinkWrapper>
+        <Link to={'/governance/proposals'} style={backLink}>
+          &#8592; {'Governance Overview'}
+        </Link>
+      </BackLinkWrapper>
       <TitleSection>
         <Subtitle>
           Purchase an NFT

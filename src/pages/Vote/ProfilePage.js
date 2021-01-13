@@ -643,11 +643,7 @@ export default function ProfilePage() {
     return <Redirect to={{ pathname: '/governance/proposals/' }} />
   }
 
-  let prevPath = null
-  const locationState = history.location.state
-  if (locationState) {
-    prevPath = locationState.prevPath
-  }
+  const prevPath = history.location.state?.prevPath
 
   const handleChangeDelegate = async (isCancel) => {
     if (isCancel) {
@@ -691,7 +687,7 @@ export default function ProfilePage() {
   return (
     <Main>
       <Link to={prevPath ? prevPath : '/governance/proposals'} style={backLink}>
-        &#8592; {prevPath ? 'Details' : 'Overview'}
+        &#8592; {prevPath ? 'Proposal Details' : 'Governance Overview'}
       </Link>
       <div>
         <Wrapper>
