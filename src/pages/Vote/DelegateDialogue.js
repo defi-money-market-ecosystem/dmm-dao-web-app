@@ -3,7 +3,7 @@ import Close from '../../assets/svg/close-black-18dp.svg'
 import styled from 'styled-components'
 import { useGovernorContract } from '../../hooks'
 import { ethers } from 'ethers'
-import { calculateGasMargin } from '../../utils'
+import { calculateGasMargin, shorten } from '../../utils'
 import * as Sentry from '@sentry/browser'
 import { usePendingCastedVotes, useTransactionAdder } from '../../contexts/Transactions'
 import { GOVERNOR_ALPHA_ADDRESS } from '../../contexts/GovernorAlpha'
@@ -18,10 +18,6 @@ const BackDrop = styled.div`
   top: 0;
   left: 0;
   z-index: 110;
-  
-  @media (max-width: 700px) {
-    background: none;
-  }
 `
 
 const Card = styled.div`
@@ -57,6 +53,7 @@ const Title = styled.div`
 const Proposal = styled.div`
   font-size: 13px;
   text-align: left;
+  line-height: 1.5;
 `
 
 const Time = styled.div`
@@ -143,22 +140,21 @@ const Underline = styled.div`
 `
 
 //export default function Cast({ proposal, time, vote, onChange }) {
-export default function DelegateDialogue({ address, self, isDelegating, onChange }) {
+export default function DelegateDialogue({ address, self, isAlreadyDelegating, onChange }) {
   const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false) //loading hook
 
   const bodyJsx = (
       <>
         {<SpinnerWrapper>
-          {loading ? <CircularProgress style={{ color: primaryColor }}/> :
+          {isAlreadyDelegating ? <CircularProgress style={{ color: primaryColor }}/> :
            <div/>}
         </SpinnerWrapper>}
         <Buttons>
-          <Button color={'#09b53d'} onClick={() => onChange(true)}>
-            Confirm
+          <Button color={'#d4001e'} onClick={() => onChange(true)}>
+            Cancel
           </Button>
-          <Button color={'#d4001e'} onClick={() => onChange(false)}>
-            Decline
+          <Button color={'#09b53d'} onClick={() => onChange(false)}>
+            Confirm
           </Button>
         </Buttons>
         <ErrorMessage>
@@ -172,14 +168,17 @@ export default function DelegateDialogue({ address, self, isDelegating, onChange
     <BackDrop>
       <Card>
         <Title>
-          Delegate to
+          Delegate Voting Power
         </Title>
         <Underline/>
         <Proposal>
-          {`${address}${self ? ' (Self)' : ''}`}
+          You are opting into delegating (moving) your voting power to {`${shorten(address)}${self ? ' (yourself)' : ''}`}. This
+          will enable the wallet that is receiving the delegates to be able to vote with your DMG tokens. Note, this
+          does NOT move the tokens out of your wallet or allow the user receiving the delegates to move your tokens
+          out of your wallet.
         </Proposal>
         {bodyJsx}
-        <Exit onClick={() => onChange(false)}>
+        <Exit onClick={() => onChange(true)}>
           <img src={Close} alt={'X'}/>
         </Exit>
       </Card>
