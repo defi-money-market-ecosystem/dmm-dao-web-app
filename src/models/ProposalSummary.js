@@ -15,8 +15,8 @@ export class ProposalSummary {
     EXECUTED: 'EXECUTED'
   }
 
-  static formatStatus(status) {
-    return status.substring(0, 1) + status.substring(1).toLowerCase()
+  static formatStatus(status, t) {
+    return t('vote.'+status);
   }
 
   constructor({ proposal_id, title, description, start_block, end_block, start_timestamp, end_timestamp, proposal_status, last_updated_timestamp }) {
@@ -41,50 +41,50 @@ export class ProposalSummary {
     return this
   }
 
-  mostRecentDateText(currentBlock) {
+  mostRecentDateText(currentBlock, t) {
     const momentFormatterDate = 'l'
     const momentFormatterTime = 'LT'
     if (this.proposalStatus === ProposalSummary.statuses.CANCELLED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal was cancelled at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalCancelledAt', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal was cancelled on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalCancelledOn', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.QUEUED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal has been queued for execution since ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalQueued', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal has been queued for execution since ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalQueued', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.EXECUTED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal was executed at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalExecutedAt', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal was executed on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalExecutedOn', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.EXPIRED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal expired at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalExpiredAt', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal expired on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalExpiredAt', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.PENDING) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal is awaiting the vote to start since ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalPending', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal is awaiting the vote to start since ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalPending', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.SUCCEEDED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal was passed at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalPassedAt', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal was passed on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalPassedAt', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.DEFEATED) {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
-        return `Proposal was defeated at ${moment(this.lastUpdatedTimestamp).format(momentFormatterTime)}`
+        return t('vote.proposalDefeatedAt', moment(this.lastUpdatedTimestamp).format(momentFormatterTime))
       } else {
-        return `Proposal was defeated on ${moment(this.lastUpdatedTimestamp).format(momentFormatterDate)}`
+        return t('vote.proposalDefeatedAt', moment(this.lastUpdatedTimestamp).format(momentFormatterDate))
       }
     } else if (this.proposalStatus === ProposalSummary.statuses.ACTIVE) {
       const durationSeconds = (this.endBlock - (currentBlock || this.startBlock)) * 15
@@ -92,23 +92,23 @@ export class ProposalSummary {
       if (moment(this.lastUpdatedTimestamp).isSame(moment(), 'day')) {
         const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterTime)
         const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
-        return `Voting started at ${startTimestampFormatted} and ends roughly ${endTimestampFormatted}`
+        return t('vote.startedAt', {startTimestampFormatted: startTimestampFormatted, endTimestampFormatted: endTimestampFormatted})
       } else {
         const startTimestampFormatted = moment(this.lastUpdatedTimestamp).format(momentFormatterDate)
         if (endTimestamp.isSame(moment(), 'day')) {
           const endTimestampFormatted = endTimestamp.format(momentFormatterTime)
-          return `Voting started on ${startTimestampFormatted} and ends at roughly ${endTimestampFormatted}`
+          return t('vote.startedOn', {startTimestampFormatted: startTimestampFormatted, endTimestampFormatted: endTimestampFormatted})
         } else {
           const endTimestampFormatted = endTimestamp.format(momentFormatterDate)
-          return `Voting started on ${startTimestampFormatted} and ends roughly ${endTimestampFormatted}`
+          return t('vote.startedOn', {startTimestampFormatted: startTimestampFormatted, endTimestampFormatted: endTimestampFormatted})
         }
       }
 
     }
   }
 
-  proposalStatusFormatted() {
-    return ProposalSummary.formatStatus(this.proposalStatus)
+  proposalStatusFormatted(t) {
+    return ProposalSummary.formatStatus(this.proposalStatus, t)
   }
 
   isVotingDisabled() {

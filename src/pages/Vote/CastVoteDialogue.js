@@ -11,6 +11,8 @@ import { primaryColor } from '../../theme'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import { AccountProposalVoteInfo } from '../../models/AccountProposalVoteInfo'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const BackDrop = styled.div`
   width: 100vw;
 	height: 100vh;
@@ -162,7 +164,7 @@ const Underline = styled.div`
 `
 
 //export default function Cast({ proposal, time, vote, onChange }) {
-export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDelegating, onClose }) {
+function CastVoteDialogue({ proposal, timestamp, votesBN, isDelegating, onClose, t }) {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false) //loading hook
 
@@ -212,8 +214,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     bodyJsx = (
       <div>
         <TextualBody>
-          You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the
-          confirmation to finish.
+          {t('vote.waitingForConfirmation')}
         </TextualBody>
         <CircularProgress style={{ color: primaryColor }}/>
       </div>
@@ -222,9 +223,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     bodyJsx = (
       <div>
         <TextualBody>
-          Before voting for the first time, you must activate your wallet. To activate your wallet, go to the &nbsp;
-          <a href={'/governance/proposals'}>home page</a> of the voting dashboard and press the 'Activate Wallet'
-          button.
+          {t('vote.mustActivateWallet')}
         </TextualBody>
       </div>
     )
@@ -238,17 +237,16 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
           :
           <SpinnerWrapper>
             <span>
-              Cast your vote using the options below. Keep in mind, all votes are final and&nbsp;
-              <strong>cannot</strong> be modified.
+              {t('vote.castVoteHelper')}
             </span>
           </SpinnerWrapper>
         }
         <Buttons>
           <Button color={'#09b53d'} onClick={() => castVote(true)}>
-            For
+            {t('vote.for')}
           </Button>
           <Button color={'#d4001e'} onClick={() => castVote(false)}>
-            Against
+            {t('vote.against')}
           </Button>
         </Buttons>
         <ErrorMessage>
@@ -262,7 +260,7 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     <BackDrop>
       <Card>
         <Title>
-          Cast your vote
+          {t('vote.castYourVote')}
         </Title>
         <Underline/>
         <Proposal>
@@ -279,3 +277,5 @@ export default function CastVoteDialogue({ proposal, timestamp, votesBN, isDeleg
     </BackDrop>
   )
 }
+
+export default withTranslations(CastVoteDialogue);

@@ -6,6 +6,8 @@ import { AccountProposalVoteInfo } from '../../models/AccountProposalVoteInfo'
 import { ProposalSummary } from '../../models/ProposalSummary'
 import { useBlockNumber } from '../../contexts/Application'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const Main = styled.div`
   font-size: 18px;
   font-weight: 500;
@@ -107,7 +109,9 @@ const link = {
   cursor: 'pointer'
 }
 
-export default function ProposalItem(props) {
+function ProposalItem(props) {
+  const t = (snippet, prop=null) => props.excerpt(snippet, props.language, prop);
+
   const proposal = props.proposal
   const proposalVoteInfo = proposal?.account?.proposalVoteInfo
 
@@ -139,21 +143,21 @@ export default function ProposalItem(props) {
         </Link>
         <Info active={proposal.proposalStatus}>
           <Status active={proposal.proposalStatus}>
-            {proposal.proposalStatusFormatted()}
+            {proposal.proposalStatusFormatted(t)}
           </Status>
           <Extra>
-            {proposal.proposalId} &#8226; {proposal.mostRecentDateText(currentBlock)}
+            {proposal.proposalId} &#8226; {proposal.mostRecentDateText(currentBlock, t)}
           </Extra>
         </Info>
       </Wrapper>
       <VoteButton onClick={() => !isVoteButtonDisabled && setShowCastDialogue(true)} disabled={isVoteButtonDisabled}>
-        {AccountProposalVoteInfo.toFormattedVoteButtonString(voteStatus)}
+        {AccountProposalVoteInfo.toFormattedVoteButtonString(voteStatus, t)}
       </VoteButton>
       <div>
         {showCastDialogue ?
           <CastVoteDialogue
             proposal={proposal}
-            timestamp={proposal.mostRecentDateText(currentBlock)}
+            timestamp={proposal.mostRecentDateText(currentBlock, t)}
             isDelegating={props.isDelegating}
             votesBN={props.votesBN}
             onClose={() => setShowCastDialogue(false)}
@@ -164,3 +168,5 @@ export default function ProposalItem(props) {
     </Main>
   )
 }
+
+export default withTranslations(ProposalItem);

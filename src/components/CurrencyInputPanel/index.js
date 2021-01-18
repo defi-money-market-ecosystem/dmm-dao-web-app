@@ -30,6 +30,8 @@ import { ReactComponent as Close } from '../../assets/images/x.svg'
 import Circle from '../../assets/images/circle-grey.svg'
 import * as Sentry from '@sentry/browser'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
 const SubCurrencySelect = styled.button`
@@ -271,7 +273,7 @@ const SpinnerWrapper = styled(Spinner)`
   opacity: 0.6;
 `
 
-export default function CurrencyInputPanel({
+function CurrencyInputPanel({
                                              onValueChange = () => {
                                              },
                                              allBalances,
@@ -295,9 +297,9 @@ export default function CurrencyInputPanel({
                                              minDecimals,
                                              tokenAddress,
                                              unlockAddress,
-                                             tokenList
+                                             tokenList,
+                                             t
                                            }) {
-  const { t } = useTranslation()
 
   if (!unlockAddress) {
     throw Error('Missing unlockAddress! (DELEGATE, FARM_ROUTER, ETC)')
@@ -355,11 +357,11 @@ export default function CurrencyInputPanel({
                 })
             }}
           >
-            {t('unlock')}
+            {t('inputPanel.unlock')}
           </SubCurrencySelect>
         )
       } else {
-        return <SubCurrencySelect>{t('pending')}</SubCurrencySelect>
+        return <SubCurrencySelect>{t('inputPanel.pending')}</SubCurrencySelect>
       }
     }
   }
@@ -406,7 +408,7 @@ export default function CurrencyInputPanel({
             {selectedTokenAddress ? <TokenLogo address={selectedTokenAddress}/> : null}
             {
               <StyledTokenName>
-                {(allTokens[selectedTokenAddress] && allTokens[selectedTokenAddress][SYMBOL]) || t('selectToken')}
+                {(allTokens[selectedTokenAddress] && allTokens[selectedTokenAddress][SYMBOL]) || t('inputPanel.selectToken')}
               </StyledTokenName>
             }
             {!disableTokenSelect && <StyledDropDown selected={!!selectedTokenAddress}/>}
@@ -459,14 +461,14 @@ export default function CurrencyInputPanel({
           allBalances={allBalances}
           hideETH={hideETH}
           tokenList={tokenList}
+          t={t}
         />
       )}
     </InputPanel>
   )
 }
 
-function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenList }) {
-  const { t } = useTranslation()
+function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenList, t }) {
 
   const [searchQuery, setSearchQuery] = useState('')
   const { exchangeAddress } = useTokenDetails(searchQuery)
@@ -623,7 +625,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
       return <TokenModalInfo>Searching for Tokens...</TokenModalInfo>
     }
     if (!filteredTokenList.length) {
-      return <TokenModalInfo>{t('noTokens')}</TokenModalInfo>
+      return <TokenModalInfo>{t('inputPanel.noTokens')}</TokenModalInfo>
     }
 
     return filteredTokenList.map(({ address, symbol, name, balance, usdBalance }) => {
@@ -690,7 +692,7 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
     >
       <TokenModal>
         <ModalHeader>
-          <p>{t('selectToken')}</p>
+          <p>{t('inputPanel.selectToken')}</p>
           <CloseIcon onClick={clearInputAndDismiss}>
             <CloseColor alt={'close icon'}/>
           </CloseIcon>
@@ -710,3 +712,5 @@ function CurrencySelectModal({ isOpen, onDismiss, onTokenSelect, hideETH, tokenL
     </Modal>
   )
 }
+
+export default withTranslations(CurrencyInputPanel);

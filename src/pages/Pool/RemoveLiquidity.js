@@ -407,6 +407,7 @@ export default function RemoveLiquidity({ params }) {
         errorMessage={inputError}
         selectedTokenAddress={outputCurrency}
         hideETH={true}
+        t={t}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -434,6 +435,7 @@ export default function RemoveLiquidity({ params }) {
         }
         disableTokenSelect
         disableUnlock
+        t={t}
       />
       <OversizedPanel key="remove-liquidity-input-under" hideBottom>
         <SummaryPanel>

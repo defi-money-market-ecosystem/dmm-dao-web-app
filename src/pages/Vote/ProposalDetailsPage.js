@@ -16,6 +16,8 @@ import { AccountDetails } from '../../models/AccountDetails'
 import ViewMoreVotersDialogue from './ViewMoreVotersDialogue'
 import { useBlockNumber } from '../../contexts/Application'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const Main = styled.div`
   width: 60vw;
 	overflow-y: scroll;
@@ -333,7 +335,9 @@ async function getAccountInfo(walletAddress) {
     .then(response => !!response.data ? new AccountDetails(response.data) : null)
 }
 
-export default function ProposalDetailsPage(props) {
+function ProposalDetailsPage(props) {
+  const t = (snippet, prop=null) => props.excerpt(snippet, props.language, prop);
+
   const [vote, setVote] = useState(CAST_VOTE)
   const [accountInfo, setAccountInfo] = useState({})
   const [cast, setCast] = useState(true)
@@ -359,11 +363,11 @@ export default function ProposalDetailsPage(props) {
 
   const voteDetails = [
     {
-      title: 'For',
+      title: t('proposal.for'),
       color: '#44d394'
     },
     {
-      title: 'Against',
+      title: t('proposal.against'),
       color: '#df5e66'
     }
   ]
@@ -416,7 +420,7 @@ export default function ProposalDetailsPage(props) {
     return () => clearInterval(subscriptionId)
   }, [proposalId, walletAddress])
 
-  const addressTitle = (l) => `${l} ${l === 1 ? 'Address' : 'Top Addresses'}`
+  const addressTitle = (l) => `${l} ${l === 1 ? t('proposal.address') : t('proposal.topAddresses')}`
   if (!isValidProposalId(proposalId) || proposal === 'BAD') {
     return <Redirect to={{ pathname: '/governance/proposals', state: { isBadPath: true } }}/>
   }
@@ -432,7 +436,7 @@ export default function ProposalDetailsPage(props) {
   return (
     <Main>
       <Link to={'/governance/proposals'} style={backLink}>
-        &#8592; Overview
+        &#8592; {t('proposal.overview')}
       </Link>
       <div>
         <Wrapper>
@@ -441,10 +445,10 @@ export default function ProposalDetailsPage(props) {
           </Proposal>
           <Info active={true}>
             <Status active={true}>
-              {proposal?.proposalStatus}
+              {proposal && t('vote.'+proposal.proposalStatus)}
             </Status>
             <Extra>
-              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText(currentBlock) : undefined}
+              {proposal?.proposalId} &#8226; {!!proposal ? proposal.mostRecentDateText(currentBlock, t) : undefined}
             </Extra>
           </Info>
         </Wrapper>
@@ -483,10 +487,10 @@ export default function ProposalDetailsPage(props) {
               <Addresses>
                 <AddressTitle>
                   {addressTitle(filteredTopVoters.length)}
-                  <VotesTitle>Votes</VotesTitle>
+                  <VotesTitle>{t('proposal.votes')}</VotesTitle>
                 </AddressTitle>
                 {filteredTopVoters.length === 0 ? (
-                  <NoVoters>No votes {title.toLowerCase()} the proposal have been cast</NoVoters>) : (<span/>)}
+                  <NoVoters>{t('proposal.noVotes', title.toLowerCase())}</NoVoters>) : (<span/>)}
                 {filteredTopVoters.map((topVoter) => {
                   return (
                     <Link to={{pathname: `/governance/address/${topVoter.walletAddress}`, state: { prevPath: location.pathname}}} style={addressLink}>
@@ -502,7 +506,7 @@ export default function ProposalDetailsPage(props) {
               </Addresses>
               {topVoters.length > topVotersAmount && (
                 <View onClick={() => setViewMoreVoters(topVoters)}>
-                  {'View More'}
+                  {t('proposal.viewMore')}
                 </View>
               )}
             </Card>
@@ -511,7 +515,7 @@ export default function ProposalDetailsPage(props) {
       </Body>
       <Card width={60}>
         <Title>
-          Details
+          {t('proposal.details')}
         </Title>
         <Underline/>
         <Description>
@@ -520,7 +524,7 @@ export default function ProposalDetailsPage(props) {
       </Card>
       <Card width={40}>
         <Title>
-          Proposal History
+          {t('proposal.history')}
         </Title>
         <Underline/>
         <HistoryWrapper>
@@ -532,7 +536,7 @@ export default function ProposalDetailsPage(props) {
               <HistoryInfo>
                 {!!breadcrumb.transactionHash ? (
                   <HistoryTitle>
-                    {breadcrumb.statusFormatted()}
+                    {breadcrumb.statusFormatted(t)}
                     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                     <a href={`https://etherscan.io/tx/${breadcrumb.transactionHash}`} target={'_blank'} rel="noopener noreferrer">
                       <ExternalLink/>
@@ -540,7 +544,7 @@ export default function ProposalDetailsPage(props) {
                   </HistoryTitle>
                 ) : (
                   <HistoryTitle>
-                    {breadcrumb.statusFormatted()}
+                    {breadcrumb.statusFormatted(t)}
                   </HistoryTitle>
                 )}
                 <HistoryDate>
@@ -564,13 +568,14 @@ export default function ProposalDetailsPage(props) {
         {showCast &&
         <CastVoteDialogue
           proposal={proposal}
-          timestamp={proposal.mostRecentDateText(currentBlock)}
+          timestamp={proposal.mostRecentDateText(currentBlock, t)}
           onClose={() => setShowCastDialogue(false)}
           isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
           votesBN={accountInfo?.voteInfo?.votesBN}
           onVoteCasted={(hash) => {
             setCastHash(hash)
-          }}/>
+          }}
+          t={t}/>
         }
       </div>
       <div>
@@ -579,9 +584,12 @@ export default function ProposalDetailsPage(props) {
           proposal={proposal}
           voters={viewMoreVoters}
           onClose={() => setViewMoreVoters([])}
+          t={t}
         />
         }
       </div>
     </Main>
   )
 }
+
+export default withTranslations(ProposalDetailsPage);

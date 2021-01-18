@@ -114,8 +114,9 @@ const IconWrapper = styled.div`
   }
 `
 
-export default function Web3Status() {
-  const { t } = useTranslation()
+export default function Web3Status(props) {
+
+
   const { active, account, connector, error } = useWeb3React()
   const contextNetwork = useWeb3React(NetworkContextName)
 
@@ -185,7 +186,7 @@ export default function Web3Status() {
     } else {
       return (
         <Button onClick={toggleWalletModal} faded={(!account).toString()}>
-          <Text>{t('connectToWallet')}</Text>
+          <Text>{props.t('header.connectToWallet')}</Text>
         </Button>
       )
     }

@@ -23,6 +23,8 @@ import { getConnectorName, getDefaultApiKeyHeaders, routes, sessionId } from '..
 import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 import STAKING_ABI from '../../constants/abis/asset_introducer_staking_router'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
 
@@ -464,6 +466,15 @@ const PurchaseButton = styled.div`
   width: 240px;
 `
 
+const ConnectWalletButton = styled.div`
+  button {
+    color: white;
+    width: fit-content;
+    padding: 10px 25px;
+    background: #327ccb;
+  }
+`
+
 const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelectedStakingToken, setSelectedStakingPeriod) => {
   fetch(`${DMM_API_URL}/v1/asset-introducers/primary-market`)
     .then(response => response.json())
@@ -548,8 +559,10 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, setSelecte
 const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF'
 const ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS = '0x2bd086E46af30eDb0039b6b0B528F8218151c898'
 
-export default function NFT({ params }) {
-  const { t } = useTranslation()
+function NFT({ params, language, excerpt }) {
+
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -689,17 +702,17 @@ export default function NFT({ params }) {
     <NFTWrapper>
       <TitleSection>
         <Subtitle>
-          Purchase an NFT
+          {t('nft.purchaseAnNFT')}
         </Subtitle>
         <PageTitle>
-          Become an Asset Introducer
+          {t('nft.becomeAnAssetIntroducer')}
         </PageTitle>
         <Underline />
       </TitleSection>
       <SelectCountrySection>
         <CountrySelect>
           <SectionTitle>
-            Select Country
+            {t('nft.selectCountry')}
           </SectionTitle>
           <CountryDropdown
             className={dropdownExpanded ? 'expanded' : ''}
@@ -711,11 +724,11 @@ export default function NFT({ params }) {
               ▼
             </CountryDropdownIcon>
             <CountryDropdownRow>
-              {selectedCountry ? (selectedCountry.country) : 'Select...'}
+              {selectedCountry ? (selectedCountry.country) : t('nft.select')}
             </CountryDropdownRow>
             {constructedCountryData && constructedCountryData.length === 0 ? (
               <CountryDropdownRow>
-                No countries available
+                {t('nft.noCountriesAvailable')}
               </CountryDropdownRow>
             ) : (
               constructedCountryData && constructedCountryData.map(country =>
@@ -732,7 +745,7 @@ export default function NFT({ params }) {
             {selectedCountry && <div>
               <InformationItem>
                 <InformationTitle>
-                  Country:
+                  {t('nft.country')}
                 </InformationTitle>
                 <InformationData>
                   {selectedCountry.country}
@@ -740,7 +753,7 @@ export default function NFT({ params }) {
               </InformationItem>
               <InformationItem>
                 <InformationTitle>
-                  Affiliates Remaining:
+                  {t('nft.affiliatesRemaining')}
                 </InformationTitle>
                 <InformationData>
                   {selectedCountry.availableAffiliates || 0} NFT{selectedCountry && selectedCountry.availableAffiliates !== 1 ? 's' : ''}
@@ -749,7 +762,7 @@ export default function NFT({ params }) {
               {selectedCountry.availableAffiliates > 0 &&
               <InformationItem>
                 <InformationTitle>
-                  Affiliate NFT Price:
+                  {t('nftt.affiliateNFTPrice')}
                 </InformationTitle>
                 <InformationData>
                   {amountFormatter(ethers.BigNumber.from(selectedCountry.priceAffiliateDMG), 18, 2, true, true)} DMG
@@ -758,7 +771,7 @@ export default function NFT({ params }) {
               }
               <InformationItem>
                 <InformationTitle>
-                  Principals Remaining:
+                  {t('nft.principalsRemaining')}
                 </InformationTitle>
                 <InformationData>
                   {selectedCountry.availablePrincipals || 0} NFT{selectedCountry && selectedCountry.availablePrincipals !== 1 ? 's' : ''}
@@ -767,7 +780,7 @@ export default function NFT({ params }) {
               {selectedCountry.availablePrincipals > 0 &&
               <InformationItem>
                 <InformationTitle>
-                  Principal NFT Price:
+                  {t('nft.principalNFTPrice')}
                 </InformationTitle>
                 <InformationData>
                   {amountFormatter(ethers.BigNumber.from(selectedCountry.pricePrincipalDMG), 18, 2, true, true)} DMG
@@ -777,7 +790,7 @@ export default function NFT({ params }) {
             </div>}
           </CountryInformation>
           <ExploreLink>
-            <a href="https://explorer.defimoneymarket.com/asset-introducers">Explore current asset introducers</a>
+            <a href="https://explorer.defimoneymarket.com/asset-introducers">{t('nft.exploreCurrentAssetIntroducers')}</a>
           </ExploreLink>
         </CountrySelect>
         <Map>
@@ -798,7 +811,7 @@ export default function NFT({ params }) {
       </SelectCountrySection>
       <SelectTypeSection>
         <SectionTitle>
-          Select Type
+          {t('nft.selectType')}
         </SectionTitle>
         <TypeSelection>
           <Type
@@ -806,14 +819,10 @@ export default function NFT({ params }) {
             onClick={() => setSelectedType('Affiliate')}
           >
             <TypeTitle>
-              Affiliate
+              {t('nft.affiliate')}
             </TypeTitle>
             <TypeBody>
-              Affiliates are the base level asset introducer in the DMM Ecosystem. They are able to charge and set
-              their own origination fees as well as receive a slight percentage on the derived income payment
-              production. For more information, click <a
-              href="https://medium.com/dmm-dao/introducing-the-first-affiliate-member-and-nfts-into-the-dmm-dao-4392cf3f26d8"
-              target='_blank' rel='noopener noreferrer'>here</a>.
+              {t('nft.affiliateDescription')}
             </TypeBody>
           </Type>
           <Type
@@ -822,10 +831,10 @@ export default function NFT({ params }) {
             }/*setSelectedType('Principal')*/}
           >
             <TypeTitle>
-              Principal
+              {t('nft.principal')}
             </TypeTitle>
             <TypeBody>
-              Currently unavailable
+              {t('nft.currentlyUnavailable')}
             </TypeBody>
           </Type>
         </TypeSelection>
@@ -833,16 +842,16 @@ export default function NFT({ params }) {
       <CompanyInfoSection>
         <CompanyTitle>
           <SectionTitle>
-            Company Information
+            {t('nft.companyInformation')}
           </SectionTitle>
           <SectionSubtitle>
-            Optional
+            {t('nft.optional')}
           </SectionSubtitle>
         </CompanyTitle>
         <CompanyFields>
           <CompanyName>
             <FieldTitle>
-              Company Name
+              {t('nft.companyName')}
             </FieldTitle>
             <FieldInputSmall>
               <input
@@ -852,7 +861,7 @@ export default function NFT({ params }) {
           </CompanyName>
           <CompanyDetails>
             <FieldTitle>
-              Company Details
+              {t('nft.companyDetails')}
             </FieldTitle>
             <FieldInputLarge>
               <textarea
@@ -861,7 +870,7 @@ export default function NFT({ params }) {
           </CompanyDetails>
           <CompanyWebsite>
             <FieldTitle>
-              Website
+              {t('nft.website')}
             </FieldTitle>
             <FieldInputSmall>
               <input
@@ -875,13 +884,13 @@ export default function NFT({ params }) {
       {selectedCountry && <CompletePurchaseSection>
         <CompanyTitle>
           <SectionTitle>
-            Complete Purchase
+            {t('nft.completePurchase')}
           </SectionTitle>
         </CompanyTitle>
         <CompanyFields>
           <PurchaseInfoField>
             <PurchaseInfoFieldTitle>
-              Country:
+              {t('nft.country')}
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
               {selectedCountry && selectedCountry.country}
@@ -889,7 +898,7 @@ export default function NFT({ params }) {
           </PurchaseInfoField>
           <PurchaseInfoField>
             <PurchaseInfoFieldTitle>
-              Type:
+              {t('nft.type')}
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
               {selectedType}
@@ -901,14 +910,14 @@ export default function NFT({ params }) {
               onClick={() => setStakingSelected(!stakingSelected)}
             />
             <StakeTitle>
-              Stake mTokens for discounted purchase
+              {t('nft.stakemTokens')}
             </StakeTitle>
           </StakeCheckboxWrapper>
           {stakingSelected &&
           <StakingInfoSection>
             <StakingSelectSection>
               <StakingInfoTitle>
-                Select mToken to lock up:
+                {t('nft.selectmToken')}
               </StakingInfoTitle>
               <CountryDropdown
                 className={mTokenDropdownExpanded ? 'expanded' : ''}
@@ -925,7 +934,7 @@ export default function NFT({ params }) {
                   </CountryDropdownRow>
                 ) : (
                   <CountryDropdownRow>
-                    Select...
+                    {t('nft.select')}
                   </CountryDropdownRow>
                 )}
                 {stakingTokens.map(token =>
@@ -940,7 +949,7 @@ export default function NFT({ params }) {
             </StakingSelectSection>
             <StakingSelectSection>
               <StakingInfoTitle>
-                Select lockup period:
+                {t('nft.selectPeriod')}
               </StakingInfoTitle>
               <CountryDropdown
                 className={periodDropdownExpanded ? 'expanded' : ''}
@@ -953,19 +962,19 @@ export default function NFT({ params }) {
                 </CountryDropdownIcon>
                 {selectedStakingPeriod ? (
                   <CountryDropdownRow>
-                    {selectedStakingPeriod['duration_months']} months
+                    {selectedStakingPeriod['duration_months']} {t('nft.months')}
                   </CountryDropdownRow>
                 ) : (
                   <CountryDropdownRow>
-                    Select...
+                    {t('nft.select')}
                   </CountryDropdownRow>
                 )}
                 {stakingPeriods.map(period =>
-                  period !== selectedStakingPeriod &&
+                  period['duration_months'] !== selectedStakingPeriod['duration_months'] &&
                   <CountryDropdownRow
                     onClick={() => setSelectedStakingPeriod(period)}
                   >
-                    {period['duration_months']} months
+                    {period['duration_months']} {t('nft.months')}
                   </CountryDropdownRow>
                 )}
               </CountryDropdown>
@@ -975,7 +984,7 @@ export default function NFT({ params }) {
           {stakingSelected &&
           <LockupInfoField>
             <LockupInfoFieldTitle>
-              Lockup Size:
+              {t('nft.lockupSize')}
             </LockupInfoFieldTitle>
             <LockupInfoFieldValue>
               {amountFormatter(ethers.BigNumber.from(lockupAmount), stakingTokenDecimals, 2, false, true)} {selectedStakingToken}
@@ -984,22 +993,21 @@ export default function NFT({ params }) {
           }
           <PurchaseInfoField>
             <PurchaseInfoFieldTitle>
-              Purchase Size:
+              {t('nft.purchaseSize')}
             </PurchaseInfoFieldTitle>
             <PurchaseInfoFieldValue>
               {amountFormatter(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG)), 18, 2, false, true) } DMG
             </PurchaseInfoFieldValue>
           </PurchaseInfoField>
           <PurchaseButton>
-            {
-              account ? (
+            {account ? (
                 !stakingSelected || !stakingTokenBalance || stakingTokenBalance.gte(ethers.BigNumber.from(lockupAmount)) ? (
                   userTokenBalance.gte(ethers.BigNumber.from(stakingSelected ? stakingPurchaseSize : (selectedType === 'Affiliate' ? selectedCountry.priceAffiliateDMG : selectedCountry.pricePrincipalDMG))) ? (
                     !stakingSelected || stakingTokenAllowanceSet ? (
                       dmgAllowanceSet ? (
                         <Button
                           onClick={() => purchaseNft(selectedType === 'Affiliate' ? selectedCountry.affiliateTokenID : selectedCountry.principalTokenID, stakingDmmTokenId, selectedStakingPeriod['period'])}>
-                          Purchase
+                          {t('nft.purchase')}
                         </Button>
                       ) : (
                         <Button
@@ -1033,7 +1041,7 @@ export default function NFT({ params }) {
                               })
                           }}
                         >
-                          Unlock DMG
+                          {t('nft.unlockDMG')}
                         </Button>
                       )
                     ) : (
@@ -1069,21 +1077,21 @@ export default function NFT({ params }) {
                             })
                         }}
                       >
-                        Unlock {selectedStakingToken}
+                        {t('nft.unlock')} {selectedStakingToken}
                       </Button>
                     )
                   ) : (
                     <Button
                       disabled
                     >
-                      Insufficient DMG
+                      {t('nft.insufficientDMG')}
                     </Button>
                   )
                 ) : (
                   <Button
                     disabled
                   >
-                    Insufficient {selectedStakingToken}
+                    {t('nft.insufficient')} {selectedStakingToken}
                   </Button>
                 )
               ) : (
@@ -1097,5 +1105,6 @@ export default function NFT({ params }) {
       </CompletePurchaseSection>}
     </NFTWrapper>
   )
-
 }
+
+export default withTranslations(NFT);

@@ -21,6 +21,8 @@ import { BigNumber } from 'ethers-utils'
 import * as Sentry from '@sentry/browser'
 import DMG_ABI from '../../constants/abis/dmg'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const Main = styled.div`
   width: 60vw;
 	overflow-y: scroll;
@@ -422,22 +424,6 @@ async function getAccountInfo(walletAddress) {
 
 const displayPages = 7
 
-
-const holdings = [
-  {
-    title: 'DMG Balance',
-    valueBN: ethers.constants.Zero
-  },
-  {
-    title: 'Votes',
-    valueBN: ethers.constants.Zero
-  },
-  {
-    title: 'Delegating To',
-    delegating: null
-  }
-]
-
 function display(p, selected, l) {
   if (l <= displayPages) return true //displays all pages if it is less than the diplayed amount
 
@@ -456,7 +442,24 @@ const capitalizeFirstLetter = string => {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export default function ProfilePage() {
+function ProfilePage(props) {
+  const t = (snippet, prop=null) => props.excerpt(snippet, props.language, prop);
+
+  const holdings = [
+    {
+      title: t('profile.dmgBalance'),
+      valueBN: ethers.constants.Zero
+    },
+    {
+      title: t('profile.votes'),
+      valueBN: ethers.constants.Zero
+    },
+    {
+      title: t('profile.deleagtingTo'),
+      delegating: null
+    }
+  ]
+
   const [loading, setLoading] = useState(true)
   const [page, changePage] = useState(1)
   const [proposals, setProposals] = useState([])
@@ -482,7 +485,7 @@ export default function ProfilePage() {
   const delegate = accountInfo?.vote_info?.delegate_address || true
   holdings[0].valueBN = balance
   holdings[1].valueBN = accountInfo ? accountInfo.vote_info?.votes_padded : 'N/A'
-  holdings[2].delegating = delegate === address ? 'Self' : delegate
+  holdings[2].delegating = delegate === address ? t('profile.self') : delegate
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
   const mp = page * proposalsPerPage - proposalsPerPage
@@ -499,7 +502,7 @@ export default function ProfilePage() {
     block_number: '-'
   }
 
-  const transactionTitles = ['Action', 'Block Number']
+  const transactionTitles = [t('profile.action'), t('profile.blockNumber')]
   const transactionsAmount = 3
   let transactions = []
   let lt = loadedTransactions.length
@@ -607,7 +610,7 @@ export default function ProfilePage() {
   return (
     <Main>
       <Link to={prevPath ? prevPath : '/governance/proposals'} style={backLink}>
-        &#8592; {prevPath ? 'Details' : 'Overview'}
+        &#8592; {prevPath ? t('profile.details') : t('profile.overview')}
       </Link>
       <div>
         <Wrapper>
@@ -645,7 +648,7 @@ export default function ProfilePage() {
         */}
         </Wrapper>
         <Rank>
-          RANK
+          {t('profile.rank')}
           <RankNum>
             {rank}
           </RankNum>
@@ -654,7 +657,7 @@ export default function ProfilePage() {
       <div>
         <Card width={35}>
           <Title>
-            Holdings
+            {t('profile.holdings')}
           </Title>
           <Underline />
           {holdings.map(({ title, valueBN, delegating }, index) => (
@@ -680,25 +683,22 @@ export default function ProfilePage() {
               </Value>
             </Balance>
           ))}
-          { /*nfts*/true /*&& nfts.length > 0*/ &&
+          { nfts && nfts.length > 0 &&
           <Balance key={`balance-NFT`}>
             <DMGTitle active={false}>
               NFTs
             </DMGTitle>
             {nfts.map(nft =>
               <NFTSection>
-                {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
+                {nft.country_name} - {t('profile.'+nft.introduer_type)}
               </NFTSection>
             )}
-            <NFTSection>
-              {/*nft.country_name*/}South Korea - {/*capitalizeFirstLetter(nft.introducer_type.toLowerCase())*/}Affiliate
-            </NFTSection>
           </Balance>
           }
         </Card>
         <Card width={65}>
           <Title>
-            Transactions
+            {t('profile.transactions')}
           </Title>
           <Underline />
           <div>
@@ -711,7 +711,7 @@ export default function ProfilePage() {
               {transactions.slice(0, transactionsAmount).map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} ${t('profile.votes')}`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
@@ -721,14 +721,14 @@ export default function ProfilePage() {
           {transactions.length > transactionsAmount ? (
             <View onClick={() => changeViewMore(true)}>
               <ViewText>
-                {'View More'}
+                {t('profile.viewMore')}
               </ViewText>
             </View>
           ) : (<span />)}
         </Card>
         <Card width={100}>
           <Title>
-            Voting History
+            {t('profile.votingHistory')}
           </Title>
           <Underline />
           {loading ?
@@ -775,7 +775,7 @@ export default function ProfilePage() {
               {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} ${t('profile.votes')}`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
@@ -809,3 +809,5 @@ export default function ProfilePage() {
     </Main>
   )
 }
+
+export default withTranslations(ProfilePage);

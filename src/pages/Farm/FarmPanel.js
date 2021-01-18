@@ -44,6 +44,8 @@ import { useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressYieldFarmingBalance } from '../../contexts/YieldFarmingBalances'
 import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 
 const BackDrop = styled.div`
   width: 100vw;
@@ -400,8 +402,8 @@ function formatBalance(value) {
   return `Balance: ${value}`
 }
 
-export default function FarmPanel({ params }) {
-  const { t } = useTranslation()
+function FarmPanel({ params, language, excerpt }) {
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -494,7 +496,7 @@ export default function FarmPanel({ params }) {
 
   useEffect(() => {
     if (!independentError && !isFarmingActive) {
-      setIndependentError(t('farmNotActive'))
+      setIndependentError(t('farm.farmNotActive'))
     } else {
       setIndependentError(null)
     }
@@ -525,7 +527,7 @@ export default function FarmPanel({ params }) {
           setIndependentError(null)
         }
       } catch (error) {
-        setIndependentError(t('inputNotValid'))
+        setIndependentError(t('farm.inputNotValid'))
       }
 
       return () => {
@@ -564,7 +566,7 @@ export default function FarmPanel({ params }) {
 
   useEffect(() => {
     if (allowanceCurrencyA.eq(ethers.BigNumber.from(0)) || currencyAInputValueParsed.gt(allowanceCurrencyA)) {
-      setIndependentError(`You must unlock ${currencyASymbol} to begin farming`)
+      setIndependentError(t('farm.mustUnlock', currencyASymbol))
       setShowUnlockCurrencyA(true)
     } else {
       setIndependentError('')
@@ -572,7 +574,7 @@ export default function FarmPanel({ params }) {
     }
 
     if (allowanceCurrencyB.eq(ethers.BigNumber.from(0)) || currencyBInputValueParsed.gt(allowanceCurrencyB)) {
-      setIndependentError(`You must unlock ${currencyBSymbol} to begin farming`)
+      setIndependentError(t('farm.mustUnlock', currencyBSymbol))
       setShowUnlockCurrencyB(true)
     } else {
       setIndependentError('')
@@ -732,10 +734,10 @@ export default function FarmPanel({ params }) {
     } else if (showUnlockCurrencyB) {
       setIsBeginValid(false)
     } else if (!currencyABalance || currencyABalance.lt(currencyAInputValueParsed)) {
-      setIndependentError(t('insufficientBalanceForSymbol', { symbol: currencyASymbol }))
+      setIndependentError(t('farm.insufficientBalanceForSymbol', currencyASymbol))
       setIsBeginValid(false)
     } else if (!currencyBBalance || currencyBBalance.lt(currencyBInputValueParsed)) {
-      setIndependentError(t('insufficientBalanceForSymbol', { symbol: currencyBSymbol }))
+      setIndependentError(t('farm.insufficientBalanceForSymbol', currencyBSymbol))
       setIsBeginValid(false)
     } else if (!currencyAInputValueParsed || currencyAInputValueParsed.eq(ethers.constants.Zero)) {
       setIsBeginValid(false)
@@ -981,20 +983,18 @@ export default function FarmPanel({ params }) {
       <BackDrop>
         <Card>
           <CardTitle>
-            Confirm Withdraw Farming
+            {t('farm.confirmWithdraw')}
           </CardTitle>
           <Underline />
           <CardText>
-            You are withdrawing your active farm, which incurs a {feesByToken} fee on the amount
-            of {currencyASymbol} and {currencyBSymbol} you deposited. The expected fee is about
-            {feeAmountAFormatted} {currencyASymbol} and {feeAmountBFormatted} {currencyBSymbol}.
+            {t('farm.withdrawInfo', {feesByToken: feesByToken, currencyASymbol: currencyASymbol, currencyBSymbol: currencyBSymbol, feeAmountAFormatted: feeAmountAFormatted, feeAmountBFormatted: feeAmountBFormatted})}
           </CardText>
           <ConfirmButtonsWrapper>
             <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>
-              Deny
+              {t('farm.deny')}
             </Button>
             <Button onClick={endYieldFarming}>
-              Confirm
+              {t('farm.confirm')}
             </Button>
           </ConfirmButtonsWrapper>
         </Card>
@@ -1002,7 +1002,7 @@ export default function FarmPanel({ params }) {
       }
       <InfoPanel>
         <Title>
-          Farming Info
+          {t('farm.title')}
         </Title>
         <Underline />
         <Amount>
@@ -1010,7 +1010,7 @@ export default function FarmPanel({ params }) {
             return (
               <InlineAmount key={`inline-amount-${key}`}>
                 <Label>
-                  {key} APR
+                  {t('farm.aprTitle', key)}
                 </Label>
                 <Value>
                   {aprs[key]}
@@ -1021,19 +1021,19 @@ export default function FarmPanel({ params }) {
         </Amount>
         <Amount>
           <Label>
-            Left for redemption
+            {t('farm.leftForRedemption')}
           </Label>
           <Value>
             {dmgLeft} DMG
           </Value>
         </Amount>
         <Title>
-          Your Wallet
+          {t('farm.yourWallet')}
         </Title>
         <Underline />
         <Amount>
           <Label>
-            Earning a net APR of
+            {t('farm.earningNetAPR')}
           </Label>
           <Value>
             {walletApr}
@@ -1043,7 +1043,7 @@ export default function FarmPanel({ params }) {
       <Wrapper>
         {/* CURRENCY A */}
         <CurrencyInputPanel
-          title={t('deposit', { extra: 'mTokens' })}
+          title={t('farm.deposit', 'mTokens')}
           extraText={currencyABalance ? formatBalance(amountFormatter(currencyABalance, currencyADecimals, 6)) : ''}
           onValueChange={inputValue => {
             dispatchFarmState({
@@ -1075,6 +1075,7 @@ export default function FarmPanel({ params }) {
           minDecimals={Math.min(currencyADecimals, 6)}
           unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
           tokenList={mTokens}
+          t={t}
         />
         {/* END CURRENCY A */}
         <OversizedPanel>
@@ -1084,7 +1085,7 @@ export default function FarmPanel({ params }) {
         </OversizedPanel>
         {/* CURRENCY B */}
         <CurrencyInputPanel
-          title={t('deposit', { extra: 'Tokens' })}
+          title={t('farm.deposit', 'Tokens')}
           description={''}
           extraText={currencyBBalance ? formatBalance(amountFormatter(currencyBBalance, currencyBDecimals, 6)) : ''}
           selectedTokenAddress={currencyB}
@@ -1117,20 +1118,21 @@ export default function FarmPanel({ params }) {
           minDecimals={Math.min(currencyBDecimals, 6)}
           unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
           tokenList={underlyingTokens}
+          t={t}
         />
         {/* END CURRENCY B */}
         <OversizedPanel style={{ boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)` }}
                         hideTop hideBottom>
           <SummaryPanel>
             <ExchangeRateWrapper>
-              <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
+              <ExchangeRate>{t('farm.exchangeRate')}</ExchangeRate>
               <CurrencySwitcher onClick={() => setIsExchangeRateInverted(!isExchangeRateInverted)}>
                 {!isExchangeRateInverted && (exchangeRate ? `1 ${currencyASymbol} = ${amountFormatter(exchangeRate, 18, 6)} ${currencyBSymbol}` : ' - ')}
                 {isExchangeRateInverted && (exchangeRateInverted ? `1 ${currencyBSymbol} = ${amountFormatter(exchangeRateInverted, 18, 6)} ${currencyASymbol}` : ' - ')}
               </CurrencySwitcher>
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
-              <ExchangeRate>{t('currentPoolSize')}</ExchangeRate>
+              <ExchangeRate>{t('farm.currentPoolSize')}</ExchangeRate>
               <CurrencySwitcher onClick={() => setIsCurrencyADisplayed(!isCurrencyADisplayed)}>
                 {isCurrencyADisplayed && ((exchangeCurrencyABalance.eq(ethers.constants.Zero)) ? '-' : `${amountFormatter(exchangeCurrencyABalance, currencyADecimals, 4)} ${currencyASymbol}`)}
                 {!isCurrencyADisplayed && ((exchangeCurrencyBBalance.eq(ethers.constants.Zero)) ? '-' : `${amountFormatter(exchangeCurrencyBBalance, currencyBDecimals, 4)} ${currencyBSymbol}`)}
@@ -1138,7 +1140,7 @@ export default function FarmPanel({ params }) {
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
-                {t('yourPoolShare')} ({currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
+                {t('farm.yourPoolShare')} ({currencyABalance && amountFormatter(poolTokenPercentage, 16, 4)}%)
               </ExchangeRate>
               <CurrencySwitcher onClick={() => setIsCurrencyADisplayed(!isCurrencyADisplayed)}>
                 {isCurrencyADisplayed && (currencyAShare.eq(ethers.constants.Zero) ? '-' : `${amountFormatter(currencyAShare, currencyADecimals, 4)} ${currencyASymbol}`)}
@@ -1147,7 +1149,7 @@ export default function FarmPanel({ params }) {
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
-                {t('dmgRewardBalance')}
+                {t('farm.dmgRewardBalance')}
               </ExchangeRate>
               <CurrencySwitcher onClick={() => setIsUsingDmgPriceUsd(!isUsingDmgPriceUsd)}>
                 {!isUsingDmgPriceUsd && (!userDmgRewardBalance ? '-' : `${amountFormatter(userDmgRewardBalance, dmgDecimals, 4)} DMG`)}
@@ -1156,7 +1158,7 @@ export default function FarmPanel({ params }) {
             </ExchangeRateWrapper>
             <ExchangeRateWrapper>
               <ExchangeRate>
-                {t('withdrawalFee')}
+                {t('farm.harvestFee')}
               </ExchangeRate>
               <span>{feesByToken}</span>
             </ExchangeRateWrapper>
@@ -1193,14 +1195,15 @@ export default function FarmPanel({ params }) {
         />
         <Flex>
           <Button disabled={!isFarmingActive || !isBeginValid} onClick={beginYieldFarming}>
-            {isFarmingApproved ? (isAlreadyFarming ? t('addToFarm') : t('farm')) : t('approveFarming')}
+            {isFarmingApproved ? (isAlreadyFarming ? t('farm.addToFarm') : t('farm.farm')) : t('farm.approveFarming')}
           </Button>
           <Button disabled={!isEndValid || !isFarmingApproved} onClick={() => setIsDisplayConfirmWithdraw(true)}>
-            {isFarmingActive ? t('endFarming') : t('withdraw')}
+            {isFarmingActive ? t('farm.endFarming') : t('farm.withdraw')}
           </Button>
         </Flex>
       </Wrapper>
     </FarmingWrapper>
   )
-
 }
+
+export default withTranslations(FarmPanel);

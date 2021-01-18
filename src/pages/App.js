@@ -15,6 +15,10 @@ import ProfilePage from './Vote/ProfilePage'
 import { isAddress } from '../utils/index'
 import Farm from './Farm/index'
 import NFT from './NFT/index'
+import Languages from '../services/Translations/Languages';
+
+import USFlag from '../assets/US-Flag.png';
+import CNFlag from '../assets/CN-Flag.png';
 
 const Swap = lazy(() => import('./Swap'))
 
@@ -65,9 +69,54 @@ const Body = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+  position: relative;
+`
+
+const LanguageSelector = styled.div`
+  position: absolute;
+  transform: rotate(-90deg);
+  right: -20px;
+  top: 70px;
+  z-index: 999;
+  cursor: pointer;
+  color: black !important;
+  
+  img {
+    width: 30px;
+    margin-right: 8px;
+    margin-bottom: -2px;
+  }
+  
+  a {
+    text-decoration: none !important;
+    color: black !important;
+  }
 `
 
 class App extends React.Component {
+  constructor(props) {
+    super(props);
+
+    const lang = navigator.language || navigator.userLanguage;
+
+    let browserLanguage = Languages.ENGLISH;
+
+    if (lang) {
+      if (lang === 'zh-CN' || lang === 'zh') {
+        browserLanguage = Languages.CHINESE;
+      }
+    }
+    else if (props.lang) {
+      if (props.lang === 'CN') {
+        browserLanguage = Languages.CHINESE;
+      }
+    }
+
+    this.state = {
+      language: browserLanguage,
+      selectedLanguage: null,
+    };
+  }
 
   render() {
     const params = getAllQueryParams()
@@ -86,17 +135,34 @@ class App extends React.Component {
         <Suspense fallback={null}>
           <AppWrapper>
             <HeaderWrapper>
-              <Header hideInfo hideBuy/>
+              <Header hideInfo hideBuy language={this.state.selectedLanguage || this.state.language}/>
             </HeaderWrapper>
             <BodyWrapper>
               <Body>
                 <Web3ReactManager>
                   <BrowserRouter>
-                    <NavigationTabs/>
+                    <LanguageSelector>
+                      { (this.state.selectedLanguage || this.state.language) === Languages.CHINESE ? (
+                        <div>
+                          <div onClick={() => this.setState({ selectedLanguage: Languages.ENGLISH })}>
+                            <img src={USFlag} />English
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          <div onClick={() => this.setState({ selectedLanguage: Languages.CHINESE })}>
+                            <img src={CNFlag} />中文
+                          </div>
+                        </div>
+                      )}
+                    </LanguageSelector>
+                    <NavigationTabs
+                      language={this.state.selectedLanguage || this.state.language}
+                    />
                     { /*this Suspense is for route code-splitting*/ }
                     <Suspense fallback={null}>
                       <Switch>
-                        <Route exact strict path="/swap" component={() => <Swap params={params}/>}/>
+                        <Route exact strict path="/swap" component={() => <Swap params={params} language={this.state.selectedLanguage || this.state.language}/>}/>
                         <Route
                           exact
                           strict
@@ -115,11 +181,11 @@ class App extends React.Component {
                             }
                           }}
                         />
-                        <Route exact strict path="/farm" component={() => <Farm params={params} />} />
-                        <Route exact strict path="/governance/proposals" component={() => <Vote/>}/>
-                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage/>}/>
-                        <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage/>}/>
-                        <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params}/>}/>
+                        <Route exact strict path="/farm" component={() => <Farm params={params} language={this.state.selectedLanguage || this.state.language}/>} />
+                        <Route exact strict path="/governance/proposals" component={() => <Vote language={this.state.selectedLanguage || this.state.language}/>}/>
+                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage language={this.state.selectedLanguage || this.state.language}/>}/>
+                        <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage language={this.state.selectedLanguage || this.state.language}/>}/>
+                        <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params} language={this.state.selectedLanguage || this.state.language}/>}/>
                         <Redirect to="/swap"/>
                       </Switch>
                     </Suspense>
@@ -128,7 +194,7 @@ class App extends React.Component {
               </Body>
             </BodyWrapper>
             <FooterWrapper>
-              <Footer/>
+              <Footer language={this.state.selectedLanguage || this.state.language}/>
             </FooterWrapper>
           </AppWrapper>
         </Suspense>
