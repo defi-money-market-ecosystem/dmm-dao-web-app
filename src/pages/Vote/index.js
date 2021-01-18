@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import ProposalItem from './ProposalItem'
 import styled from 'styled-components'
-import { useHistory } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import LeftArrow from '../../assets/svg/keyboard_arrow_left-black-18dp.svg'
 import RightArrow from '../../assets/svg/keyboard_arrow_right-black-18dp.svg'
 import { ProposalSummary } from '../../models/ProposalSummary'
@@ -10,13 +10,14 @@ import { useAddressBalance } from '../../contexts/Balances'
 import BN from 'bn.js'
 import Web3 from 'web3'
 import { DMG_ADDRESS } from '../../contexts/Tokens'
-import { amountFormatter, calculateGasMargin, DMM_API_URL } from '../../utils'
+import { amountFormatter, calculateGasMargin, DMM_API_URL, shorten } from '../../utils'
 import { ethers } from 'ethers'
 import * as Sentry from '@sentry/browser'
 import { usePendingDelegation, useTransactionAdder } from '../../contexts/Transactions'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import { AccountDetails } from '../../models/AccountDetails'
 import { primaryColor } from '../../theme/index'
+import { Button } from '../../theme'
 
 import { withTranslations } from '../../services/Translations/Translations';
 
@@ -120,20 +121,21 @@ const Title = styled.div`
   }
 `
 
-const ProfileLink = styled.div`
-  width: 100%;
-  text-align: center;
-  font-size: 18px;
-  font-weight: 400;
-`
-
 const Proposals = styled.div`
   height: calc(100% - 62px);
 `
 
-const Balance = styled.div`
+const WalletRow = styled.div`
   padding: 20px 30px;
   border-bottom: 1px solid #DCDCDC;
+  
+  ${({ flex }) => flex && `
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+    align-items: center;
+  `}
 `
 
 const DMGTitle = styled.div`
@@ -145,6 +147,37 @@ const DMGTitle = styled.div`
     color: #b7c3cc;
   `}
 `
+
+const DelegationWrapper = styled.div`
+  padding-top: 12px;
+  display: inline-block;
+`
+
+const ViewProfileButtonWrapper = styled.div `
+  @media (max-width: 700px) {
+    text-align: center;
+  }
+`
+
+const PurchaseAssetIntroducerNFTButtonWrapper = styled.div `
+  @media (max-width: 700px) {
+    text-align: center;
+  }
+`
+
+const regularLink = {
+  textDecoration: 'none',
+  color: `${primaryColor}`,
+  cursor: 'pointer',
+}
+
+const walletButtonStyle = {
+  width: 225,
+}
+
+const purchaseAssetIntroducerSlotStyle = {
+  width: 225,
+}
 
 const Value = styled.div`
   margin-top: 10px;
@@ -170,6 +203,20 @@ const ActivateWallet = styled.div`
   ${({ hidden }) => hidden && `
     display: none;    
   `}
+`
+
+const Delegation = styled.div`
+  font-size: 12px;
+  border-radius: 3px;
+  font-weight: 700;
+  background-color: #327ccb;
+  max-width: 100px;
+  color: white;
+  margin: auto;
+  padding: 8px;
+  cursor: pointer;
+  text-align: center;
+  display: inline-block;
 `
 
 const AssetIntroducer = styled.a`
@@ -394,6 +441,13 @@ function Vote({ language, excerpt }) {
   const addTransaction = useTransactionAdder()
   const isPendingDelegateTransaction = usePendingDelegation()
 
+  const [isSameDelegateAsAccount, setIsSameDelegateAsAccount] = useState(false)
+
+  useEffect(() => {
+    const delegateAddress = accountInfo?.voteInfo?.delegateAddress
+    setIsSameDelegateAsAccount(!!delegateAddress && walletAddress.toUpperCase() === delegateAddress.toUpperCase())
+  }, [accountInfo, walletAddress])
+
   useEffect(() => {
     const subscriptionId = setTimeout(() => {
       setIsActivating(isPendingDelegateTransaction)
@@ -470,7 +524,7 @@ function Vote({ language, excerpt }) {
           </Title>
           <Underline/>
           {balances.map(({ title, valueBN, voteCountBN, isDelegating }, index) => (
-            <Balance key={`balance-${title}`}>
+            <WalletRow key={`balance-${title}`}>
               <DMGTitle active={index === 0}>
                 {t('vote.dmgBalanceTitle')}
               </DMGTitle>
@@ -479,16 +533,46 @@ function Vote({ language, excerpt }) {
                 {!valueBN ? '' : amountFormatter(valueBN, 18, 2, true, true)}
               </Value>
               {getBalanceButton(index, valueBN, voteCountBN, isDelegating)}
-            </Balance>
+            </WalletRow>
           ))}
-          {/*<ProfileLink>
-            See your profile
-          </ProfileLink>*/}
-          <Balance>
-            <AssetIntroducer onClick={() => history.push('/asset-introducers/purchase')}>
-              {t('vote.becomeIntroducer')}
-            </AssetIntroducer>
-          </Balance>
+          <WalletRow key={`balance-delegation`}>
+            <DMGTitle active={true}>
+              {t('vote.delegatingVotes')}
+            </DMGTitle>
+            <DelegationWrapper>
+              <Value>
+                {!!accountInfo?.voteInfo?.delegateAddress
+                  ? (
+                    <Link to={`/governance/address/${accountInfo?.voteInfo?.delegateAddress}`} style={regularLink}>
+                      {isSameDelegateAsAccount ? 'Self' : shorten(accountInfo?.voteInfo?.delegateAddress)}
+                    </Link>
+                  ) :
+                  'N/A'}
+              </Value>
+            </DelegationWrapper>
+          </WalletRow>
+          <WalletRow key={`view-profile`} flex={'col'}>
+            <DelegationWrapper>
+              <Value>
+                <PurchaseAssetIntroducerNFTButtonWrapper>
+                  <Button style={purchaseAssetIntroducerSlotStyle} onClick={() => history.push('/asset-introducers/purchase')}>
+                    {t('vote.becomeIntroducer')}
+                  </Button>
+                </PurchaseAssetIntroducerNFTButtonWrapper>
+              </Value>
+            </DelegationWrapper>
+            <DelegationWrapper>
+              <Value>
+                {!!walletAddress && (
+                  <ViewProfileButtonWrapper>
+                    <Button style={walletButtonStyle} onClick={() => history.push(`/governance/address/${walletAddress}`)}>
+                      {t('vote.viewProfile')}
+                    </Button>
+                  </ViewProfileButtonWrapper>
+                )}
+              </Value>
+            </DelegationWrapper>
+          </WalletRow>
         </VotingWallet>
         <GovernanceProposals>
           <GovernanceInner>

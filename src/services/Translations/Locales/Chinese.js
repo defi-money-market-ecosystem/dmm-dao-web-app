@@ -1,7 +1,18 @@
 /*eslint-disable */
-import {
-  h1, h2, bold, a, blue
-} from './_helper';
+
+const h1 = title => (title ? `<h1>${title}</h1>` : '');
+const h2 = title => (title ? `<h2>${title}</h2>` : '');
+const bold = text => (text ? `<b>${text}</b>` : '');
+const a = (text, href, target) => (text ? `<a href=${href} target=${target}>${text}</a>` : '');
+
+/*
+ * Rules for translating:
+ * - Only change text in quotes ("", '' or `)
+ * - When you see something like h1('Welcome') ONLY change what is in the quotes
+ *    - h1()        Makes text Header text (very large)
+ *    - h2()        Makes text Secondary Header text (very large, not quite as large as h1)
+ *    - bold()      Makes text bold
+ */
 
 export default {
   'swap.invalidInput': 'Not a valid input value',

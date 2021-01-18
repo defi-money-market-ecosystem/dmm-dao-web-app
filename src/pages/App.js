@@ -186,7 +186,7 @@ class App extends React.Component {
                         <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage language={this.state.selectedLanguage || this.state.language}/>}/>
                         <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage language={this.state.selectedLanguage || this.state.language}/>}/>
                         <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params} language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Redirect to="/swap"/>
+                        <Redirect to="/governance/proposals"/>
                       </Switch>
                     </Suspense>
                   </BrowserRouter>

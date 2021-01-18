@@ -1107,7 +1107,7 @@ function ExchangePage({ initialCurrency, sending = false, params, language, exce
         disableTokenSelect={inputCurrency === DMG_ADDRESS}
         unlockAddress={DELEGATE_ADDRESS}
         tokenList={SWAP_TOKENS_CONTEXT[chainId]}
-        t={t}
+        language={language}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -1150,7 +1150,7 @@ function ExchangePage({ initialCurrency, sending = false, params, language, exce
         market={market}
         unlockAddress={DELEGATE_ADDRESS}
         tokenList={SWAP_TOKENS_CONTEXT[chainId]}
-        t={t}
+        language={language}
       />
       <OversizedPanel hideBottom>
         <ExchangeRateWrapper

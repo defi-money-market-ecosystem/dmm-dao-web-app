@@ -1,8 +1,9 @@
 /*eslint-disable */
-import {
-  h1, h2, bold, a
-} from './_helper';
-import moment from 'moment/moment'
+
+const h1 = title => (title ? `<h1>${title}</h1>` : '');
+const h2 = title => (title ? `<h2>${title}</h2>` : '');
+const bold = text => (text ? `<b>${text}</b>` : '');
+const a = (text, href, target) => (text ? `<a href=${href} target=${target}>${text}</a>` : '');
 
 /*
  * Rules for translating:
@@ -64,7 +65,7 @@ export default {
   'vote.activateWallet': 'Activate Wallet',
   'vote.votes': 'Votes',
   'vote.yourWallet': 'Your Wallet',
-  'vote.becomeIntroducer': 'Become an Asset Introducer',
+  'vote.becomeIntroducer': 'Purchase Asset Introducer NFT',
   'vote.governanceProposals': 'Governance Proposals',
   'vote.invalidID': 'Invalid Proposal ID',
   'vote.FOR': 'FOR',
@@ -100,6 +101,8 @@ export default {
   'vote.for': 'For',
   'vote.against': 'Against',
   'vote.castYourVote': 'Cast your vote',
+  'vote.viewProfile': 'View Profile',
+  'vote.delegatingVotes': 'Delegating Votes To',
 
   'proposal.address': 'Address',
   'proposal.topAddresses': 'Top Addresses',
@@ -115,8 +118,8 @@ export default {
 
   'profile.action': 'Action',
   'profile.blockNumber': 'Block Number',
-  'profile.details': 'Details',
-  'profile.overview': 'Overview',
+  'profile.details': 'Proposal Details',
+  'profile.overview': 'Governance Overview',
   'profile.rank': 'RANK',
   'profile.holdings': 'Holdings',
   'profile.AFFILIATE': 'Affiliate',
@@ -184,10 +187,3 @@ export default {
   'inputPanel.noTokens': 'No Tokens Found',
 
 }
-
-/*
- * Add new translations to the bottom of the file. Everytime you reconcile
- * other languages with the English.js file, add a comment saying so at the bottom
- * of the file with the date. This makes keeping track of what needs to be
- * translated much, much easier
- */

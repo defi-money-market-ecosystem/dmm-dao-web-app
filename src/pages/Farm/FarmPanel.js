@@ -402,8 +402,41 @@ function formatBalance(value) {
   return `Balance: ${value}`
 }
 
-function FarmPanel({ params, language, excerpt }) {
-  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+function updateValues(independentValueParsed, exchangeCurrencyABalance, exchangeCurrencyBBalance, independentField, t, isFarmingActive, dispatchFarmState, setIndependentError) {
+  const amount = independentValueParsed
+  if (amount) {
+    try {
+      if (independentField === INDEPENDENT_CURRENCY_A) {
+        const calculatedDependentValue = calculateCurrencyBFromCurrencyA(amount, exchangeCurrencyABalance, exchangeCurrencyBBalance)
+        if (calculatedDependentValue.lte(ethers.constants.Zero)) {
+          throw Error()
+        }
+        dispatchFarmState({
+          type: 'UPDATE_DEPENDENT',
+          payload: calculatedDependentValue
+        })
+      } else {
+        const calculatedDependentValue = calculateCurrencyAFromCurrencyB(amount, exchangeCurrencyABalance, exchangeCurrencyBBalance)
+        if (calculatedDependentValue.lte(ethers.constants.Zero)) {
+          throw Error()
+        }
+        dispatchFarmState({
+          type: 'UPDATE_DEPENDENT',
+          payload: calculatedDependentValue
+        })
+      }
+    } catch (error) {
+      setIndependentError('Invalid Value')
+    }
+    return () => {
+      dispatchFarmState({ type: 'UPDATE_DEPENDENT', payload: '' })
+    }
+  }
+}
+
+export default function FarmPanel({ params, language }) {
+  //const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+  const t = () => 'hi';
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -580,7 +613,7 @@ function FarmPanel({ params, language, excerpt }) {
       setIndependentError('')
       setShowUnlockCurrencyB(false)
     }
-  }, [allowanceCurrencyA, allowanceCurrencyB, currencyAInputValueParsed, currencyASymbol, currencyBInputValueParsed, currencyBSymbol])
+  }, [allowanceCurrencyA, allowanceCurrencyB, currencyAInputValueParsed, currencyASymbol, currencyBInputValueParsed, currencyBSymbol, t])
 
   const [totalPoolTokens, setTotalPoolTokens] = useState(ethers.constants.Zero)
   const fetchPoolTokens = useCallback(() => {
@@ -694,38 +727,6 @@ function FarmPanel({ params, language, excerpt }) {
         .catch(() => '...')
     }
   }, 15 * 1000, true, [account])
-
-  useEffect(() => {
-    const amount = independentValueParsed
-    if (amount) {
-      try {
-        if (independentField === INDEPENDENT_CURRENCY_A) {
-          const calculatedDependentValue = calculateCurrencyBFromCurrencyA(amount, exchangeCurrencyABalance, exchangeCurrencyBBalance)
-          if (calculatedDependentValue.lte(ethers.constants.Zero)) {
-            throw Error()
-          }
-          dispatchFarmState({
-            type: 'UPDATE_DEPENDENT',
-            payload: calculatedDependentValue
-          })
-        } else {
-          const calculatedDependentValue = calculateCurrencyAFromCurrencyB(amount, exchangeCurrencyABalance, exchangeCurrencyBBalance)
-          if (calculatedDependentValue.lte(ethers.constants.Zero)) {
-            throw Error()
-          }
-          dispatchFarmState({
-            type: 'UPDATE_DEPENDENT',
-            payload: calculatedDependentValue
-          })
-        }
-      } catch (error) {
-        setIndependentError('Invalid Value')
-      }
-      return () => {
-        dispatchFarmState({ type: 'UPDATE_DEPENDENT', payload: '' })
-      }
-    }
-  }, [independentValueParsed, exchangeCurrencyABalance, exchangeCurrencyBBalance, independentField, t, isFarmingActive])
 
   const [isBeginValid, setIsBeginValid] = useState(false)
   useEffect(() => {
@@ -1046,10 +1047,13 @@ function FarmPanel({ params, language, excerpt }) {
           title={t('farm.deposit', 'mTokens')}
           extraText={currencyABalance ? formatBalance(amountFormatter(currencyABalance, currencyADecimals, 6)) : ''}
           onValueChange={inputValue => {
-            dispatchFarmState({
+            /*dispatchFarmState({
               type: 'UPDATE_INDEPENDENT',
               payload: { value: inputValue, field: INDEPENDENT_CURRENCY_A }
-            })
+            });*/
+            console.log("VALUE CHANGE");
+            console.log(inputValue);
+            updateValues(independentValueParsed, exchangeCurrencyABalance, exchangeCurrencyBBalance, independentField, t, isFarmingActive, dispatchFarmState, setIndependentError)
           }}
           extraTextClickHander={() => {
             if (currencyABalance) {
@@ -1075,7 +1079,7 @@ function FarmPanel({ params, language, excerpt }) {
           minDecimals={Math.min(currencyADecimals, 6)}
           unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
           tokenList={mTokens}
-          t={t}
+          language={language}
         />
         {/* END CURRENCY A */}
         <OversizedPanel>
@@ -1099,7 +1103,8 @@ function FarmPanel({ params, language, excerpt }) {
             dispatchFarmState({
               type: 'UPDATE_INDEPENDENT',
               payload: { value: outputValue, field: INDEPENDENT_CURRENCY_B }
-            })
+            });
+            updateValues(independentValueParsed, exchangeCurrencyABalance, exchangeCurrencyBBalance, independentField, t, isFarmingActive, dispatchFarmState, setIndependentError)
           }}
           extraTextClickHander={() => {
             if (currencyBBalance) {
@@ -1118,7 +1123,7 @@ function FarmPanel({ params, language, excerpt }) {
           minDecimals={Math.min(currencyBDecimals, 6)}
           unlockAddress={YIELD_FARMING_ROUTER_ADDRESS}
           tokenList={underlyingTokens}
-          t={t}
+          language={language}
         />
         {/* END CURRENCY B */}
         <OversizedPanel style={{ boxShadow: `1px 1px 8px -4px rgba(0,0,0,.5), 1px 1px 4px -4px rgba(0,0,0,.5)` }}
@@ -1206,4 +1211,4 @@ function FarmPanel({ params, language, excerpt }) {
   )
 }
 
-export default withTranslations(FarmPanel);
+//export default withTranslations(FarmPanel);

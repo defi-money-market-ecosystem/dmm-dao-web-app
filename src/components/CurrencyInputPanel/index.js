@@ -298,8 +298,11 @@ function CurrencyInputPanel({
                                              tokenAddress,
                                              unlockAddress,
                                              tokenList,
-                                             t
+                                             language,
+                                             excerpt,
                                            }) {
+
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
 
   if (!unlockAddress) {
     throw Error('Missing unlockAddress! (DELEGATE, FARM_ROUTER, ETC)')

@@ -54,6 +54,12 @@ const backLink = {
   marginLeft: '10px'
 }
 
+const regularLink = {
+  textDecoration: 'none',
+  color: `${primaryColor}`,
+  cursor: 'pointer',
+}
+
 const Wrapper = styled.div`
 	margin-top: 20px;
 	margin-left: 10px;
@@ -173,7 +179,7 @@ const DMGTitle = styled.div`
 `
 
 const NFTSection = styled.div`
-
+  padding-top: 8px;
 `
 
 const Light = styled.span`
@@ -181,16 +187,17 @@ const Light = styled.span`
 `
 
 const Value = styled.div`
-  margin-top: 10px;
+  padding-top: 8px;
   font-size: 18px;
   font-weight: 600;
-  color: #b7c3cc;
-  display: inline;
+  color: black;
 
-  ${({ active }) => active && `
-    color: black;
+  ${({ inline }) => inline && `
+    display: inline-block;
+    padding: 0;
+    margin: auto;
+    margin-right: 16px;
   `}
-
 `
 
 const Transactions = styled.div`
@@ -243,7 +250,8 @@ const View = styled.div`
 	text-align: center;
  	transition: opacity 0.2s ease-in-out;
   cursor: pointer;
-  float: center
+  float: center;
+  margin: auto;
 
  	${({ active }) => active && `
     color: black;
@@ -364,27 +372,45 @@ const RankNum = styled.div`
   margin-top: 5px;
 `
 
-const DelegateButton = styled.div`
-  font-size: 10px;
+const ActivateWalletWrapper = styled.div`
+  padding-top: 8px;
+`
+
+const ActivateWallet = styled.div`
+  font-size: 12px;
   border-radius: 3px;
   font-weight: 700;
   background-color: #327ccb;
   max-width: 100px;
   color: white;
-  margin: 10px auto 0;
-  padding: 5px;
+  margin: auto;
+  padding: 8px;
   cursor: pointer;
-  display: none;
   text-align: center;
-  width: calc(100% - 10px);
-
-  ${({ active }) => active && `
-    display: block;
+  display: inline-block;
+  
+  ${({ isPersonalDelegatingToProfile }) => isPersonalDelegatingToProfile && `
+    cursor: default;
+    color: #000;
+    background-color: #FFF;
+    text-align: left;
+    max-width: 999px;
+    padding: 0;
+  `}
+  
+  ${({ isDelegatingToSelf }) => isDelegatingToSelf && `
+    display: none;
+  `}
+    
+   ${({ isActivating }) => isActivating && `
+    background-color: #FFF;
   `}
 `
 
-const dt = styled.div`
-  margin: 0;
+const SpinnerWrapper = styled.div`
+  height: 24px;
+  width: 24px
+  margin: auto; 
 `
 
 function isValidWalletAddress(walletAddress) {
@@ -425,7 +451,7 @@ async function getAccountInfo(walletAddress) {
 const displayPages = 7
 
 function display(p, selected, l) {
-  if (l <= displayPages) return true //displays all pages if it is less than the diplayed amount
+  if (l <= displayPages) return true //displays all pages if it is less than the displayed amount
 
   const half = (displayPages - 1) / 2
 
@@ -445,26 +471,12 @@ const capitalizeFirstLetter = string => {
 function ProfilePage(props) {
   const t = (snippet, prop=null) => props.excerpt(snippet, props.language, prop);
 
-  const holdings = [
-    {
-      title: t('profile.dmgBalance'),
-      valueBN: ethers.constants.Zero
-    },
-    {
-      title: t('profile.votes'),
-      valueBN: ethers.constants.Zero
-    },
-    {
-      title: t('profile.deleagtingTo'),
-      delegating: null
-    }
-  ]
-
   const [loading, setLoading] = useState(true)
   const [page, changePage] = useState(1)
   const [proposals, setProposals] = useState([])
   const [accountInfo, setAccountInfo] = useState({})
-  const [name, setName] = useState(null)
+  const [personalAccountInfo, setPersonalAccountInfo] = useState({})
+  const [profileName, setName] = useState(null)
   const [picture, setPicture] = useState(null)
   const [rank, setRank] = useState('N/A')
   const [loadedTransactions, setTransactions] = useState([])
@@ -474,18 +486,80 @@ function ProfilePage(props) {
   const [nfts, setNfts] = useState([])
 
   const { account: walletAddress, library } = useWeb3React()
-  const address = useParams().wallet_address
+  const profileAddress = useParams().wallet_address
   let history = useHistory()
-  const balance = useAddressBalance(address, DMG_ADDRESS)
-  const edit = address === walletAddress
+  const balance = useAddressBalance(profileAddress, DMG_ADDRESS)
+
+  const [isSameDelegateAsProfile, setIsSameDelegateAsProfile] = useState(false)
+  const [isPersonalSameDelegateAsProfile, setIsPersonalSameDelegateAsProfile] = useState(false)
+  const [isSameAccountAsProfile, setIsSameAccountAsProfile] = useState(false)
+
+  useEffect(() => {
+    const delegateAddress = accountInfo?.vote_info?.delegate_address
+    setIsSameDelegateAsProfile(!!delegateAddress && profileAddress.toUpperCase() === delegateAddress.toUpperCase())
+  }, [accountInfo, profileAddress])
+
+  useEffect(() => {
+    const personalDelegateAddress = personalAccountInfo?.vote_info?.delegate_address
+    setIsPersonalSameDelegateAsProfile(!!personalDelegateAddress && profileAddress.toUpperCase() === personalDelegateAddress.toUpperCase())
+  }, [personalAccountInfo, profileAddress])
+
+  useEffect(() => {
+    setIsSameAccountAsProfile(!!walletAddress && profileAddress.toUpperCase() === walletAddress.toUpperCase())
+  }, [walletAddress, profileAddress])
 
   const [showEdit, changeShowEdit] = useState(false)
   const shorten = (a) => isAddress(a) ? `${a.substring(0, 6)}...${a.substring(a.length - 4, a.length)}` : a
 
-  const delegate = accountInfo?.vote_info?.delegate_address || true
-  holdings[0].valueBN = balance
-  holdings[1].valueBN = accountInfo ? accountInfo.vote_info?.votes_padded : 'N/A'
-  holdings[2].delegating = delegate === address ? t('profile.self') : delegate
+  const [holdings, setHoldings] = useState([
+      {
+        title: t('profile.dmgBalance'),
+        valueBN: ethers.constants.Zero,
+        delegateAddress: '',
+        personalDelegateAddress: '',
+        isDelegate: false
+      },
+      {
+        title: t('profile.votes'),
+        valueBN: ethers.constants.Zero,
+        delegateAddress: '',
+        personalDelegateAddress: '',
+        isDelegate: false
+      },
+      {
+        title: t('profile.deleagtingTo'),
+        valueBN: undefined,
+        delegateAddress: accountInfo?.vote_info?.delegate_address,
+        personalDelegateAddress: personalAccountInfo?.vote_info?.delegate_address,
+        isDelegate: true
+      }
+    ]
+  )
+
+  useEffect(() => {
+    setHoldings([
+        {
+          title: holdings[0].title,
+          valueBN: balance || ethers.constants.Zero,
+          delegateAddress: null,
+          isDelegate: false
+        },
+        {
+          title: holdings[1].title,
+          valueBN: accountInfo?.vote_info?.votes_padded || ethers.constants.Zero,
+          delegateAddress: null,
+          isDelegate: false
+        },
+        {
+          title: holdings[2].title,
+          valueBN: undefined,
+          delegateAddress: accountInfo?.vote_info?.delegate_address,
+          personalDelegateAddress: personalAccountInfo?.vote_info?.delegate_address,
+          isDelegate: true
+        }
+      ]
+    )
+  }, [accountInfo, balance])
 
   const proposalsPerPage = window.innerWidth > 900 ? 5 : 3
   const mp = page * proposalsPerPage - proposalsPerPage
@@ -504,24 +578,26 @@ function ProfilePage(props) {
 
   const transactionTitles = [t('profile.action'), t('profile.blockNumber')]
   const transactionsAmount = 3
-  let transactions = []
+  let transactions
   let lt = loadedTransactions.length
   if (lt < transactionsAmount) {
     const empty = new Array(transactionsAmount - lt)
     transactions = [...loadedTransactions, ...empty.fill(emptyTransaction)]
-  } else transactions = [...loadedTransactions]
+  } else {
+    transactions = [...loadedTransactions]
+  }
 
   useEffect(() => {
     const perform = () => {
-      const proposalPromise = getProposals(address).then(data => {
+      const proposalPromise = getProposals(profileAddress).then(data => {
         setProposals(data)
       })
 
-      getNFTs(address).then(data => {
+      getNFTs(profileAddress).then(data => {
         setNfts(data)
       })
 
-      getAccountInfo(address).then(accountInfo => {
+      getAccountInfo(profileAddress).then(accountInfo => {
         if (accountInfo) {
           setAccountInfo(accountInfo)
           setName(accountInfo?.name)
@@ -529,7 +605,18 @@ function ProfilePage(props) {
           setTransactions(accountInfo?.transactions)
           setRank(accountInfo?.rank)
         }
+        if (!!walletAddress && profileAddress.toUpperCase() === walletAddress.toUpperCase()) {
+          setPersonalAccountInfo(accountInfo)
+        }
       })
+
+      if (!!walletAddress && walletAddress.toUpperCase() !== profileAddress.toUpperCase()) {
+        getAccountInfo(walletAddress).then(personalAccountInfo => {
+          if (personalAccountInfo) {
+            setPersonalAccountInfo(personalAccountInfo)
+          }
+        })
+      }
 
       Promise.all([proposalPromise]).then(() => {
         setLoading(false)
@@ -542,11 +629,10 @@ function ProfilePage(props) {
     }, 15000)
 
     return () => clearInterval(subscriptionId)
-  }, [walletAddress])
+  }, [walletAddress, profileAddress])
 
   const dmgContract = useDmgContract()
   const isPendingDelegateTransaction = usePendingDelegation()
-  const web3 = new Web3(library.provider)
   const addTransaction = useTransactionAdder()
 
   useEffect(() => {
@@ -557,50 +643,45 @@ function ProfilePage(props) {
     return () => clearInterval(subscriptionId)
   }, [isPendingDelegateTransaction])
 
-  if (!isValidWalletAddress(address)) {
+  if (!isValidWalletAddress(profileAddress)) {
     return <Redirect to={{ pathname: '/governance/proposals/' }} />
   }
 
-  let prevPath = null
-  const locationState = history.location.state
-  if (locationState) {
-    prevPath = locationState.prevPath
-  }
+  const prevPath = history.location.state?.prevPath
 
-  const handleClick = (e) => {
-    // if (e) {}
-    setDelegateView(false)
-  }
+  const handleChangeDelegate = async (isCancel) => {
+    if (isCancel) {
+      setDelegateView(false)
+    } else {
+      const delegateAddress = profileAddress
+      const GAS_MARGIN = ethers.BigNumber.from(1000)
+      const estimatedGas = await dmgContract.estimateGas
+        .delegate(delegateAddress)
+        .catch(error => {
+          console.error(`Error getting gas estimation for delegating with address ${delegateAddress}: `, error)
+          return ethers.BigNumber.from('500000')
+        })
 
-  //fix editing logic
-  const activateWallet = async () => {
-    const GAS_MARGIN = ethers.BigNumber.from(1000)
-    setIsActivating(true)
-
-    const estimatedGas = await dmgContract.estimateGas
-      .delegate(walletAddress)
-      .catch(error => {
-        console.error(`Error getting gas estimation for delegating with address ${walletAddress}: `, error)
-        return ethers.BigNumber.from('500000')
-      })
-
-    dmgContract
-      .delegate(walletAddress, {
-        gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
-      })
-      .then(response => {
-        setLoading(false)
-        addTransaction(response, { delegate: DMG_ADDRESS })
-      })
-      .catch(error => {
-        setLoading(false)
-        if (error?.code !== 4001) {
-          console.error(`Could not delegate due to error: `, error)
-          Sentry.captureException(error)
-        } else {
-          console.log('Could not delegate because the transaction was cancelled')
-        }
-      })
+      return dmgContract
+        .delegate(delegateAddress, {
+          gasLimit: calculateGasMargin(estimatedGas, GAS_MARGIN)
+        })
+        .then(response => {
+          setLoading(false)
+          addTransaction(response, { delegate: DMG_ADDRESS })
+          setDelegateView(false)
+          setIsActivating(true)
+        })
+        .catch(error => {
+          setLoading(false)
+          if (error?.code !== 4001) {
+            console.error(`Could not delegate due to error: `, error)
+            Sentry.captureException(error)
+          } else {
+            console.log('Could not delegate because the transaction was cancelled')
+          }
+        })
+    }
   }
 
   const openEtherscan = (hash) => {
@@ -617,23 +698,23 @@ function ProfilePage(props) {
           <Image>
             {!!picture ?
               <img src={picture} style={pfp} alt={'pfp'} /> :
-              <span style={defaultPfp} class="material-icons">
+              <span style={defaultPfp} className={'material-icons'}>
                 account_circle
               </span>
             }
           </Image>
           <Info>
-            {name ?
+            {profileName ?
               <div>
                 <Name>
-                  {name}
+                  {profileName}
                 </Name>
                 <AddressBottom>
-                  {address}
+                  {profileAddress}
                 </AddressBottom>
               </div> :
               <OnlyAddress>
-                {window.innerWidth > 725 ? address : shorten(address)}
+                {window.innerWidth > 725 ? profileAddress : shorten(profileAddress)}
               </OnlyAddress>
             }
           </Info>
@@ -660,40 +741,59 @@ function ProfilePage(props) {
             {t('profile.holdings')}
           </Title>
           <Underline />
-          {holdings.map(({ title, valueBN, delegating }, index) => (
+          {holdings.map(({ title, valueBN, delegateAddress, personalDelegateAddress, isDelegate }, index) => (
             <Balance key={`balance-${title}`}>
               <DMGTitle active={false}>
                 {title}
               </DMGTitle>
-              <Value active={true}>
-                {isActivating || !edit ? (!valueBN ? shorten(delegating) : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2)) : 'N/A'}
-                {/*<DelegateButton active={delegating} onClick={() => setDelegateView(true)}>*/}
-                {/*  { edit ? */}
-                {/*    (*/}
-                {/*      isActivating ?*/}
-                {/*      <dt>Delegate to Self</dt>:*/}
-                {/*      <dt onClick={() => activateWallet(web3, walletAddress)}>Activate Wallet</dt>*/}
-                {/*    ):*/}
-                {/*    <div>*/}
-                {/*      <dt>Delegate to</dt>*/}
-                {/*      <dt>{(name || shorten(address))}</dt>*/}
-                {/*    </div>*/}
-                {/*  }*/}
-                {/*</DelegateButton>*/}
-              </Value>
+              {!isDelegate ? (
+                <Value>
+                  {!valueBN ? 'N/A' : amountFormatter(ethers.BigNumber.from(valueBN), 18, 2, true, true)}
+                </Value>
+              ) : (
+                <ActivateWalletWrapper>
+                  <Value inline={true}>
+                    {isSameDelegateAsProfile
+                      ? 'Self'
+                      : <Link to={`/governance/address/${delegateAddress}`} style={regularLink}>{shorten(delegateAddress)}</Link>
+                    }
+                  </Value>
+                  <ActivateWallet
+                    isDelegatingToSelf={isPersonalSameDelegateAsProfile && isSameAccountAsProfile}
+                    isPersonalDelegatingToProfile={isPersonalSameDelegateAsProfile}
+                    isActivating={isActivating}
+                    onClick={() => setDelegateView(!isPersonalSameDelegateAsProfile)}>
+                    {isActivating ? (
+                      <SpinnerWrapper><CircularProgress
+                        style={{ color: primaryColor, width: 24, height: 24 }} /></SpinnerWrapper>
+                    ) : (
+                      isPersonalSameDelegateAsProfile ? (
+                        <dt>
+                          You are delegating to this profile
+                        </dt>
+                      ) : (
+                        <dt>
+                          Delegate to {isSameAccountAsProfile ? 'Self' : profileName || shorten(delegateAddress)}
+                        </dt>
+                      )
+                    )}
+                  </ActivateWallet>
+                </ActivateWalletWrapper>
+
+              )}
             </Balance>
           ))}
-          { nfts && nfts.length > 0 &&
-          <Balance key={`balance-NFT`}>
-            <DMGTitle active={false}>
-              NFTs
-            </DMGTitle>
-            {nfts.map(nft =>
-              <NFTSection>
-                {nft.country_name} - {t('profile.'+nft.introduer_type)}
-              </NFTSection>
-            )}
-          </Balance>
+          {nfts && nfts.length > 0 &&
+            <Balance key={`balance-NFT`}>
+              <DMGTitle active={false}>
+                NFTs
+              </DMGTitle>
+              {nfts.map(nft =>
+                <NFTSection>
+                  {nft.country_name} - {t('profile.' + nft.introduer_type)}
+                </NFTSection>
+              )}
+            </Balance>
           }
         </Card>
         <Card width={65}>
@@ -743,7 +843,7 @@ function ProfilePage(props) {
                   proposal={proposal}
                   isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
                   votesBN={accountInfo?.voteInfo?.votesBN}
-                  walletAddress={address}
+                  walletAddress={profileAddress}
                 />
               ))}
             </Proposals>)
@@ -775,7 +875,7 @@ function ProfilePage(props) {
               {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta), 18, 2)} ${t('profile.votes')}`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} ${t('profile.votes')}`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
@@ -798,13 +898,12 @@ function ProfilePage(props) {
         </BackDrop>
         : null
       }
-      {delgateView ?
-        <DelegateDialogue
-          address={address}
-          self={edit}
-          isDelegating={!!accountInfo?.voteInfo ? accountInfo?.voteInfo?.isDelegating() : false}
-          onChange={e => handleClick(e)} />
-        : null
+      {delgateView &&
+      <DelegateDialogue
+        address={profileAddress}
+        self={isSameAccountAsProfile}
+        isAlreadyDelegating={!!accountInfo?.voteInfo ? (accountInfo?.voteInfo?.isDelegating() || isActivating) : false}
+        onChange={(isCancel) => handleChangeDelegate(isCancel)} />
       }
     </Main>
   )
