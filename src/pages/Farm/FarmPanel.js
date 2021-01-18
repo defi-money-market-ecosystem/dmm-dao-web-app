@@ -434,9 +434,8 @@ function updateValues(independentValueParsed, exchangeCurrencyABalance, exchange
   }
 }
 
-export default function FarmPanel({ params, language }) {
-  //const t = (snippet, prop=null) => excerpt(snippet, language, prop);
-  const t = () => 'hi';
+function FarmPanel({ params, language, excerpt }) {
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -613,7 +612,7 @@ export default function FarmPanel({ params, language }) {
       setIndependentError('')
       setShowUnlockCurrencyB(false)
     }
-  }, [allowanceCurrencyA, allowanceCurrencyB, currencyAInputValueParsed, currencyASymbol, currencyBInputValueParsed, currencyBSymbol, t])
+  }, [allowanceCurrencyA, allowanceCurrencyB, currencyAInputValueParsed, currencyASymbol, currencyBInputValueParsed, currencyBSymbol])
 
   const [totalPoolTokens, setTotalPoolTokens] = useState(ethers.constants.Zero)
   const fetchPoolTokens = useCallback(() => {
@@ -1047,12 +1046,10 @@ export default function FarmPanel({ params, language }) {
           title={t('farm.deposit', 'mTokens')}
           extraText={currencyABalance ? formatBalance(amountFormatter(currencyABalance, currencyADecimals, 6)) : ''}
           onValueChange={inputValue => {
-            /*dispatchFarmState({
+            dispatchFarmState({
               type: 'UPDATE_INDEPENDENT',
               payload: { value: inputValue, field: INDEPENDENT_CURRENCY_A }
-            });*/
-            console.log("VALUE CHANGE");
-            console.log(inputValue);
+            });
             updateValues(independentValueParsed, exchangeCurrencyABalance, exchangeCurrencyBBalance, independentField, t, isFarmingActive, dispatchFarmState, setIndependentError)
           }}
           extraTextClickHander={() => {
@@ -1211,4 +1208,4 @@ export default function FarmPanel({ params, language }) {
   )
 }
 
-//export default withTranslations(FarmPanel);
+export default withTranslations(FarmPanel);
