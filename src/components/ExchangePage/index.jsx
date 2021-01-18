@@ -474,7 +474,7 @@ function ExchangePage({ initialCurrency, sending = false, params, language, exce
         setIndependentError()
       }
     }
-  }, [independentValue, independentDecimals, t, independentField, market, effectiveInputCurrency, effectiveOutputCurrency])
+  }, [independentValue, independentDecimals, independentField, market, effectiveInputCurrency, effectiveOutputCurrency])
 
   // // calculate slippage from target rate
   const { minimum: dependentValueMinimum, maximum: dependentValueMaximum } = calculateSlippageBounds(
@@ -545,7 +545,6 @@ function ExchangePage({ initialCurrency, sending = false, params, language, exce
     effectiveInputCurrency,
     effectiveOutputCurrency,
     inputAllowance,
-    t,
     inputCurrency,
     orderSubmissionError
   ])
@@ -586,7 +585,7 @@ function ExchangePage({ initialCurrency, sending = false, params, language, exce
         dispatchSwapState({ type: 'UPDATE_DEPENDENT', payload: '' })
       }
     }
-  }, [independentValueParsed, orderBooks, independentField, t, effectiveInputCurrency, effectiveOutputCurrency])
+  }, [independentValueParsed, orderBooks, independentField, effectiveInputCurrency, effectiveOutputCurrency])
 
   useEffect(() => {
     const history = createBrowserHistory()
