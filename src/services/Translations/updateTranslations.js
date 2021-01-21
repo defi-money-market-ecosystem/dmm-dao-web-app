@@ -98,14 +98,11 @@ async function main() {
           }
         }
 
-
-
         fs.writeFile('src/services/Translations/Locales/' + languagesList[language] , splitData.join('\n'), function(err) {
           if (err) return console.log(err);
         })
       });
     }
-
   });
 }
 
