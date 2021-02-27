@@ -73,27 +73,27 @@ function NavigationTabs({ location: { pathname }, history, language, excerpt }) 
   const t = (snippet, prop=null) => excerpt(snippet, language, prop);
 
   const tabOrder = [
-    {
-      path: '/governance/proposals',
-      textKey: t('navigation.vote'),
-      regex: /\/governance\/proposals/,
-    },
-    {
-      path: '/earn',
-      textKey: t('navigation.earn'),
-      regex: /\/earn/,
-      disabled: true,
-    },
+    // {
+    //   path: '/governance/proposals',
+    //   textKey: t('navigation.vote'),
+    //   regex: /\/governance\/proposals/,
+    // },
+    // {
+    //   path: '/earn',
+    //   textKey: t('navigation.earn'),
+    //   regex: /\/earn/,
+    //   disabled: true,
+    // },
     {
       path: '/farm',
       textKey: t('navigation.farm'),
       regex: /\/farm/,
     },
-    {
-      path: '/swap',
-      textKey: t('navigation.swap'),
-      regex: /\/swap/,
-    },
+    // {
+    //   path: '/swap',
+    //   textKey: t('navigation.swap'),
+    //   regex: /\/swap/,
+    // },
   ]
 
   const navigate = useCallback(

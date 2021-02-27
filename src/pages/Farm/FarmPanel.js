@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useReducer, useState } from 'react'
 import {
   useExchangeContract,
-  useInterval,
   useWeb3React,
   useYieldFarmingProxyContract,
   useYieldFarmingRouterContract
@@ -10,7 +9,8 @@ import {
   ALL_TOKENS_CONTEXT,
   CURRENCY_A,
   CURRENCY_B,
-  DECIMALS, DMG_ADDRESS,
+  DECIMALS,
+  DMG_ADDRESS,
   ETH,
   ETH_ADDRESS,
   EXCHANGE_ADDRESS,
@@ -23,28 +23,22 @@ import {
   YIELD_FARMING_TOKENS_MAP
 } from '../../contexts/Tokens'
 import CurrencyInputPanel from '../../components/CurrencyInputPanel'
-import { amountFormatter, calculateGasMargin, DMM_API_URL, isAddress, MIN_DECIMALS } from '../../utils'
+import { amountFormatter, calculateGasMargin, isAddress, MIN_DECIMALS } from '../../utils'
 import { ethers } from 'ethers'
 import OversizedPanel from '../../components/OversizedPanel'
 import { Button } from '../../theme'
 import { useAddressBalance } from '../../contexts/Balances'
 import styled from 'styled-components'
 import { ReactComponent as Plus } from '../../assets/images/plus-blue.svg'
-import {
-  useDmgPrice,
-  useIsYieldFarmingActive,
-  YIELD_FARMING_PROXY_ADDRESS,
-  YIELD_FARMING_ROUTER_ADDRESS
-} from '../../contexts/YieldFarming'
+import { YIELD_FARMING_PROXY_ADDRESS, YIELD_FARMING_ROUTER_ADDRESS } from '../../contexts/YieldFarming'
 import { useAddressAllowance } from '../../contexts/Allowances'
-import { useTranslation } from 'react-i18next'
 import TransactionDetails from '../../components/TransactionDetails'
 import * as Sentry from '@sentry/browser'
 import { useTransactionAdder } from '../../contexts/Transactions'
 import { useAddressYieldFarmingBalance } from '../../contexts/YieldFarmingBalances'
 import { useAddressDmgRewardBalance } from '../../contexts/DmgRewardBalances'
 
-import { withTranslations } from '../../services/Translations/Translations';
+import { withTranslations } from '../../services/Translations/Translations'
 
 
 const BackDrop = styled.div`
@@ -88,7 +82,7 @@ const FarmingWrapper = styled.div`
   width: 835px;
   max-width: 90vw;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   
   @media (max-width: 900px) {
     flex-direction: column;
@@ -403,7 +397,7 @@ function formatBalance(value) {
 }
 
 function FarmPanel({ params, language, excerpt }) {
-  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+  const t = (snippet, prop = null) => excerpt(snippet, language, prop)
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -475,7 +469,8 @@ function FarmPanel({ params, language, excerpt }) {
     }
   }, [fetchIsFarmingApproved, library])
 
-  const isFarmingActive = useIsYieldFarmingActive()
+  // const isFarmingActive = useIsYieldFarmingActive()
+  const isFarmingActive = true
 
   const dmgDecimals = 18
   const currencyADecimals = ALL_TOKENS_CONTEXT[chainId][currencyA][DECIMALS]
@@ -600,23 +595,13 @@ function FarmPanel({ params, language, excerpt }) {
   }, [fetchPoolTokens, library])
 
   const [feesByToken, setFeesByToken] = useState('-')
-  const fetchFeesByToken = useCallback(() => {
-    if (exchangeAddress) {
-      return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/fees`)
-        .then(response => response.json())
-        .then(data => setFeesByToken(data.data))
-    }
-  }, [exchangeAddress])
   useEffect(() => {
-    fetchFeesByToken()
-    library.on('block', fetchFeesByToken)
-
-    return () => {
-      library.removeListener('block', fetchFeesByToken)
+    if ('0x514910771af9ca656af840dff83e8264ecf986ca'.toLowerCase() === currencyB.toLowerCase()) {
+      setFeesByToken('1.0%')
+    } else {
+      setFeesByToken('0.5%')
     }
-  }, [fetchFeesByToken, library])
-
-  const dmgPriceUsdWei = useDmgPrice()
+  }, [currencyB])
 
   const currencyADepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyABalance).div(totalPoolTokens) : undefined
   const currencyBDepositValue = (!!totalPoolTokens && userDepositedLiquidityBalance && !totalPoolTokens.eq(ethers.constants.Zero)) ? userDepositedLiquidityBalance.mul(exchangeCurrencyBBalance).div(totalPoolTokens) : undefined
@@ -632,68 +617,68 @@ function FarmPanel({ params, language, excerpt }) {
   const currencyBShare = (!currencyBBalance || !poolTokenPercentage) ? ethers.constants.Zero
     : exchangeCurrencyBBalance.mul(poolTokenPercentage).div(oneWei)
 
-  const initialAprs = Object.entries(yieldFarmingTokens)
-    .reduce((tokens, token) => {
-      tokens[ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]] = '...'
-      return tokens
-    }, {})
-  const [aprs, setAprs] = useState(initialAprs)
-  useInterval(async () => {
-    const responsePromises = Object.entries(yieldFarmingTokens)
-      .map(async (tokensForChainId) => {
-        const token = tokensForChainId[1]
-        const currencyASymbol = ALL_TOKENS_CONTEXT[chainId][token[CURRENCY_A]][SYMBOL]
-        const currencyBSymbol = ALL_TOKENS_CONTEXT[chainId][token[CURRENCY_B]][SYMBOL]
-        const exchangeAddress = token[EXCHANGE_ADDRESS]
-        if (currencyASymbol === 'DMG' || (currencyASymbol.substring(1) === currencyBSymbol && exchangeAddress)) {
-          return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/current-apr`)
-            .then(response => response.json())
-            .then(data => {
-              if (currencyASymbol === 'DMG') {
-                return ['DMG-ETH', data.data]
-              } else {
-                return [currencyASymbol, data.data]
-              }
-            })
-        } else {
-          return Promise.resolve()
-        }
-      })
-
-    const responses = await Promise.all(responsePromises)
-    const newAprs = responses
-      .filter(responseOpt => !!responseOpt)
-      .reduce((tokens, response) => {
-        tokens[response[0]] = response[1]
-        return tokens
-      }, {})
-    setAprs(newAprs)
-  }, 15 * 1000, true)
-
-  const [dmgLeft, setDmgLeft] = useState('...')
-  useInterval(async () => {
-    const amountLeftWei = await fetch(`${DMM_API_URL}/v1/yield-farming/dmg-left`)
-      .then(response => response.json())
-      .then(data => ethers.BigNumber.from(data.data))
-      .catch(() => '...')
-
-    if (amountLeftWei === '...') {
-      setDmgLeft('...')
-    } else {
-      const amountLeftDecimal = amountFormatter(amountLeftWei, 18, 2, true, true)
-      setDmgLeft(amountLeftDecimal)
-    }
-  }, 15 * 1000, true)
-
-  const [walletApr, setWalletApr] = useState('...')
-  useInterval(async () => {
-    if (!!account) {
-      await fetch(`${DMM_API_URL}/v1/yield-farming/addresses/${account}/current-apr`)
-        .then(response => response.json())
-        .then(data => setWalletApr(!!data.data ? data.data : '...'))
-        .catch(() => '...')
-    }
-  }, 15 * 1000, true, [account])
+  // const initialAprs = Object.entries(yieldFarmingTokens)
+  //   .reduce((tokens, token) => {
+  //     tokens[ALL_TOKENS_CONTEXT[chainId][token[1][CURRENCY_A]][SYMBOL]] = '...'
+  //     return tokens
+  //   }, {})
+  // const [aprs, setAprs] = useState(initialAprs)
+  // useInterval(async () => {
+  //   const responsePromises = Object.entries(yieldFarmingTokens)
+  //     .map(async (tokensForChainId) => {
+  //       const token = tokensForChainId[1]
+  //       const currencyASymbol = ALL_TOKENS_CONTEXT[chainId][token[CURRENCY_A]][SYMBOL]
+  //       const currencyBSymbol = ALL_TOKENS_CONTEXT[chainId][token[CURRENCY_B]][SYMBOL]
+  //       const exchangeAddress = token[EXCHANGE_ADDRESS]
+  //       if (currencyASymbol === 'DMG' || (currencyASymbol.substring(1) === currencyBSymbol && exchangeAddress)) {
+  //         return fetch(`${DMM_API_URL}/v1/yield-farming/tokens/${exchangeAddress}/current-apr`)
+  //           .then(response => response.json())
+  //           .then(data => {
+  //             if (currencyASymbol === 'DMG') {
+  //               return ['DMG-ETH', data.data]
+  //             } else {
+  //               return [currencyASymbol, data.data]
+  //             }
+  //           })
+  //       } else {
+  //         return Promise.resolve()
+  //       }
+  //     })
+  //
+  //   const responses = await Promise.all(responsePromises)
+  //   const newAprs = responses
+  //     .filter(responseOpt => !!responseOpt)
+  //     .reduce((tokens, response) => {
+  //       tokens[response[0]] = response[1]
+  //       return tokens
+  //     }, {})
+  //   setAprs(newAprs)
+  // }, 15 * 1000, true)
+  //
+  // const [dmgLeft, setDmgLeft] = useState('...')
+  // useInterval(async () => {
+  //   const amountLeftWei = await fetch(`${DMM_API_URL}/v1/yield-farming/dmg-left`)
+  //     .then(response => response.json())
+  //     .then(data => ethers.BigNumber.from(data.data))
+  //     .catch(() => '...')
+  //
+  //   if (amountLeftWei === '...') {
+  //     setDmgLeft('...')
+  //   } else {
+  //     const amountLeftDecimal = amountFormatter(amountLeftWei, 18, 2, true, true)
+  //     setDmgLeft(amountLeftDecimal)
+  //   }
+  // }, 15 * 1000, true)
+  //
+  // const [walletApr, setWalletApr] = useState('...')
+  // useInterval(async () => {
+  //   if (!!account) {
+  //     await fetch(`${DMM_API_URL}/v1/yield-farming/addresses/${account}/current-apr`)
+  //       .then(response => response.json())
+  //       .then(data => setWalletApr(!!data.data ? data.data : '...'))
+  //       .catch(() => '...')
+  //   }
+  // }, 15 * 1000, true, [account])
 
   useEffect(() => {
     const amount = independentValueParsed
@@ -972,10 +957,10 @@ function FarmPanel({ params, language, excerpt }) {
   }, [account, currencyADepositValue])
 
   let dmgRewardValueUsd = '0.00'
-  if (isUsingDmgPriceUsd && !!dmgPriceUsdWei) {
-    dmgRewardValueUsd = userDmgRewardBalance.mul(dmgPriceUsdWei).div(ethers.BigNumber.from('1000000000000000000'))
-    dmgRewardValueUsd = amountFormatter(dmgRewardValueUsd, 18, 2, true, true)
-  }
+  // if (isUsingDmgPriceUsd && !!dmgPriceUsdWei) {
+  //   dmgRewardValueUsd = userDmgRewardBalance.mul(dmgPriceUsdWei).div(ethers.BigNumber.from('1000000000000000000'))
+  //   dmgRewardValueUsd = amountFormatter(dmgRewardValueUsd, 18, 2, true, true)
+  // }
 
   return (
     <FarmingWrapper>
@@ -987,7 +972,13 @@ function FarmPanel({ params, language, excerpt }) {
           </CardTitle>
           <Underline />
           <CardText>
-            {t('farm.withdrawInfo', {feesByToken: feesByToken, currencyASymbol: currencyASymbol, currencyBSymbol: currencyBSymbol, feeAmountAFormatted: feeAmountAFormatted, feeAmountBFormatted: feeAmountBFormatted})}
+            {t('farm.withdrawInfo', {
+              feesByToken: feesByToken,
+              currencyASymbol: currencyASymbol,
+              currencyBSymbol: currencyBSymbol,
+              feeAmountAFormatted: feeAmountAFormatted,
+              feeAmountBFormatted: feeAmountBFormatted
+            })}
           </CardText>
           <ConfirmButtonsWrapper>
             <Button onClick={() => setIsDisplayConfirmWithdraw(false)}>
@@ -1000,46 +991,46 @@ function FarmPanel({ params, language, excerpt }) {
         </Card>
       </BackDrop>
       }
-      <InfoPanel>
-        <Title>
-          {t('farm.title')}
-        </Title>
-        <Underline />
-        <Amount>
-          {Object.keys(aprs).map((key) => {
-            return (
-              <InlineAmount key={`inline-amount-${key}`}>
-                <Label>
-                  {t('farm.aprTitle', key)}
-                </Label>
-                <Value>
-                  {aprs[key]}
-                </Value>
-              </InlineAmount>
-            )
-          })}
-        </Amount>
-        <Amount>
-          <Label>
-            {t('farm.leftForRedemption')}
-          </Label>
-          <Value>
-            {dmgLeft} DMG
-          </Value>
-        </Amount>
-        <Title>
-          {t('farm.yourWallet')}
-        </Title>
-        <Underline />
-        <Amount>
-          <Label>
-            {t('farm.earningNetAPR')}
-          </Label>
-          <Value>
-            {walletApr}
-          </Value>
-        </Amount>
-      </InfoPanel>
+      {/*<InfoPanel>*/}
+      {/*  <Title>*/}
+      {/*    {t('farm.title')}*/}
+      {/*  </Title>*/}
+      {/*  <Underline />*/}
+      {/*  <Amount>*/}
+      {/*    {Object.keys(aprs).map((key) => {*/}
+      {/*      return (*/}
+      {/*        <InlineAmount key={`inline-amount-${key}`}>*/}
+      {/*          <Label>*/}
+      {/*            {t('farm.aprTitle', key)}*/}
+      {/*          </Label>*/}
+      {/*          <Value>*/}
+      {/*            {aprs[key]}*/}
+      {/*          </Value>*/}
+      {/*        </InlineAmount>*/}
+      {/*      )*/}
+      {/*    })}*/}
+      {/*  </Amount>*/}
+      {/*  <Amount>*/}
+      {/*    <Label>*/}
+      {/*      {t('farm.leftForRedemption')}*/}
+      {/*    </Label>*/}
+      {/*    <Value>*/}
+      {/*      {dmgLeft} DMG*/}
+      {/*    </Value>*/}
+      {/*  </Amount>*/}
+      {/*  <Title>*/}
+      {/*    {t('farm.yourWallet')}*/}
+      {/*  </Title>*/}
+      {/*  <Underline />*/}
+      {/*  <Amount>*/}
+      {/*    <Label>*/}
+      {/*      {t('farm.earningNetAPR')}*/}
+      {/*    </Label>*/}
+      {/*    <Value>*/}
+      {/*      {walletApr}*/}
+      {/*    </Value>*/}
+      {/*  </Amount>*/}
+      {/*</InfoPanel>*/}
       <Wrapper>
         {/* CURRENCY A */}
         <CurrencyInputPanel
@@ -1205,4 +1196,4 @@ function FarmPanel({ params, language, excerpt }) {
   )
 }
 
-export default withTranslations(FarmPanel);
+export default withTranslations(FarmPanel)

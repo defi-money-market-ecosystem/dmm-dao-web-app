@@ -162,31 +162,13 @@ class App extends React.Component {
                     { /*this Suspense is for route code-splitting*/ }
                     <Suspense fallback={null}>
                       <Switch>
-                        <Route exact strict path="/swap" component={() => <Swap params={params} language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Route
-                          exact
-                          strict
-                          path="/swap/:tokenAddress?"
-                          render={({ match, location }) => {
-                            if (isAddress(match.params.tokenAddress)) {
-                              return (
-                                <Swap
-                                  location={location}
-                                  initialCurrency={isAddress(match.params.tokenAddress)}
-                                  params={params}
-                                />
-                              )
-                            } else {
-                              return <Redirect to={{ pathname: '/swap' }} />
-                            }
-                          }}
-                        />
+                        {/*<Route exact strict path="/swap" component={() => <Swap params={params} language={this.state.selectedLanguage || this.state.language}/>}/>*/}
+                        {/*<Route exact strict path="/governance/proposals" component={() => <Vote language={this.state.selectedLanguage || this.state.language}/>}/>*/}
+                        {/*<Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage language={this.state.selectedLanguage || this.state.language}/>}/>*/}
+                        {/*<Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage language={this.state.selectedLanguage || this.state.language}/>}/>*/}
+                        {/*<Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params} language={this.state.selectedLanguage || this.state.language}/>}/>*/}
                         <Route exact strict path="/farm" component={() => <Farm params={params} language={this.state.selectedLanguage || this.state.language}/>} />
-                        <Route exact strict path="/governance/proposals" component={() => <Vote language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Route exact strict path="/governance/proposals/:proposal_id" component={() => <ProposalDetailsPage language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Route exact strict path="/governance/address/:wallet_address" component={() => <ProfilePage language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Route exact strict path="/asset-introducers/purchase" component={() => <NFT params={params} language={this.state.selectedLanguage || this.state.language}/>}/>
-                        <Redirect to="/governance/proposals"/>
+                        <Redirect to="/farm"/>
                       </Switch>
                     </Suspense>
                   </BrowserRouter>
