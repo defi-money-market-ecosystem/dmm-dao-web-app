@@ -6,29 +6,9 @@ import { darken, transparentize } from 'polished'
 
 import { useBodyKeyDown } from '../../hooks'
 
-const tabOrder = [
-  {
-    path: '/governance/proposals',
-    textKey: 'Vote',
-    regex: /\/governance\/proposals/,
-  },
-  {
-    path: '/earn',
-    textKey: 'Earn',
-    regex: /\/earn/,
-    disabled: true,
-  },
-  {
-    path: '/farm',
-    textKey: 'Farm',
-    regex: /\/farm/,
-  },
-  {
-    path: '/swap',
-    textKey: 'Swap',
-    regex: /\/swap/,
-  },
-]
+import { withTranslations } from '../../services/Translations/Translations';
+
+
 
 const Tabs = styled.div`
   ${({ theme }) => theme.flexRowNoWrap}
@@ -89,10 +69,32 @@ const StyledNavLink = styled(NavLink).attrs({
   }
 `
 
-function NavigationTabs({ location: { pathname }, history }) {
-  const { t } = useTranslation()
+function NavigationTabs({ location: { pathname }, history, language, excerpt }) {
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
 
-  // const { account } = useWeb3React()
+  const tabOrder = [
+    // {
+    //   path: '/governance/proposals',
+    //   textKey: t('navigation.vote'),
+    //   regex: /\/governance\/proposals/,
+    // },
+    // {
+    //   path: '/earn',
+    //   textKey: t('navigation.earn'),
+    //   regex: /\/earn/,
+    //   disabled: true,
+    // },
+    {
+      path: '/farm',
+      textKey: t('navigation.farm'),
+      regex: /\/farm/,
+    },
+    // {
+    //   path: '/swap',
+    //   textKey: t('navigation.swap'),
+    //   regex: /\/swap/,
+    // },
+  ]
 
   const navigate = useCallback(
     direction => {
@@ -116,7 +118,7 @@ function NavigationTabs({ location: { pathname }, history }) {
       <Tabs>
         {tabOrder.map(({ path, textKey, regex, disabled }) => (
           <StyledNavLink disabled={disabled} key={path} to={path} isActive={(_, { pathname }) => pathname.match(regex)}>
-            {t(textKey)}
+            {textKey}
           </StyledNavLink>
         ))}
       </Tabs>
@@ -124,4 +126,4 @@ function NavigationTabs({ location: { pathname }, history }) {
   )
 }
 
-export default withRouter(NavigationTabs)
+export default withTranslations(withRouter(NavigationTabs));

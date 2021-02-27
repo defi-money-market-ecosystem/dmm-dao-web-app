@@ -4,7 +4,8 @@ import { createBrowserHistory } from 'history'
 import { ethers } from 'ethers'
 import { BigNumber } from 'ethers-utils'
 import styled from 'styled-components'
-import { useTranslation } from 'react-i18next'
+
+import { withTranslations } from '../../services/Translations/Translations';
 
 import Web3 from 'web3'
 
@@ -278,8 +279,8 @@ function getExchangeRate(inputValue, inputDecimals, outputValue, outputDecimals,
   }
 }
 
-export default function ExchangePage({ initialCurrency, sending = false, params }) {
-  const { t } = useTranslation()
+function ExchangePage({ initialCurrency, sending = false, params, language, excerpt }) {
+  const t = (snippet) => excerpt(snippet, language);
   const { library, account, chainId, error } = useWeb3React()
 
   const urlAddedTokens = {}
@@ -465,7 +466,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
           setIndependentError(null)
         }
       } catch (error) {
-        setIndependentError(t('inputNotValid'))
+        setIndependentError(t('swap.invalidInput'))
       }
 
       return () => {
@@ -473,7 +474,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         setIndependentError()
       }
     }
-  }, [independentValue, independentDecimals, t, independentField, market, effectiveInputCurrency, effectiveOutputCurrency])
+  }, [independentValue, independentDecimals, independentField, market, effectiveInputCurrency, effectiveOutputCurrency])
 
   // // calculate slippage from target rate
   const { minimum: dependentValueMinimum, maximum: dependentValueMaximum } = calculateSlippageBounds(
@@ -505,13 +506,13 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
       setInputError(orderSubmissionError)
     } else if (inputBalance && inputAllowance && inputValueCalculation) {
       if (inputBalance.lt(inputValueCalculation)) {
-        setInputError(t('insufficientBalance'))
+        setInputError(t('swap.insufficientBalance'))
       } else if (inputAllowance.lt(inputValueCalculation)) {
-        setInputError(t('unlockTokenCont'))
+        setInputError(t('swap.unlockTokenCont'))
         setShowUnlock(true)
         setShowWrap(false)
       } else if (inputCurrency === 'ETH' && inputValueCalculation.gt(inputBalance.sub(ethBalanceBuffer))) {
-        setInputError(t('insufficientBalanceWithBuffer'))
+        setInputError(t('swap.insufficientBalanceBuffer'))
         setShowWrap(false)
         setShowUnlock(false)
       } else if (valueForMinOrder && valueForMinOrder.lt(SWAP_TOKENS_CONTEXT['1'][currencyForMinOrder][MIN_ORDER])) {
@@ -544,7 +545,6 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
     effectiveInputCurrency,
     effectiveOutputCurrency,
     inputAllowance,
-    t,
     inputCurrency,
     orderSubmissionError
   ])
@@ -576,16 +576,16 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         }
       } catch (error) {
         if (error.message === 'INSUFFICIENT_LIQUIDITY') {
-          setIndependentError(t('insufficientLiquidity'))
+          setIndependentError(t('swap.insufficientLiquidity'))
         } else {
-          setIndependentError(t('orderBooksLoading'))
+          setIndependentError(t('swap.orderBooksLoading'))
         }
       }
       return () => {
         dispatchSwapState({ type: 'UPDATE_DEPENDENT', payload: '' })
       }
     }
-  }, [independentValueParsed, orderBooks, independentField, t, effectiveInputCurrency, effectiveOutputCurrency])
+  }, [independentValueParsed, orderBooks, independentField, effectiveInputCurrency, effectiveOutputCurrency])
 
   useEffect(() => {
     const history = createBrowserHistory()
@@ -600,7 +600,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
     ? exchangeRate && inputError === null && independentError === null && recipientError === null
     : exchangeRate && inputError === null && independentError === null
 
-  const estimatedText = `(${t('estimated')})`
+  const estimatedText = `(${t('swap.estimated')})`
 
   function formatBalance(value) {
     return `Balance: ${value}`
@@ -969,9 +969,9 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         let errorMessage
         if (error?.code !== 4001) {
           if (error?.code === -32603) {
-            errorMessage = t('unsupportedDeviceForSubmittingOrders')
+            errorMessage = t('swap.unsupportedDevice')
           } else {
-            errorMessage = t('submissionError')
+            errorMessage = t('swap.submissionError')
             exchange.addresses.getPortfolio(account).then(response => {
               console.error('Portfolio Data: ', JSON.stringify(response))
             })
@@ -1009,23 +1009,23 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
     if (!!dolomiteOrderId) {
       return <CircularProgress />
     } else if (pendingWrapping) {
-      return t('wrapping')
+      return t('swap.wrapping')
     } else if (isAwaitingSignature) {
-      return t('awaitingSignature')
+      return t('swap.awaitingSignature')
     } else if (brokenTokenWarning) {
-      return t('swap')
+      return t('swap.swap')
     } else if (!account) {
-      return t('connectToWallet')
+      return t('swap.connectToWallet')
     } else if (sending) {
       if (customSlippageError === 'warning') {
-        return t('sendAnyway')
+        return t('swap.sendAnyway')
       } else {
-        return t('send')
+        return t('swap.send')
       }
     } else if (customSlippageError === 'warning') {
-      return t('swapAnyway')
+      return t('swap.swapAnyway')
     } else {
-      return t('swap')
+      return t('swap.swap')
     }
   }
 
@@ -1066,7 +1066,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         />
       )}
       <CurrencyInputPanel
-        title={t('input')}
+        title={t('swap.input')}
         urlAddedTokens={urlAddedTokens}
         description={inputCurrency === DMG_ADDRESS ? '' : estimatedText}
         extraText={inputBalanceFormatted && formatBalance(inputBalanceFormatted)}
@@ -1106,6 +1106,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         disableTokenSelect={inputCurrency === DMG_ADDRESS}
         unlockAddress={DELEGATE_ADDRESS}
         tokenList={SWAP_TOKENS_CONTEXT[chainId]}
+        language={language}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -1121,7 +1122,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         </DownArrowBackground>
       </OversizedPanel>
       <CurrencyInputPanel
-        title={t('output')}
+        title={t('swap.output')}
         description={outputCurrency === DMG_ADDRESS ? '' : estimatedText}
         extraText={outputBalanceFormatted && formatBalance(outputBalanceFormatted)}
         urlAddedTokens={urlAddedTokens}
@@ -1148,6 +1149,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
         market={market}
         unlockAddress={DELEGATE_ADDRESS}
         tokenList={SWAP_TOKENS_CONTEXT[chainId]}
+        language={language}
       />
       <OversizedPanel hideBottom>
         <ExchangeRateWrapper
@@ -1155,7 +1157,7 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
             setInverted(inverted => !inverted)
           }}
         >
-          <ExchangeRate>{t('exchangeRate')}</ExchangeRate>
+          <ExchangeRate>{t('swap.exchangeRate')}</ExchangeRate>
           {inverted ? (
             <span>
               {exchangeRate
@@ -1233,3 +1235,5 @@ export default function ExchangePage({ initialCurrency, sending = false, params 
     </Wrapper>
   )
 }
+
+export default withTranslations(ExchangePage);

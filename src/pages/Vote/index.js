@@ -19,6 +19,8 @@ import { AccountDetails } from '../../models/AccountDetails'
 import { primaryColor } from '../../theme/index'
 import { Button } from '../../theme'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const Main = styled.div`
   width: 80vw;
   /*position: absolute;*/
@@ -368,7 +370,9 @@ async function getAccountInfo(walletAddress) {
   }
 }
 
-export default function Vote() {
+function Vote({ language, excerpt }) {
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+
   const [proposals, setProposals] = useState([])
   const [accountInfo, setAccountInfo] = useState({})
   const [loading, setLoading] = useState(true)
@@ -495,7 +499,7 @@ export default function Vote() {
             :
             (<ActivateWallet hidden={!walletAddress || isDelegating || voteCountBN.gt(new BN('0'))}
                              onClick={() => activateWallet(web3, walletAddress)}>
-              Activate Wallet
+              {t('vote.activateWallet')}
             </ActivateWallet>)
         ) :
         (
@@ -507,7 +511,7 @@ export default function Vote() {
     <Main>
       <Votes>
         <VoteTitle>
-          Votes
+          {t('vote.votes')}
         </VoteTitle>
         <Amount>
           {!!accountInfo?.voteInfo?.votesBN ? amountFormatter(accountInfo?.voteInfo?.votesBN, 18, 2, true, true) : '0.00'}
@@ -516,13 +520,13 @@ export default function Vote() {
       <Voting>
         <VotingWallet>
           <Title>
-            Your Wallet
+            {t('vote.yourWallet')}
           </Title>
           <Underline/>
           {balances.map(({ title, valueBN, voteCountBN, isDelegating }, index) => (
             <WalletRow key={`balance-${title}`}>
               <DMGTitle active={index === 0}>
-                {title}
+                {t('vote.dmgBalanceTitle')}
               </DMGTitle>
               <Value active={index === 0}>
                 {/*{!valueBN ? 'N/A' : amountFormatter(valueBN, 18, 2, true, true)}*/}
@@ -533,7 +537,7 @@ export default function Vote() {
           ))}
           <WalletRow key={`balance-delegation`}>
             <DMGTitle active={true}>
-              Delegating Votes To
+              {t('vote.delegatingVotes')}
             </DMGTitle>
             <DelegationWrapper>
               <Value>
@@ -552,7 +556,7 @@ export default function Vote() {
               <Value>
                 <PurchaseAssetIntroducerNFTButtonWrapper>
                   <Button style={purchaseAssetIntroducerSlotStyle} onClick={() => history.push('/asset-introducers/purchase')}>
-                    Purchase Asset Introducer NFT
+                    {t('vote.becomeIntroducer')}
                   </Button>
                 </PurchaseAssetIntroducerNFTButtonWrapper>
               </Value>
@@ -562,7 +566,7 @@ export default function Vote() {
                 {!!walletAddress && (
                   <ViewProfileButtonWrapper>
                     <Button style={walletButtonStyle} onClick={() => history.push(`/governance/address/${walletAddress}`)}>
-                      View Profile
+                      {t('vote.viewProfile')}
                     </Button>
                   </ViewProfileButtonWrapper>
                 )}
@@ -573,7 +577,7 @@ export default function Vote() {
         <GovernanceProposals>
           <GovernanceInner>
             <Title>
-              Governance Proposals
+              {t('vote.governanceProposals')}
             </Title>
             <Underline/>
             {loading ?
@@ -591,6 +595,8 @@ export default function Vote() {
                                 setVoteStatus={(voteStatus) => {
                                   proposal.voteStatus = voteStatus
                                 }}
+                                language={language}
+                                excerpt={excerpt}
                                 walletAddress={walletAddress}/>
                 ))}
               </Proposals>)
@@ -614,9 +620,11 @@ export default function Vote() {
       <Sticky active={sticky}>
         <X>&#10006;</X>
         <StickyText>
-          Invalid Proposal ID
+          {t('vote.invalidID')}
         </StickyText>
       </Sticky>
     </Main>
   )
 }
+
+export default withTranslations(Vote);

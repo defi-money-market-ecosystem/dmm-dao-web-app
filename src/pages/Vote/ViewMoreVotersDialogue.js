@@ -92,12 +92,12 @@ const VoterAddress = styled.a`
 const VoteCount = styled.div`
 `
 
-export default function ViewMoreVotersDialogue({ proposal, voters, onClose }) {
+export default function ViewMoreVotersDialogue({ proposal, voters, onClose, t }) {
   return (
     <BackDrop>
       <Card>
         <Title>
-          Top Voters
+          {t('proposal.topVoters')}
         </Title>
         <Underline/>
         <VoterBackground>

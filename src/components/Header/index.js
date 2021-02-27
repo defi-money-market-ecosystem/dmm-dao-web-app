@@ -6,6 +6,8 @@ import './header.css'
 import DMMLogo from '../../assets/images/dmm-logo.svg'
 import FiatAdapter from 'fiat-adapter'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 class Header extends React.Component {
   constructor(props) {
     super(props)
@@ -16,6 +18,8 @@ class Header extends React.Component {
   }
 
   render() {
+    const t = (snippet, prop=null) => this.props.excerpt(snippet, this.props.language, prop);
+
     return (
       <div className={'navbar'}>
         <div className={'content'}>
@@ -31,12 +35,12 @@ class Header extends React.Component {
             <div className={'purchaseCryptoButton'}>
               {!this.props.hideBuy && (
                 <Button className={'loadWallet'} onClick={() => this.setState({ fiatAdapterOpen: true })}>
-                  Buy Crypto
+                  {t('nft.buyCrypto')}
                 </Button>
               )}
             </div>
             <div className={'connectWalletButton'}>
-              <Web3Status/>
+              <Web3Status t={t}/>
             </div>
           </div>
         </div>
@@ -50,4 +54,4 @@ class Header extends React.Component {
   }
 }
 
-export default Header
+export default withTranslations(Header);

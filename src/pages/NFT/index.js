@@ -24,6 +24,8 @@ import BUYER_ABI from '../../constants/abis/asset_introducer_buyer_router'
 import STAKING_ABI from '../../constants/abis/asset_introducer_staking_router'
 import { Link } from 'react-router-dom'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const GAS_MARGIN = ethers.BigNumber.from(1000)
 
 
@@ -576,8 +578,10 @@ const getNFTData = (setConstructedCountryData, setConstructedMapData, selectedSt
 const ASSET_INTRODUCER_BUYER_ROUTER_ADDRESS = '0xc8AC9D420e960DA89Eb8f1ed736eB9ff2F0054aF'
 const ASSET_INTRODUCER_STAKING_ROUTER_ADDRESS = '0x2bd086E46af30eDb0039b6b0B528F8218151c898'
 
-export default function NFT({ params }) {
-  const { t } = useTranslation()
+function NFT({ params, language, excerpt }) {
+
+  const t = (snippet, prop=null) => excerpt(snippet, language, prop);
+
   const oneWei = ethers.BigNumber.from('1000000000000000000')
 
   const { library, account, chainId } = useWeb3React()
@@ -1131,5 +1135,6 @@ export default function NFT({ params }) {
       </CompletePurchaseSection>}
     </NFTWrapper>
   )
-
 }
+
+export default withTranslations(NFT);

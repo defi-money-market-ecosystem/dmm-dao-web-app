@@ -645,6 +645,7 @@ export default function AddLiquidity({ params }) {
         value={inputValue}
         errorMessage={inputError}
         disableTokenSelect
+        t={t}
       />
       <OversizedPanel>
         <DownArrowBackground>
@@ -679,6 +680,7 @@ export default function AddLiquidity({ params }) {
         value={outputValue}
         showUnlock={showUnlock}
         errorMessage={outputError}
+        t={t}
       />
       <OversizedPanel hideBottom>
         <SummaryPanel>

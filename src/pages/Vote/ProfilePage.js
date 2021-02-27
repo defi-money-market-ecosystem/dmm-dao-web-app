@@ -21,6 +21,8 @@ import { BigNumber } from 'ethers-utils'
 import * as Sentry from '@sentry/browser'
 import DMG_ABI from '../../constants/abis/dmg'
 
+import { withTranslations } from '../../services/Translations/Translations';
+
 const Main = styled.div`
   width: 60vw;
 	overflow-y: scroll;
@@ -466,7 +468,9 @@ const capitalizeFirstLetter = string => {
   return string.charAt(0).toUpperCase() + string.slice(1)
 }
 
-export default function ProfilePage() {
+function ProfilePage(props) {
+  const t = (snippet, prop=null) => props.excerpt(snippet, props.language, prop);
+
   const [loading, setLoading] = useState(true)
   const [page, changePage] = useState(1)
   const [proposals, setProposals] = useState([])
@@ -509,21 +513,21 @@ export default function ProfilePage() {
 
   const [holdings, setHoldings] = useState([
       {
-        title: 'DMG Balance',
+        title: t('profile.dmgBalance'),
         valueBN: ethers.constants.Zero,
         delegateAddress: '',
         personalDelegateAddress: '',
         isDelegate: false
       },
       {
-        title: 'Votes',
+        title: t('profile.votes'),
         valueBN: ethers.constants.Zero,
         delegateAddress: '',
         personalDelegateAddress: '',
         isDelegate: false
       },
       {
-        title: 'Delegating Votes To',
+        title: t('profile.deleagtingTo'),
         valueBN: undefined,
         delegateAddress: accountInfo?.vote_info?.delegate_address,
         personalDelegateAddress: personalAccountInfo?.vote_info?.delegate_address,
@@ -572,7 +576,7 @@ export default function ProfilePage() {
     block_number: '-'
   }
 
-  const transactionTitles = ['Action', 'Block Number']
+  const transactionTitles = [t('profile.action'), t('profile.blockNumber')]
   const transactionsAmount = 3
   let transactions
   let lt = loadedTransactions.length
@@ -687,7 +691,7 @@ export default function ProfilePage() {
   return (
     <Main>
       <Link to={prevPath ? prevPath : '/governance/proposals'} style={backLink}>
-        &#8592; {prevPath ? 'Proposal Details' : 'Governance Overview'}
+        &#8592; {prevPath ? t('profile.details') : t('profile.overview')}
       </Link>
       <div>
         <Wrapper>
@@ -725,7 +729,7 @@ export default function ProfilePage() {
         */}
         </Wrapper>
         <Rank>
-          RANK
+          {t('profile.rank')}
           <RankNum>
             {rank}
           </RankNum>
@@ -734,7 +738,7 @@ export default function ProfilePage() {
       <div>
         <Card width={35}>
           <Title>
-            Holdings
+            {t('profile.holdings')}
           </Title>
           <Underline />
           {holdings.map(({ title, valueBN, delegateAddress, personalDelegateAddress, isDelegate }, index) => (
@@ -779,22 +783,22 @@ export default function ProfilePage() {
               )}
             </Balance>
           ))}
-          <Balance key={`balance-NFT`}>
-            <DMGTitle active={false}>
-              NFTs
-            </DMGTitle>
-            {nfts.length === 0 ?
-              <NFTSection>N/A</NFTSection> :
-              nfts.map(nft =>
+          {nfts && nfts.length > 0 &&
+            <Balance key={`balance-NFT`}>
+              <DMGTitle active={false}>
+                NFTs
+              </DMGTitle>
+              {nfts.map(nft =>
                 <NFTSection>
-                  {nft.country_name} - {capitalizeFirstLetter(nft.introducer_type.toLowerCase())}
+                  {nft.country_name} - {t('profile.' + nft.introduer_type)}
                 </NFTSection>
               )}
-          </Balance>
+            </Balance>
+          }
         </Card>
         <Card width={65}>
           <Title>
-            Transactions
+            {t('profile.transactions')}
           </Title>
           <Underline />
           <div>
@@ -807,7 +811,7 @@ export default function ProfilePage() {
               {transactions.slice(0, transactionsAmount).map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} ${t('profile.votes')}`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
@@ -817,14 +821,14 @@ export default function ProfilePage() {
           {transactions.length > transactionsAmount ? (
             <View onClick={() => changeViewMore(true)}>
               <ViewText>
-                {'View More'}
+                {t('profile.viewMore')}
               </ViewText>
             </View>
           ) : (<span />)}
         </Card>
         <Card width={100}>
           <Title>
-            Voting History
+            {t('profile.votingHistory')}
           </Title>
           <Underline />
           {loading ?
@@ -871,7 +875,7 @@ export default function ProfilePage() {
               {transactions.map(({ vote_delta, block_number, transaction_hash }) => (
                 <Transaction small active={!!transaction_hash} onClick={() => openEtherscan(transaction_hash)}>
                   <TransactionField long>
-                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? 'Lost' : 'Received'} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} Votes`}
+                    {vote_delta === '-' ? vote_delta : `${vote_delta.charAt(0) === '-' ? t('profile.lost') : t('profile.received')} ${vote_delta === '-' ? null : amountFormatter(ethers.BigNumber.from(vote_delta.replaceAll('-', '')), 18, 2, true, true)} ${t('profile.votes')}`}
                   </TransactionField>
                   <TransactionField>{block_number}</TransactionField>
                 </Transaction>
@@ -904,3 +908,5 @@ export default function ProfilePage() {
     </Main>
   )
 }
+
+export default withTranslations(ProfilePage);

@@ -10,8 +10,8 @@ export class ProposalHistoryBreadcrumb {
     this.transactionHash = transaction_hash
   }
 
-  statusFormatted() {
-    return ProposalSummary.formatStatus(this.status)
+  statusFormatted(t) {
+    return ProposalSummary.formatStatus(this.status, t)
   }
 
   timestampFormatted() {
