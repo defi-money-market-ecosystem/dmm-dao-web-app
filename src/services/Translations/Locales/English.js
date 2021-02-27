@@ -39,9 +39,7 @@ export default {
   'farm.inputNotValid': 'Not a valid input value',
   'farm.title': 'Farming Info',
   'farm.confirmWithdraw': 'Confirm Withdraw Farming',
-  'farm.withdrawInfo': (params) => `You are withdrawing your active farm, which incurs a ${params.feesByToken} fee on the amount
-            of ${params.currencyASymbol} and ${params.currencyBSymbol} you deposited. The expected fee is about
-            ${params.feeAmountAFormatted} ${params.currencyASymbol} and ${params.feeAmountBFormatted} ${params.currencyBSymbol}.`,
+  'farm.withdrawInfo': (params) => `You are withdrawing your active farm, which incurs a ${params.feesByToken} fee on the amount of ${params.currencyASymbol} and ${params.currencyBSymbol} you deposited. The expected fee is about ${params.feeAmountAFormatted} ${params.currencyASymbol} and ${params.feeAmountBFormatted} ${params.currencyBSymbol}.`,
   'farm.deny': 'Deny',
   'farm.confirm': 'Confirm',
   'farm.aprTitle': (key) => `${key} APR`,
@@ -97,7 +95,7 @@ export default {
   'vote.dmgBalanceTitle': 'DMG Balance',
   'vote.waitingForConfirmation': 'You currently have a vote that has been cast and is waiting to be confirmed. Please wait for the confirmation to finish.',
   'vote.mustActivateWallet': 'Before voting for the first time, you must activate your wallet. To activate your wallet, go to the of the voting dashboard and press the \'Activate Wallet\' button.',
-  'vote.castVoteHelper': `Cast your vote using the options below. Keep in mind, all votes are final and ${bold('cannot')} be modified.`,
+  'vote.castVoteHelper': `Cast your vote using the options below. Keep in mind, all votes are final and cannot be modified.`,
   'vote.for': 'For',
   'vote.against': 'Against',
   'vote.castYourVote': 'Cast your vote',
@@ -185,5 +183,4 @@ export default {
   'inputPanel.pending': 'Pending',
   'inputPanel.selectToken': 'Select a token',
   'inputPanel.noTokens': 'No Tokens Found',
-
 }

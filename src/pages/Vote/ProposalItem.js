@@ -161,7 +161,9 @@ function ProposalItem(props) {
             isDelegating={props.isDelegating}
             votesBN={props.votesBN}
             onClose={() => setShowCastDialogue(false)}
-            vote={(v) => props.setVoteStatus(v)}/>
+            vote={(v) => props.setVoteStatus(v)}
+            t={t}
+          />
           : <div/>
         }
       </div>
